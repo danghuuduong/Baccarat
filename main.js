@@ -1,6 +1,7 @@
 const { injectMouseTracker } = require('./src/injectMouseTracker');
 const { UI_TableKiemthu } = require('./src/UI_TableKiemthu');
-const { createChecker } = require('./src/checker');
+const { UI_KetQua } = require('./src/UI_KetQua');
+const { createChecker, checkOnce } = require('./src/checker');
 
 const { chromium } = require("playwright");
 require('dotenv').config();
@@ -241,7 +242,7 @@ function loadStateTXT() {
         }
     });
 
-    // ── exposeFunction: di chuyển chuột qua Playwright ──
+    // ── exposeFunction: di chuyển chuột qua Playwright ──11
     await page.exposeFunction("moveMouse", async (x, y) => {
         try {
             await page.mouse.move(Math.round(x), Math.round(y));
@@ -252,8 +253,20 @@ function loadStateTXT() {
         }
     });
 
+    // ── exposeFunction: so sánh 1 vùng màn hình, trả name khớp nhất ──
+    await page.exposeFunction("checkOnceResult", async ({ x, y, width, height }) => {
+        try {
+            const result = await checkOnce(page, IMAGES_DIR, x, y, width, height);
+            return { success: true, name: result.name, score: result.score };
+        } catch (err) {
+            console.error("❌ checkOnceResult lỗi:", err.message);
+            return { success: false, error: err.message, name: null, score: 0 };
+        }
+    });
+
     // GỌI SAU page.goto__________________________
     // await injectMouseTracker(page);
     await UI_TableKiemthu(page);
+    await UI_KetQua(page);
 })();
 // =========== HẾT MAIN – CHƯƠNG TRÌNH CHÍNH ==================

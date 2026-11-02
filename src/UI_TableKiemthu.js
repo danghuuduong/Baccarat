@@ -557,7 +557,7 @@ async function UI_TableKiemthu(page) {
         const bCheck = document.createElement("button");
         bCheck.className = "btn-check";
         const isRunning = runningCheckers.has(item.name);
-        bCheck.textContent = isRunning ? "⏹ Dừng" : "Check tương thích";
+        bCheck.textContent = isRunning ? "⏹ Dừng" : "Check";
         if (isRunning) bCheck.style.background = "#dc2626";
         bCheck.onclick = async function () {
           if (!runningCheckers.has(item.name)) {
@@ -572,7 +572,7 @@ async function UI_TableKiemthu(page) {
             // Dừng check
             await window.stopChecker(item.name);
             runningCheckers.delete(item.name);
-            bCheck.textContent = "Check tương thích";
+            bCheck.textContent = "Check";
             bCheck.style.background = "";
           }
         };
