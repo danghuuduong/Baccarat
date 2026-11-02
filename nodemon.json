@@ -1,0 +1,14 @@
+{
+  "watch": [
+    "main.js",
+    "src/"
+  ],
+  "ext": "js",
+  "ignore": [
+    "node_modules/",
+    "state.txt",
+    "src/Images/"
+  ],
+  "delay": "5500",
+  "verbose": true
+}
