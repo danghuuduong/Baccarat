@@ -45,8 +45,8 @@ async function UI_KetQua(page) {
 
                 #ui-kq-panel {
                     position: fixed;
-                    top: 10px;
-                    left: 5px;
+                    top: 416px;
+                    left: 63px;
                     display: flex;
                     flex-direction: row;
                     align-items: flex-start;
@@ -60,7 +60,7 @@ async function UI_KetQua(page) {
                     background: rgba(255,255,255,0.92);
                     border: 1px solid #555;
                     border-radius: 6px;
-                    padding: 4px;
+                    padding: 1px;
                     box-shadow: 0 2px 8px rgba(0,0,0,0.22);
                 }
 
@@ -69,8 +69,8 @@ async function UI_KetQua(page) {
                 }
 
                 #ui-kq-table td {
-                    width: 22px;
-                    height: 22px;
+                    width: 20px;
+                    height: 20px;
                     border: 1px solid #bbb;
                     text-align: center;
                     vertical-align: middle;

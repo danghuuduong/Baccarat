@@ -1,4 +1,4 @@
-const { injectMouseTracker } = require('./src/injectMouseTracker');
+const { injectMouseTracker, UI_TieuDiem } = require('./src/injectMouseTracker');
 const { UI_TableKiemthu } = require('./src/UI_TableKiemthu');
 const { UI_KetQua } = require('./src/UI_KetQua');
 const { createChecker, checkOnce } = require('./src/checker');
@@ -49,7 +49,13 @@ function loadStateTXT() {
     // Load state trước khi mở browser
     loadStateTXT();
 
-    const browser = await chromium.launch({ headless: false });
+    const browser = await chromium.launch({
+        headless: false,
+        args: [
+            "--disable-web-security",
+            "--disable-features=IsolateOrigins,site-per-process"
+        ]
+    });
     let page = await browser.newPage();
     await page.goto(process.env.X_URL, {
         waitUntil: "networkidle",
@@ -164,7 +170,7 @@ function loadStateTXT() {
         }
     });
 
-    // ── exposeFunction: cập nhật thông số 1 item (name, x, y, width, height) ──
+    // ── exposeFunction: edit thông số 1 item (name, x, y, width, height) ──
     await page.exposeFunction("updateCapture", async (index, updated) => {
         try {
             if (index >= 0 && index < captureItems.length) {
@@ -268,5 +274,35 @@ function loadStateTXT() {
     // await injectMouseTracker(page);
     await UI_TableKiemthu(page);
     await UI_KetQua(page);
+
+
+
+    // Tạo overlay nhiều điểm
+    // Sảnh 
+    // await UI_TieuDiem(page, 320, 380, 6, 6, "sanh-1", "#ff0000");   // đỏ
+    // await UI_TieuDiem(page, 640, 380, 6, 6, "sanh-2", "#e83e8c"); // hồng
+    // await UI_TieuDiem(page, 950, 380, 6, 6, "sanh-3", "#2bf011"); // cam
+    // await UI_TieuDiem(page, 320, 530, 6, 6, "sanh-4", "#ff0000");   // đỏ
+    // await UI_TieuDiem(page, 640, 530, 6, 6, "sanh-5", "#e83e8c"); // hồng
+    // await UI_TieuDiem(page, 950, 530, 6, 6, "sanh-6", "#2bf011"); // cam
+
+    // await UI_TieuDiem(page, 320, 650, 6, 6, "sanh-7", "#ff0000");   // đỏ
+    // await UI_TieuDiem(page, 640, 650, 6, 6, "sanh-8", "#e83e8c"); // hồng
+    // await UI_TieuDiem(page, 950, 650, 6, 6, "sanh-9", "#2bf011"); // cam
+
+    //Đồng Xu
+    // await UI_TieuDiem(page, 420, 686, 3, 3, "dongxu-1", "#2bf011"); // cam
+    // await UI_TieuDiem(page, 464, 686, 3, 3, "dongxu-2", "#ffc107"); // vàng
+    // await UI_TieuDiem(page, 508, 686, 3, 3, "dongxu-3", "#fd7e14"); // cam
+    // await UI_TieuDiem(page, 550, 686, 3, 3, "dongxu-4", "#ff0000");   // đỏ
+    // await UI_TieuDiem(page, 600, 686, 3, 3, "dongxu-5", "#6f42c1"); // tím
+
+    // //Đặt cược
+
+    // await UI_TieuDiem(page, 500, 630, 3, 3, "datcuocXanh", "#007bff"); // xanh dương
+    // await UI_TieuDiem(page, 800, 630, 3, 3, "datcuocDo", "#ff0000");   // đỏ
+    // await UI_TieuDiem(page, 715, 690, 3, 3, "DatCuocXacNhan", "#2bf011"); // xanh
+
+    // await UI_TieuDiem(page, 1191, 370, 3, 3, "controlroiBan", "#0abbfbff");   // đỏ
 })();
 // =========== HẾT MAIN – CHƯƠNG TRÌNH CHÍNH ==================
