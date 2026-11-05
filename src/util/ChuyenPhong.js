@@ -4,6 +4,7 @@
 const { checkOnce } = require("./checker");
 const { showThongBao } = require("../UI_ThongBao");
 const { captureItems, IMAGES_DIR } = require("../captureState");
+const { TOA_DO_THOAT_PHONG } = require("../config/RoomConfig");
 
 /**
  * Click thoát phòng, chờ xác nhận đã về sảnh (ảnh NgoaiSanhCho).
@@ -17,7 +18,7 @@ async function ChuyenPhong(page, thongBao = "⚠️") {
     await new Promise(r => setTimeout(r, 1000));
 
     // Click nút thoát phòng
-    await page.mouse.click(1191, 370);
+    await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
     await new Promise(r => setTimeout(r, 3000));
 
     // Lấy toạ độ ảnh NgoaiSanhCho

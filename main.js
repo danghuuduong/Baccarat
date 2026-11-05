@@ -4,7 +4,7 @@
 const { chromium } = require("playwright");
 require("dotenv").config();
 
-const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
+// const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
 const { UI_KetQuaList } = require("./src/UI_KetQuaList");
 const { UI_Vao_Phong_Choi } = require("./src/UI_Vao_Phong_Choi");
 const { UI_Dashboard, updateDashboard } = require("./src/UI/DashboardUI");
@@ -95,12 +95,10 @@ function resetMucTieu(page) {
 // =========== HẾT MAIN ==================
 
 function HandleBatDauBot() {
-    console.log("[Room] ▶ Nhận lệnh Bắt đầu chạy bot.");
     roomState.yeuCauDung = false;
 }
 
 async function HandleYeuCauDungBot(page) {
-    console.log("[Room] 🛑 Nhận yêu cầu dừng bot từ giao diện.");
     roomState.yeuCauDung = true;
 
     if (roomState.TrongRoomReady) {

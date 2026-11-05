@@ -3,18 +3,7 @@
 
 "use strict";
 
-// ── Toạ độ tiêu điểm từng phòng (x, y) ──────────────────────────────────────
-const ROOMS = [
-    { id: 1, x: 320, y: 380 },
-    { id: 2, x: 640, y: 380 },
-    { id: 3, x: 950, y: 380 },
-    { id: 4, x: 320, y: 530 },
-    { id: 5, x: 640, y: 530 },
-    { id: 6, x: 950, y: 530 },
-    { id: 7, x: 320, y: 650 },
-    { id: 8, x: 640, y: 650 },
-    { id: 9, x: 950, y: 650 },
-];
+const { ROOMS } = require("./config/RoomConfig");
 
 async function UI_Vao_Phong_Choi(page) {
     await page.exposeFunction("playwrightClick", async (x, y) => {
@@ -188,7 +177,7 @@ async function UI_Vao_Phong_Choi(page) {
             if (idx < 0 || idx >= rooms.length) return;
             const room = rooms[idx];
             setActive(idx);
-            console.log(`[PhongChoi] Click vào Room ${room.id} tại (${room.x}, ${room.y})`);
+            // console.log(`[PhongChoi] Click vào Room ${room.id} tại (${room.x}, ${room.y})`);
             try {
                 await window.playwrightClick(room.x, room.y);
             } catch (e) {
@@ -204,10 +193,6 @@ async function UI_Vao_Phong_Choi(page) {
                     info = await window.getImageInfo("Exit_Room");
                 } catch (_) { }
             }
-            if (!info) {
-                info = { x: 1181, y: 356, width: 30, height: 40 };
-            }
-
             console.log(`[PhongChoi] Đang kiểm tra Exit_Room tại (${info.x}, ${info.y}, ${info.width}x${info.height}) trong tối đa ${timeoutMs / 1000}s...`);
 
             const startTime = Date.now();
