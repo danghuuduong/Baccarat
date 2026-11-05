@@ -89,7 +89,7 @@ async function UI_TableKiemthu(page) {
       padding: "10px 12px 14px 12px",
       fontSize: "12px",
       fontFamily: "monospace",
-      zIndex: 9999,
+      zIndex: 999902,
       boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
       display: "none",
     });

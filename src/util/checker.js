@@ -15,6 +15,10 @@ const PAD = 3;           // px mở rộng mỗi phía khi chụp (chịu lệch
 // Điểm giống 0..1 (TM_CCOEFF_NORMED). Hạ xuống nếu khắt, tăng lên nếu nhận nhầm.
 const THRESHOLD = 0.85;
 
+// Dùng cho checkGrid
+const KQ_NAMES = ["KetQua_Player", "KetQua_Banker", "KetQua_Tie"];
+const MARGIN = 0.04;     // ảnh nhất phải hơn ảnh nhì ít nhất 5%
+
 // ─── Chờ opencv.js khởi tạo xong (onRuntimeInitialized) ─────────────────────
 const cvReadyPromise = (async () => {
     if (cvModule instanceof Promise) {
@@ -188,6 +192,7 @@ function createChecker(page, IMAGES_DIR) {
         const shotBuf = await page.screenshot({
             clip: { x: cx, y: cy, width: cw, height: ch },
             type: "png",
+            scale: "css",
         });
 
         let scene = null;
@@ -276,7 +281,7 @@ function createChecker(page, IMAGES_DIR) {
  * ngược lại trả { name: null, score }.
  * Dùng riêng, không phụ thuộc vào createChecker.
  */
-async function checkOnce(page, IMAGES_DIR, x, y, width, height) {
+async function checkOnce(page, IMAGES_DIR, x, y, width, height, threshold = THRESHOLD) {
     const cv = await ensureCV();
     const vp = page.viewportSize() ?? { width: 1920, height: 1080 };
 
@@ -291,6 +296,7 @@ async function checkOnce(page, IMAGES_DIR, x, y, width, height) {
     const shotBuf = await page.screenshot({
         clip: { x: cx, y: cy, width: cw, height: ch },
         type: "png",
+        scale: "css",
     });
 
     let scene = null;
@@ -308,7 +314,6 @@ async function checkOnce(page, IMAGES_DIR, x, y, width, height) {
                 bestName = bname;
             }
         }
-
         // Nếu cache chưa có thì thử load từ thư mục
         if (imageCache.size === 0) {
             let files = [];
@@ -325,11 +330,65 @@ async function checkOnce(page, IMAGES_DIR, x, y, width, height) {
             }
         }
 
-        if (bestScore >= THRESHOLD) return { name: bestName, score: bestScore };
+        if (bestScore >= threshold) return { name: bestName, score: bestScore };
         return { name: null, score: bestScore };
     } finally {
         if (scene) try { scene.delete(); } catch (_) { }
     }
 }
 
-module.exports = { createChecker, checkOnce };
+// ─── checkGrid: chụp 1 lần cả bảng, cắt từng ô, chỉ so với 3 ảnh KetQua_* ────
+/**
+ * @param {Array<{x:number,y:number}>} cells  góc trên trái từng ô, theo đúng thứ tự muốn trả
+ * @returns {Promise<Array<string|null>>}     tên ảnh khớp (hoặc null) cho từng ô
+ */
+async function checkGrid(page, IMAGES_DIR, cells, cellW, cellH, names = KQ_NAMES, threshold = THRESHOLD, margin = MARGIN) {
+    const cv = await ensureCV();
+    const vp = page.viewportSize()
+        ?? await page.evaluate(() => ({ width: innerWidth, height: innerHeight }));
+
+    const x0 = Math.max(0, Math.round(Math.min(...cells.map(c => c.x)) - PAD));
+    const y0 = Math.max(0, Math.round(Math.min(...cells.map(c => c.y)) - PAD));
+    const x1 = Math.min(vp.width, Math.round(Math.max(...cells.map(c => c.x + cellW)) + PAD));
+    const y1 = Math.min(vp.height, Math.round(Math.max(...cells.map(c => c.y + cellH)) + PAD));
+    if (x1 <= x0 || y1 <= y0) return cells.map(() => null);
+
+    const buf = await page.screenshot({
+        clip: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 },
+        type: "png",
+        scale: "css",
+    });
+
+    const tmpls = names
+        .map((n) => ({ n, t: loadTemplate(IMAGES_DIR, n) }))
+        .filter((o) => o.t);
+
+    const scene = pngBufToGray(cv, buf);
+    try {
+        return cells.map(({ x, y }) => {
+            const rx = Math.max(0, Math.round(x - PAD) - x0);
+            const ry = Math.max(0, Math.round(y - PAD) - y0);
+            const rw = Math.min(scene.cols - rx, cellW + 2 * PAD);
+            const rh = Math.min(scene.rows - ry, cellH + 2 * PAD);
+            if (rw <= 0 || rh <= 0) return null;
+
+            const roi = scene.roi(new cv.Rect(rx, ry, rw, rh));
+            try {
+                const scores = tmpls
+                    .map(({ n, t }) => ({ n, s: matchOne(cv, roi, t, 0, 0).score }))
+                    .sort((a, b) => b.s - a.s);
+                const best = scores[0];
+                const second = scores[1];
+                if (!best || best.s < threshold) return null;
+                if (second && best.s - second.s < margin) return null;
+                return best.n;
+            } finally {
+                roi.delete();
+            }
+        });
+    } finally {
+        scene.delete();
+    }
+}
+
+module.exports = { createChecker, checkOnce, checkGrid };
