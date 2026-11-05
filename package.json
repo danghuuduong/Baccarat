@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@techstark/opencv-js": "^5.0.0-release.1",
     "axios": "^1.15.2",
     "dotenv": "^17.4.2",
     "play-sound": "^1.1.6",

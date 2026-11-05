@@ -1,14 +1,54 @@
+1. Kết Quả List
 X:
 69   
 88    
 107   
 126  
-145   
 
 Y:
 575
-594
-613
+595
+614
 632
-651
-670
+652
+671
+
+2.  Sảnh _________________________________
+Phòng
+1 - 320 380 
+2 - 640 380
+3 - 950 380
+
+4 - 320 530 
+5 - 640 530
+6 - 950 530
+
+7 - 320 650 
+8 - 640 650
+9 - 950 650
+
+3. Đồng xu 
+10:   420 681 
+20 :  464  681
+50 :  508 681
+100 : 550 681
+200 : 600 681
+
+3.  Dat Cuoc Bên _________________________________
+Bên XAnh : 
+500 620
+Bên Đỏ : 800 620
+Button Xác Nhan : 715 688
+4. rời bàn 
+1191 370
+
+5. Tắt cái live trim ngoài màn chính_________________________________
+1180 133
++ button bấm zoo live trim để tìm bacarat 
+900 166 
++ Bấm vô Gamming tìm bacarat
+1032 300
+=> Lấy cái hình để xác nhận tìm Bacarat ( Bầu cua , ... ,...,.. )
+300 350 để chính thức vào sảnh => Ảnh truyền thống để xác nhận đã vào thành công . sau đó bấm chuột trái
+để tắt cái popup hiển thị sau 24h 1033 130
+
