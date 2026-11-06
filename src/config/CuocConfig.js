@@ -36,6 +36,8 @@ const CLICK_DELAY_MS = 150; // Nghỉ giữa các lần click (ms)
 
 
 const DS_TRANG_THAI = [
+    "NgoaiSanhCho",// cài này tạm thời thôi . nạp tiền thật ai mà sài :)) xoá đi
+    "HoiThoaiDaKetThuc",//Sợ Game nó đá ra ngoài
     "ChucMayMan", "CoHoiCuoiCung",      // Điều kiện đặt cược
     "Green_Hoa", "Red_Win", "Blue_Win", // Kết quả mở bài
     "DangChoMoBai", "VuiLongCho_XaoBai", // Chờ – không làm gì

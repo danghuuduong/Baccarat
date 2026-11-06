@@ -15,11 +15,11 @@ const { TOA_DO_THOAT_PHONG } = require("../config/RoomConfig");
  */
 async function ChuyenPhong(page, thongBao = "⚠️") {
     showThongBao(page, thongBao, 5000);
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 700));
 
     // Click nút thoát phòng
     await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 1000));
 
     // Lấy toạ độ ảnh NgoaiSanhCho
     let info = null;

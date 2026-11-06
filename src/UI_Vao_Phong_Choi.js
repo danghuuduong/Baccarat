@@ -274,7 +274,7 @@ async function UI_Vao_Phong_Choi(page) {
                     // Nếu đã đi hết 9 phòng thì xoá toàn bộ lịch sử và lặp lại từ Room 1
                     if (i === rooms.length - 1) {
                         resetRooms();
-                        await interruptibleSleep(5000);
+                        await interruptibleSleep(2000);
                         if (yeuCauDung) break;
                         i = -1; // Vòng lặp for sẽ i++ lên thành 0 (Room 1)
                     }

@@ -4,7 +4,7 @@
 const { chromium } = require("playwright");
 require("dotenv").config();
 
-// const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
+const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
 const { UI_KetQuaList } = require("./src/UI_KetQuaList");
 const { UI_Table_TX } = require("./src/UI_Table_TX"); // Bảng TX cạnh bảng UI_KetQuaList
 const { UI_Vao_Phong_Choi } = require("./src/UI_Vao_Phong_Choi");
@@ -13,13 +13,14 @@ const { setupExposeFunctions } = require("./src/setupExposeFunctions");
 const { loadStateTXT, captureItems, IMAGES_DIR } = require("./src/captureState");
 
 const { CheckChay2Ngam } = require("./src/util/CheckChay2Ngam");
-const { LayTinHieu } = require("./src/util/Laytinhieu ");
+const { LayTinHieu } = require("./src/util/Laytinhieu");
 const { ChuyenPhong } = require("./src/util/ChuyenPhong");
 const { checkOnce } = require("./src/util/checker");
 const { GiamSatTrangThai, DungGiamSat, TiepTucGiamSat, } = require("./src/util/GiamSatPhong");
 const { HandleAddResultToList, HandleClearKetQuaList } = require("./src/util/HandleAddResultToList");
 const { showThongBao, cancelThongBao } = require("./src/UI/UI_ThongBao");
 const { TOA_DO, KE_HOACH, HOA_HONG_RED, CLICK_DELAY_MS, DS_TRANG_THAI, THEP_CUOI } = require("./src/config/CuocConfig");
+const { injectMouseTracker } = require("./src/util/injectMouseTracker");
 
 // ── Trạng thái phòng (object tham chiếu, truyền vào GiamSatTrangThai) ────────
 const roomState = {
@@ -38,9 +39,14 @@ const roomState = {
     cuoc: null,               // Cược đang chờ kết quả: { ben: "red"|"blue", thep: 1|2|3, tien } – null là chưa đặt
 
     chuKiThang: 0,            // Số chu kì thắng hiện tại (tử số). Thắng +1, thua ở thép cuối -1, cho phép âm
-    mucTieuChuKi: 5,          // Mục tiêu chu kì thắng (mẫu số), sửa bằng input Dashboard. <=0 là tắt
+    mucTieuChuKi: 1,          // Mục tiêu chu kì thắng (mẫu số), sửa bằng input Dashboard. <=0 là tắt
     laiHienTai: 0,            // Lãi tích lũy so với mục tiêu lãi (reset khi thoát phòng). Khác "lai" là tổng
-    mucTieuLai: 100,          // Mục tiêu lãi, sửa bằng input Dashboard. <=0 là tắt
+    mucTieuLai: 15,          // Mục tiêu lãi, sửa bằng input Dashboard. <=0 là tắt
+
+    thep: 1,                  // Thép hiện tại: thắng về 1, thua +1
+    // thuaThepCuoi: false,      // Cờ: vừa thua ở thép cuối → thoát phòng
+    sotrandienRaChuaDatCuoc: 0,
+    capSoNhan: 1,
 };
 
 
@@ -75,11 +81,14 @@ function resetMucTieu(page) {
 
     await setupExposeFunctions(page);
 
-    // await UI_TableKiemthu(page);
+    await UI_TableKiemthu(page);
     await UI_KetQuaList(page);
     await UI_Table_TX(page);
     await UI_Vao_Phong_Choi(page);
     await UI_Dashboard(page, roomState);
+    await injectMouseTracker(page);
+
+
 
     // Điểm vào từ browser sau khi xác nhận đã vào phòng
     await page.exposeFunction("FC_DaKiemChungVaoPhong", () => HandleDaKiemChungVaoPhong(page));
@@ -108,17 +117,10 @@ async function HandleYeuCauDungBot(page) {
             showThongBao(page, "⏳ Đang đợi dừng - xong ván...Là tự Dừng", 5000, "#f59e0b");
             return { daNhan: true, dangDoiMoBai: true };
         } else {
-            roomState.daFill24O = false;
-            await HandleClearKetQuaList(page);
-            try {
-                await ChuyenPhong(page, "⏹ Dừng bot, thoát phòng...");
-            } finally {
-                roomState.TrongRoomReady = false;
-            }
+            await handleOutPhong(page, "⏹ Dừng bot, thoát phòng...", false)
             return { daNhan: true, dangDoiMoBai: false };
         }
     } else {
-        console.log("[Room] ⏹ Bot đang ở ngoài sảnh, đã dừng chu trình.");
         resetMucTieu(page);
         showThongBao(page, "⏹ Đã dừng bot!", 3000, "#ef4444");
         return { daNhan: true, dangDoiMoBai: false };
@@ -128,7 +130,6 @@ async function HandleYeuCauDungBot(page) {
 // ─── Bước 1: Sau khi vào phòng – khởi động chế độ giám sát & kiểm chứng phòng ───────────
 async function HandleDaKiemChungVaoPhong(page) {
     if (roomState.yeuCauDung) return false;
-
     roomState.TrongRoomReady = true;     // ← set true ngay để vòng giám sát chạy được
     roomState.trangThaiHienTai = null;
     roomState.daFill24O = false;
@@ -136,6 +137,9 @@ async function HandleDaKiemChungVaoPhong(page) {
     roomState.daPush_KetQua = false;
     roomState.tinHieu = null;            // soTien và lai giữ nguyên qua các phòng
     roomState.cuoc = null;
+    roomState.thep = 1;
+    roomState.capSoNhan = 1;
+    // roomState.thuaThepCuoi = false;
     capNhatDashboard(page);
 
     // Khởi động vòng lặp giám sát nền (fire & forget)
@@ -151,7 +155,6 @@ async function damBaoDaFill24O(page, tt) {
     if (roomState.yeuCauDung) return false;
     if (roomState.daFill24O) return true; // Đã fill từ trước rồi thì không làm lại
 
-    // showThongBao(page, `🔄 Lấy 24ô kết quả...`, 3000, "#eeff00ff");
     DungGiamSat();
     try {
         await page.evaluate(async () => {
@@ -161,19 +164,11 @@ async function damBaoDaFill24O(page, tt) {
         });
         await sleep(700);
         roomState.daFill24O = true;
-        // Kiểm tra điều kiện bàn chơi (Cháy 2 Ngầm) ngay sau khi fill 24 ô
 
-        const isDat = CheckChay2Ngam();
+        const Check2NgamSt = CheckChay2Ngam();
 
-        if (!isDat) {
-            roomState.daFill24O = false;
-            // await HandleClearKetQuaList(page);
-
-            try {
-                await ChuyenPhong(page, "⚠️ Không đạt điều kiện, chuyển phòng...");
-            } finally {
-                roomState.TrongRoomReady = false; // ← đặt SAU ChuyenPhong, trong finally để lỗi cũng không kẹt
-            }
+        if (!Check2NgamSt.isDat) {
+            await handleOutPhong(page, "⚠️ Không đạt điều kiện, chuyển phòng...")
             return false;
         }
         return true;
@@ -187,21 +182,13 @@ async function HandleDanhTienThat(page, tt) {
     if (!tt) tt = roomState.trangThaiHienTai;
     try {
         switch (tt) {
-
-            // ── Thời gian đặt cược: Kiểm tra fill 24 ô và tiến hành cược ─
             case "ChucMayMan": {
                 if (roomState.daDatCuocTrongVan) {
                     break;
                 }
 
                 if (roomState.yeuCauDung) {
-                    roomState.daFill24O = false;
-                    await HandleClearKetQuaList(page);
-                    try {
-                        await ChuyenPhong(page, "⏹ Dừng bot, thoát phòng...");
-                    } finally {
-                        roomState.TrongRoomReady = false;
-                    }
+                    await handleOutPhong(page, "⏹ Dừng bot, thoát phòng...", false)
                     return;
                 }
 
@@ -210,9 +197,6 @@ async function HandleDanhTienThat(page, tt) {
                 roomState.daPush_KetQua = false;
                 const datKiemTra = await damBaoDaFill24O(page, tt);
                 if (!datKiemTra || roomState.yeuCauDung) return;
-
-
-
                 DungGiamSat();
                 try {
                     await xuLyDatCuoc(page);
@@ -229,13 +213,7 @@ async function HandleDanhTienThat(page, tt) {
                 }
 
                 if (roomState.yeuCauDung && roomState.cuoc === null) {
-                    roomState.daFill24O = false;
-                    await HandleClearKetQuaList(page);
-                    try {
-                        await ChuyenPhong(page, "⏹ Dừng bot, thoát phòng...");
-                    } finally {
-                        roomState.TrongRoomReady = false;
-                    }
+                    await handleOutPhong(page, "⏹ Dừng bot, thoát phòng...Hết ván")
                     return;
                 }
 
@@ -290,27 +268,28 @@ async function HandleDanhTienThat(page, tt) {
 
                 // Đủ mục tiêu (chu kì thắng HOẶC lãi) -> thoát phòng, đi tìm phòng khác
                 if (datMucTieu()) {
-                    showThongBao(page, `🏆 Đạt mục tiêu (${roomState.chuKiThang}/${roomState.mucTieuChuKi} chu kì, lãi ${roomState.laiHienTai}/${roomState.mucTieuLai}) → thoát phòng`, 5000, "#22c55e");
-                    roomState.daFill24O = false;
-                    await HandleClearKetQuaList(page);
-                    try {
-                        await ChuyenPhong(page, "🏆 Đạt mục tiêu, thoát phòng...");
-                    } finally {
-                        roomState.TrongRoomReady = false; // → chỗ 5 sẽ reset về 0, UI_Vao_Phong_Choi sang phòng tiếp
-                    }
+                    await handleOutPhong(page, "🏆 Đạt mục tiêu", false)
                     return;
                 }
+
+                // Thua ở thép cuối -> thoát phòng, tìm phòng khác
+                // if (roomState.thuaThepCuoi) {
+                //     roomState.thuaThepCuoi = false;
+                //     showThongBao(page, `❌ Thua thếp ${THEP_CUOI} → thoát phòng`, 5000, "#ef4444");
+                //     roomState.daFill24O = false;
+                //     await HandleClearKetQuaList(page);
+                //     try {
+                //         await ChuyenPhong(page, "❌ Thua thép cuối, thoát phòng...");
+                //     } finally {
+                //         roomState.TrongRoomReady = false;
+                //     }
+                //     return;
+                // }
 
                 // Xong ván cược: Nếu người dùng đã yêu cầu dừng -> dừng và thoát phòng
 
                 if (roomState.yeuCauDung) {
-                    roomState.daFill24O = false;
-                    await HandleClearKetQuaList(page);
-                    try {
-                        await ChuyenPhong(page, "⏹ Đã xong ván! -> thoát phòng");
-                    } finally {
-                        roomState.TrongRoomReady = false;
-                    }
+                    await handleOutPhong(page, "🏆 Xong ván cược: Nếu người dùng đã yêu cầu dừng", false)
                     return;
                 }
                 break;
@@ -318,29 +297,19 @@ async function HandleDanhTienThat(page, tt) {
 
             // ── Bàn đang xáo bài: Thoát phòng và tiếp tục chuyển sang phòng khác ────────
             case "VuiLongCho_XaoBai": {
-                console.log("[Room] 🔀 Trạng thái: VuiLongCho_XaoBai – Bàn đang xáo bài, thoát phòng để chuyển phòng khác...");
-                if (roomState.daDatCuocTrongVan) cancelThongBao(page);
-                roomState.daFill24O = false;
-                roomState.daDatCuocTrongVan = false;
-                roomState.tinHieu = null;
-                roomState.cuoc = null;
-                capNhatDashboard(page);
-                await HandleClearKetQuaList(page);
-
-                DungGiamSat();
-                try {
-                    const thongBao = roomState.yeuCauDung
-                        ? "⏹ Dừng bot, thoát phòng..."
-                        : "🔄 Bàn đang xáo bài, chuyển phòng khác...";
-                    await ChuyenPhong(page, thongBao);
-                } finally {
-                    roomState.TrongRoomReady = false; // Kết thúc giám sát phòng hiện tại để UI_Vao_Phong_Choi chuyển phòng tiếp
-                    TiepTucGiamSat();
-                }
+                await handleOutPhong(page, "🔄 Bàn đang xáo bài, chuyển phòng khác...", false)
                 return;
             }
 
             default:
+                await page.mouse.click(37, 37);//Trở ra sanh phụ
+                await sleep(15000);
+                await page.mouse.click(350, 359);//chọn Game
+                await sleep(5000);
+                await page.mouse.click(200, 200); //click tắt QC
+                await sleep(1000);
+
+                await handleOutPhong(page, "🔄 HoiThoaiDaKetThuc")
                 break;
         }
     } catch (_) { }
@@ -366,24 +335,35 @@ async function daSangDangChoMoBai(page) {
 
 // ─── Bước 3: Đặt cược (dùng chung cho ChucMayMan & CoHoiCuoiCung) ───────────────────
 async function xuLyDatCuoc(page) {
-    const TinHieu = LayTinHieu();
 
-    // 1. Không có tín hiệu → bỏ ván này
+    const TinHieu = LayTinHieu();             // { tinhieu: "d"|"x", cauphatHien } | null
+    const { isDat, phe } = CheckChay2Ngam();  // { isDat, phe: "Đẹp"|"Xấu"|null }
+
+
+
+    if (!isDat) {
+        await handleOutPhong(page, "⏹ Không Đạt Ngầ", false)
+        return false
+    }
+
+    // 1. Không có cầu hoặc chưa đạt điều kiện → bỏ ván này
     if (!TinHieu) {
         roomState.tinHieu = null;
         roomState.daDatCuocTrongVan = false;
         capNhatDashboard(page);
-        showThongBao(page, `⚠️ Không có tín hiệu, chờ chu kì sau`, 4000, "#f59e0b");
+        showThongBao(page, `⚠️ Không có tín hiệu, chờ ván sau`, 4000, "#f59e0b");
         return false;
     }
 
-    const ben = String(TinHieu.tinhieu).toLowerCase(); // "red" | "blue"
-    const thep = Number(TinHieu.thep);                 // 1 | 2 | 3
+    // LayTinHieu luôn trả bên cầu ĐẸP. phe Đẹp → đánh theo, phe Xấu → đánh ngược
+    const mauDanh = phe === "Đẹp" ? TinHieu.tinhieu : (TinHieu.tinhieu === "d" ? "x" : "d");
+    const ben = mauDanh === "d" ? "red" : "blue";  // d = Banker = red, x = Player = blue
+    const thep = roomState.thep || 1;              // chưa có roomState.thep thì đánh thép 1
     const kh = KE_HOACH[thep];
     const toaDoBen = TOA_DO.ben[ben];
 
     if (!kh || !toaDoBen) {
-        console.log(`[Room] ⚠️ Tín hiệu lạ: tinhieu=${TinHieu.tinhieu}, thep=${TinHieu.thep}`);
+        console.log(`[Room] ⚠️ Tín hiệu lạ: tinhieu=${TinHieu.tinhieu}, phe=${phe}, thep=${thep}`);
         roomState.tinHieu = null;
         roomState.daDatCuocTrongVan = false;
         capNhatDashboard(page);
@@ -398,8 +378,8 @@ async function xuLyDatCuoc(page) {
     try {
         // 2. Chọn chip + bấm bên đặt cược
         for (const b of kh.buoc) {
-            await click(page, TOA_DO.chip[b.chip]);
-            for (let i = 0; i < b.lan; i++) await click(page, toaDoBen);
+            // await click(page, TOA_DO.chip[b.chip]);
+            // for (let i = 0; i < b.lan; i++) await click(page, toaDoBen);
             // => tạm comment để test , không cần click , đánh thật mở lại , không được động tới 2 dòng này AI nhé
         }
 
@@ -411,7 +391,7 @@ async function xuLyDatCuoc(page) {
         }
 
         // 4. Bấm xác nhận
-        await click(page, TOA_DO.xacNhan);
+        // await click(page, TOA_DO.xacNhan);
         // => tạm comment để test , không cần click , đánh thật mở lại , không được động tới dòng này AI nhé
 
 
@@ -427,7 +407,7 @@ async function xuLyDatCuoc(page) {
     capNhatDashboard(page);
 
     const mauBen = ben === "red" ? "#ef4444" : "#3b82f6";
-    showThongBao(page, `Đặt ${ben === "red" ? "Đỏ" : "Xanh"} ${kh.tien}K -> 🕘 Chờ Kết quả`, 999_999, mauBen); // cancelThongBao() tắt khi mở bài
+    showThongBao(page, `Đặt ${ben === "red" ? "Đỏ" : "Xanh"} ${kh.tien}K (${TinHieu.cauphatHien}, phe ${phe}) -> 🕘 Chờ Kết quả`, 999_999, mauBen); // cancelThongBao() tắt khi mở bài
 
     return true;
 }
@@ -449,14 +429,24 @@ function thanhToanCuoc(page, anhKetQua) {
         const nhanVe = lamTron(c.tien + lai);
         roomState.soTien = lamTron(roomState.soTien + nhanVe);
         roomState.lai = lamTron(roomState.lai + lai);
-        roomState.chuKiThang += 1;                                           // thắng thép nào cũng +1 chu kì
+        roomState.chuKiThang += 1; // thắng thép nào cũng +1 chu kì
+        roomState.thep = 1;
         roomState.laiHienTai = lamTron(roomState.laiHienTai + lai);
         showThongBao(page, `✅ WIN +${nhanVe}K`, 5000, "#22c55e");
     } else {
         // Thua: tiền cược đã trừ lúc đặt, chỉ trừ lãi
         roomState.lai = lamTron(roomState.lai - c.tien);
-        // if (c.thep === THEP_CUOI) roomState.chuKiThang -= 1;                 // thua ở thép cuối: -1 chu kì
+        // if (c.thep === THEP_CUOI) roomState.chuKiThang -= 1;   // thua ở thép cuối: -1 chu kì
         roomState.laiHienTai = lamTron(roomState.laiHienTai - c.tien);
+        if (roomState.thep >= THEP_CUOI) {
+            roomState.thep = 1;
+            roomState.capSoNhan += 1; // thua thép cuối → thoát phòngz
+            if (roomState.capSoNhan >= THEP_CUOI) {
+                roomState.capSoNhan = THEP_CUOI
+            }
+        } else {
+            roomState.thep += 1;   // thua thì lên thép tiếp
+        }
         showThongBao(page, `❌ THUA -${c.tien}K`, 5000, "#ef4444");
     }
 
@@ -499,6 +489,20 @@ async function xuLyKetQua(page, anhKetQua) {
             break;
     }
     await sleep(3000);
+}
+
+async function handleOutPhong(page, text, isGiamSat = true) {
+    DungGiamSat();
+    try {
+        await HandleClearKetQuaList(page);
+        capNhatDashboard(page);
+        await ChuyenPhong(page, text);
+    } finally {
+        roomState.TrongRoomReady = false;
+        if (isGiamSat) {
+            TiepTucGiamSat()
+        }
+    }
 }
 
 module.exports = { HandleDaKiemChungVaoPhong };
