@@ -268,6 +268,10 @@ async function UI_KetQuaList(page) {
 
                     // Lưu mảng kết quả vào KetQuaListTable trong ketQuaState.js và window
                     window.KetQuaListTable = collectedResults;
+
+                    // Fill  bảng TX cập nhật cùng (đường này không đi qua updateUI_KetQuaList)
+                    if (typeof window.updateUI_Table_TX === "function") window.updateUI_Table_TX(collectedResults);
+
                     if (typeof window.FcSetKetQuaListTable === "function") {
                         try { await window.FcSetKetQuaListTable(collectedResults); } catch (_) { }
                     }
@@ -284,6 +288,8 @@ async function UI_KetQuaList(page) {
             window.updateUI_KetQuaList = (list) => {
                 const safeList = Array.isArray(list) ? list : [];
                 window.KetQuaListTable = safeList.slice();
+                // Push kết quả mới (hoặc xóa bằng mảng rỗng) -> bảng TX cập nhật cùng bảng chính
+                if (typeof window.updateUI_Table_TX === "function") window.updateUI_Table_TX(safeList);
                 for (let i = 0; i < COLS * ROWS; i++) {
                     const c = Math.floor(i / ROWS);
                     const r = i % ROWS;
@@ -299,6 +305,8 @@ async function UI_KetQuaList(page) {
             window.clearUI_KetQuaList = () => {
                 clearAllCells();
                 window.KetQuaListTable = [];
+                // Xóa bảng chính thì bảng TX cũng xóa theo (truyền mảng rỗng)
+                if (typeof window.updateUI_Table_TX === "function") window.updateUI_Table_TX([]);
             };
 
             // Cho file khác (UI_Vao_Phong_Choi.js) gọi: await window.KicHoat_LayKetQua_Fill_TabeList()

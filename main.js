@@ -6,6 +6,7 @@ require("dotenv").config();
 
 // const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
 const { UI_KetQuaList } = require("./src/UI_KetQuaList");
+const { UI_Table_TX } = require("./src/UI_Table_TX"); // Bảng TX cạnh bảng UI_KetQuaList
 const { UI_Vao_Phong_Choi } = require("./src/UI_Vao_Phong_Choi");
 const { UI_Dashboard, updateDashboard } = require("./src/UI/DashboardUI");
 const { setupExposeFunctions } = require("./src/setupExposeFunctions");
@@ -17,7 +18,7 @@ const { ChuyenPhong } = require("./src/util/ChuyenPhong");
 const { checkOnce } = require("./src/util/checker");
 const { GiamSatTrangThai, DungGiamSat, TiepTucGiamSat, } = require("./src/util/GiamSatPhong");
 const { HandleAddResultToList, HandleClearKetQuaList } = require("./src/util/HandleAddResultToList");
-const { showThongBao, cancelThongBao } = require("./src/UI_ThongBao");
+const { showThongBao, cancelThongBao } = require("./src/UI/UI_ThongBao");
 const { TOA_DO, KE_HOACH, HOA_HONG_RED, CLICK_DELAY_MS, DS_TRANG_THAI, THEP_CUOI } = require("./src/config/CuocConfig");
 
 // ── Trạng thái phòng (object tham chiếu, truyền vào GiamSatTrangThai) ────────
@@ -76,6 +77,7 @@ function resetMucTieu(page) {
 
     // await UI_TableKiemthu(page);
     await UI_KetQuaList(page);
+    await UI_Table_TX(page);
     await UI_Vao_Phong_Choi(page);
     await UI_Dashboard(page, roomState);
 

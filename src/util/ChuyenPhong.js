@@ -2,7 +2,7 @@
 "use strict";
 
 const { checkOnce } = require("./checker");
-const { showThongBao } = require("../UI_ThongBao");
+const { showThongBao } = require("../UI/UI_ThongBao");
 const { captureItems, IMAGES_DIR } = require("../captureState");
 const { TOA_DO_THOAT_PHONG } = require("../config/RoomConfig");
 

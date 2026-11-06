@@ -9,7 +9,7 @@
  * @param {string}  [color]           - Màu chủ đạo (vạch trái, viền, thanh thời gian)
  * @param {string}  [top]             - CSS top của container (mặc định "35%")
  */
-function showThongBao(page, message, durationMs = 3000, color = "#fbbf24", top = "20%") {
+function showThongBao(page, message, durationMs = 3000, color = "#fbbf24", top = "23%") {
     if (!page) return;
     page.evaluate(({ text, duration, color, top }) => {
         // 0. Chèn CSS 1 lần
