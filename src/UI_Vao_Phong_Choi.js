@@ -1,5 +1,6 @@
 // UI_Vao_Phong_Choi.js – Giao diện chọn phòng Baccarat
 // Gồm: nút "Bắt Đầu" top:0 giữa màn hình, bảng 9 ô Room hiện sẵn bên dưới.
+// Hỗ trợ 18 phòng: phòng 1-9 ở đầu danh sách, phòng 10-18 phải scroll xuống trước khi click.
 
 "use strict";
 
@@ -12,6 +13,19 @@ async function UI_Vao_Phong_Choi(page) {
             return { success: true };
         } catch (err) {
             console.error("❌ playwrightClick lỗi:", err.message);
+            return { success: false, error: err.message };
+        }
+    });
+
+    // Scroll danh sách phòng (dùng cho phòng 10-18)
+    await page.exposeFunction("playwrightScroll", async (x, y, dy) => {
+        try {
+            await page.mouse.move(Math.round(x), Math.round(y));
+            await page.mouse.wheel(0, dy);
+            await page.waitForTimeout(800); // chờ cuộn xong
+            return { success: true };
+        } catch (err) {
+            console.error("❌ playwrightScroll lỗi:", err.message);
             return { success: false, error: err.message };
         }
     });
@@ -146,6 +160,11 @@ async function UI_Vao_Phong_Choi(page) {
         let yeuCauDung = false;
         let activeIndex = -1;
 
+        const SO_PHONG_TREN_TRANG = rooms.length; // 9 phòng / trang
+        const TONG_PHONG = 18;                    // tổng số phòng cần duyệt
+        const TOA_DO_SCROLL = { x: 640, y: 500 }; // vị trí đặt chuột để cuộn danh sách
+        const KHOANG_SCROLL = 465;                // số px cuộn xuống (căn lại nếu bị lệch)
+
         // Giấc ngủ có thể bị ngắt ngay lập tức khi bấm Dừng
         const interruptibleSleep = async (ms) => {
             const end = Date.now() + ms;
@@ -156,32 +175,48 @@ async function UI_Vao_Phong_Choi(page) {
         };
 
         // ── Helpers ───────────────────────────────────────────────────────
-        function resetRooms() {
-            roomEls.forEach((el) => el.classList.remove("active", "done"));
+        // Đổi nhãn bảng 9 ô: trang 1 → Room 1-9, trang 2 → Room 10-18
+        function setLabels(offset) {
+            roomEls.forEach((el, i) => {
+                el.textContent = `Room ${rooms[i].id + offset}`;
+            });
         }
 
+        function resetRooms() {
+            roomEls.forEach((el) => el.classList.remove("active", "done"));
+            setLabels(0);
+        }
+
+        // idx: 0..17 (số thứ tự phòng toàn cục)
         function setActive(idx) {
             activeIndex = idx;
+            const offset = idx >= SO_PHONG_TREN_TRANG ? SO_PHONG_TREN_TRANG : 0;
+            const viTri = idx % SO_PHONG_TREN_TRANG; // vị trí trong bảng 9 ô
+            setLabels(offset);
             roomEls.forEach((el, i) => {
                 el.classList.remove("active");
-                if (i < idx) el.classList.add("done");
+                if (i < viTri) el.classList.add("done");
                 else el.classList.remove("done");
             });
-            if (idx >= 0 && idx < roomEls.length) {
-                roomEls[idx].classList.add("active");
+            if (idx >= 0 && viTri < roomEls.length) {
+                roomEls[viTri].classList.add("active");
             }
         }
 
-        // ── Vào phòng: click toạ độ tiêu điểm ────────────────────────────
+        // ── Vào phòng: (scroll nếu là phòng 10-18) rồi click toạ độ tiêu điểm ─
         async function enterRoom(idx) {
-            if (idx < 0 || idx >= rooms.length) return;
-            const room = rooms[idx];
+            if (idx < 0 || idx >= TONG_PHONG) return;
+            const room = rooms[idx % SO_PHONG_TREN_TRANG];
             setActive(idx);
-            // console.log(`[PhongChoi] Click vào Room ${room.id} tại (${room.x}, ${room.y})`);
+
             try {
+                // Phòng 10-18: mỗi lần thoát ra sảnh danh sách về đầu → phải scroll lại
+                if (idx >= SO_PHONG_TREN_TRANG) {
+                    await window.playwrightScroll(TOA_DO_SCROLL.x, TOA_DO_SCROLL.y, KHOANG_SCROLL);
+                }
                 await window.playwrightClick(room.x, room.y);
             } catch (e) {
-                console.error(`[PhongChoi] Lỗi click Room ${room.id}:`, e.message || e);
+                console.error(`[PhongChoi] Lỗi vào Room ${idx + 1}:`, e.message || e);
             }
         }
 
@@ -230,10 +265,27 @@ async function UI_Vao_Phong_Choi(page) {
         async function runSequence() {
             resetRooms();
 
-            for (let i = 0; i < rooms.length; i++) {
-                if (yeuCauDung) break;
+            while (!yeuCauDung) {
+                // Lấy phòng tiếp theo từ hệ thống ưu tiên (Node.js side)
+                let nextRoomIdx;
+                try {
+                    nextRoomIdx = await window.FC_LayPhongTiep();
+                } catch (e) {
+                    console.error("[PhongChoi] Lỗi FC_LayPhongTiep:", e);
+                    break;
+                }
 
-                await enterRoom(i);
+                if (nextRoomIdx == null || nextRoomIdx < 0 || nextRoomIdx >= TONG_PHONG) {
+                    console.log("[PhongChoi] ⚠️ nextRoomIdx không hợp lệ, dừng.");
+                    break;
+                }
+
+                // Báo cho main.js biết phòng hiện tại
+                if (typeof window.FC_SetCurrentRoom === "function") {
+                    await window.FC_SetCurrentRoom(nextRoomIdx);
+                }
+
+                await enterRoom(nextRoomIdx);
                 if (yeuCauDung) break;
 
                 // Chờ và kiểm tra Exit_Room trong 15 giây
@@ -245,7 +297,9 @@ async function UI_Vao_Phong_Choi(page) {
                     break;
                 }
                 if (!isEntered) {
-                    break;
+                    // Không vào được phòng (mạng yếu…) → thử phòng kế
+                    await interruptibleSleep(2000);
+                    continue;
                 }
 
                 // === Thực hiện kiểm tra & đánh thật ===
@@ -258,7 +312,7 @@ async function UI_Vao_Phong_Choi(page) {
                     }
 
                     if (ketQuaDanh === true) {
-                        // ĐẠT -> Ở lại phòng này
+                        // ĐẠT – Ở lại phòng này (đánh xong mục tiêu)
                         break;
                     }
 
@@ -267,17 +321,8 @@ async function UI_Vao_Phong_Choi(page) {
                         break;
                     }
 
-                    // KHÔNG ĐẠT (ketQuaDanh === false): đã thoát ra sảnh thành công -> chuyển phòng tiếp theo
+                    // KHÔNG ĐẠT (ketQuaDanh === false): đã thoát ra sảnh → tiếp tục vòng lặp
                     await interruptibleSleep(1000);
-                    if (yeuCauDung) break;
-
-                    // Nếu đã đi hết 9 phòng thì xoá toàn bộ lịch sử và lặp lại từ Room 1
-                    if (i === rooms.length - 1) {
-                        resetRooms();
-                        await interruptibleSleep(5000);
-                        if (yeuCauDung) break;
-                        i = -1; // Vòng lặp for sẽ i++ lên thành 0 (Room 1)
-                    }
                 }
             }
 
