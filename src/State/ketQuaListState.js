@@ -3,7 +3,7 @@
 
 let KetQuaListTable = [];
 
-const MAX_KETQUA = 23;      // tối đa 24 item  - > đủ 4 cột xoá bớt đi 1 cột
+const MAX_KETQUA = 24;      // tối đa 24 item  - > đủ 4 cột xoá bớt đi 1 cột
 const SO_XOA_KHI_DAY = 6;   // đầy (item thứ 25) thì xoá 6 item đầu
 
 module.exports = {
@@ -13,6 +13,9 @@ module.exports = {
 
     setKetQuaListTable(list) {
         KetQuaListTable = Array.isArray(list) ? list.slice() : [];
+        if (KetQuaListTable.length > MAX_KETQUA) {   // >= 24 item
+            KetQuaListTable.splice(0, SO_XOA_KHI_DAY);
+        }
         return KetQuaListTable;
     },
 

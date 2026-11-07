@@ -6,6 +6,8 @@ const { showThongBao } = require("../UI/UI_ThongBao");
 const { captureItems, IMAGES_DIR } = require("../captureState");
 const { TOA_DO_THOAT_PHONG } = require("../config/RoomConfig");
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 /**
  * Click thoát phòng, chờ xác nhận đã về sảnh (ảnh NgoaiSanhCho).
  * @param {import('playwright').Page} page
@@ -15,11 +17,11 @@ const { TOA_DO_THOAT_PHONG } = require("../config/RoomConfig");
  */
 async function ChuyenPhong(page, thongBao = "⚠️") {
     showThongBao(page, thongBao, 5000);
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 200));
 
     // Click nút thoát phòng
     await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
-    await new Promise(r => setTimeout(r, 3000));
+    await new Promise(r => setTimeout(r, 300));
 
     // Lấy toạ độ ảnh NgoaiSanhCho
     let info = null;
@@ -40,15 +42,13 @@ async function ChuyenPhong(page, thongBao = "⚠️") {
 
     // Chờ tối đa 10s cho đến khi thấy ảnh sảnh
     const startTime = Date.now();
-    while (Date.now() - startTime < 10000) {
+    while (Date.now() - startTime < 7000) {
         try {
             const res = await checkOnce(page, IMAGES_DIR, info.x, info.y, info.width, info.height);
             if (res && res.name === "NgoaiSanhCho") return false; // ✅ về sảnh thành công
         } catch (_) { }
         await new Promise(r => setTimeout(r, 1000));
     }
-
-    console.log("Không tìm thấy sảnh – LOGIC CHƯA LÀM");
     return "KHONG_TIM_THAY_SANH";
 }
 

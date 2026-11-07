@@ -3,7 +3,7 @@
 const { getKetQuaListTable } = require("../State/ketQuaListState");
 
 const TIE = "KetQua_Tie";
-const SO_CHUOI_DAT = 0; // cháy liên tiếp từ 2 chu kỳ trở lên thì đạt
+const SO_CHUOI_DAT = 2; // cháy liên tiếp từ 2 chu kỳ trở lên thì đạt
 
 // Trả về true nếu chuỗi cháy ngầm hiện tại >= 2, ngược lại false.
 // Mảng đọc theo cột, mỗi cột 6 ô. Mỗi cột có 2 chu kỳ:
@@ -43,8 +43,7 @@ function CheckChay2Ngam(arr = getKetQuaListTable()) {
             chuoi++;
         }
     }
-
-    console.log(`⚠️ [CheckChay2Ngam] ngầm = ${chuoi} → ${chuoi >= SO_CHUOI_DAT}`);
+    // console.log(`⚠️ [CheckChay2Ngam] ngầm = ${chuoi} → ${chuoi >= SO_CHUOI_DAT}`);
     return chuoi >= SO_CHUOI_DAT;
 }
 

@@ -6,6 +6,24 @@
 const { ROOMS } = require("./config/RoomConfig");
 
 async function UI_Vao_Phong_Choi(page) {
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    // Hàm cứu hộ chạy từ Node.js (Playwright) khi nút tự biến đổi thành màu xanh
+    await page.exposeFunction("FC_KhoiPhucVaBatDauLai", async () => {
+        try {
+            await page.mouse.click(38, 38);
+            await sleep(7000);
+            await page.mouse.click(350, 327);
+            await sleep(15000);
+            await page.mouse.click(400, 200);
+            await sleep(15000);
+            await page.mouse.click(650, 21);//Bấm button Start
+            return true;
+        } catch (err) {
+            return false;
+        }
+    });
+
     await page.exposeFunction("playwrightClick", async (x, y) => {
         try {
             await page.mouse.click(Math.round(x), Math.round(y));
@@ -264,6 +282,7 @@ async function UI_Vao_Phong_Choi(page) {
 
                     if (ketQuaDanh === "KHONG_TIM_THAY_SANH") {
                         console.log("[PhongChoi] Dừng lại do không tìm thấy sảnh chờ.");
+
                         break;
                     }
 
@@ -274,7 +293,7 @@ async function UI_Vao_Phong_Choi(page) {
                     // Nếu đã đi hết 9 phòng thì xoá toàn bộ lịch sử và lặp lại từ Room 1
                     if (i === rooms.length - 1) {
                         resetRooms();
-                        await interruptibleSleep(5000);
+                        await interruptibleSleep(2000);
                         if (yeuCauDung) break;
                         i = -1; // Vòng lặp for sẽ i++ lên thành 0 (Room 1)
                     }
@@ -282,12 +301,26 @@ async function UI_Vao_Phong_Choi(page) {
             }
 
             console.log("[PhongChoi] Kết thúc lượt chạy.");
+            const wasYeuCauDung = yeuCauDung; // chụp trước khi reset
             isRunning = false;
             yeuCauDung = false;
             resetRooms();
             btnStart.className = "";
             btnStart.disabled = false;
             btnStart.textContent = "▶ Bắt Đầu";
+
+            // Tự động chạy cứu hộ & bấm lại Bắt Đầu nếu bot tự đổi thành màu xanh (không phải user bấm Dừng)
+            if (!wasYeuCauDung) {
+                console.log("[PhongChoi] 🔄 Bot tự dừng bất thường -> Kích hoạt cứu hộ & tự bấm lại Bắt Đầu...");
+
+                if (typeof window.FC_KhoiPhucVaBatDauLai === "function") {
+                    await window.FC_KhoiPhucVaBatDauLai();
+                }
+
+                // if (!isRunning) {
+                //     btnStart.click(); có rồi
+                // }
+            }
         }
 
         // ──______________________________________ Nút Bắt Đầu / Dừng ──────────────────────────────────────────────────

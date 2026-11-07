@@ -17,8 +17,11 @@ const MAU = {
 //   - Thuộc chu kỳ 2 (hàng 4-6) thì lấy màu ô 5 của cột đầy liền trước
 //   - thep = thứ tự của ô trong chu kỳ: hàng 1/4 → 1, hàng 2/5 → 2, hàng 3/6 → 3
 function LayTinHieu(arr = getKetQuaListTable()) {
+    if (Array.isArray(arr) && arr.length >= 24) arr = arr.slice(6); // đủ 24 thì bỏ 6 ô đầu
+
     // Cần ít nhất cột 1 đủ 6 ô để có cột chuẩn
     if (!Array.isArray(arr) || arr.length < 6) return null;
+    // ...phần còn lại giữ nguyên
 
     const pos = arr.length;              // vị trí ô kế tiếp
     const k = Math.floor(pos / 6);       // cột chứa ô kế tiếp (tính từ 0)

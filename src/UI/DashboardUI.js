@@ -17,6 +17,8 @@ function updateDashboard(page, rs) {
         mucChuKi: rs.mucTieuChuKi,
         laiHT: rs.laiHienTai,
         mucLai: rs.mucTieuLai,
+        winChuKi: rs.winChuKi ?? 0,
+        chay: rs.chay ?? 0,
     };
 
     return page.evaluate((d) => {
@@ -27,9 +29,9 @@ function updateDashboard(page, rs) {
             st.textContent = `
                 #ui-dashboard {
                     position: fixed;
-                    top: 230px;
+                    top: 210px;
                     left: 0;
-                    width: 235px;
+                    width: 205px;
                     padding: 8px 12px 8px 10px;
                     border-radius: 0 12px 12px 0;
                     background: rgba(15, 23, 42, 0.6);
@@ -142,6 +144,25 @@ function updateDashboard(page, rs) {
                 panel.appendChild(row);
             }
 
+            // 2 dòng thống kê cuối: Win chu kỳ, Cháy
+            const statRows = [
+                ["winChuKi", "Win chu kỳ"],
+                ["chay", "Cháy"],
+            ];
+            for (const [k, label] of statRows) {
+                const row = document.createElement("div");
+                row.className = "db-row";
+                const l = document.createElement("span");
+                l.className = "db-label";
+                l.textContent = label;
+                const v = document.createElement("span");
+                v.className = "db-val";
+                v.dataset.k = k;
+                row.appendChild(l);
+                row.appendChild(v);
+                panel.appendChild(row);
+            }
+
             document.body.appendChild(panel);
         }
 
@@ -169,7 +190,7 @@ function updateDashboard(page, rs) {
         if (d.tinHieu === "red" || d.tinHieu === "blue") {
             set("signal", tenBen(d.tinHieu), mauBen(d.tinHieu));
         } else {
-            set("signal", "Không có tín hiệu", GRAY);
+            set("signal", "Không tín hiệu", GRAY);
         }
 
         // Tiền & lãi
@@ -186,6 +207,10 @@ function updateDashboard(page, rs) {
         set("lai-cur", fmt(d.laiHT), d.laiHT < 0 ? RED : d.laiHT > 0 ? GREEN : WHITE);
         syncInput("chuki", d.mucChuKi);
         syncInput("lai", d.mucLai);
+
+        // Thống kê Win chu kỳ & Cháy
+        set("winChuKi", String(d.winChuKi), d.winChuKi > 0 ? GREEN : WHITE);
+        set("chay", String(d.chay), d.chay > 0 ? RED : WHITE);
     }, data).catch(() => { });
 }
 
