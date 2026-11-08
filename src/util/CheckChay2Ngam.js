@@ -1,17 +1,16 @@
 "use strict";
 
-const { getKetQuaListTable } = require("../State/ketQuaListState");
-
-const TIE = "KetQua_Tie";
-const SO_CHUOI_DAT = 0; // cháy liên tiếp từ 2 chu kỳ trở lên thì đạt
+const TIE = "T";
+const SO_CHUOI_DAT = 1; // cháy liên tiếp từ 2 chu kỳ trở lên thì đạt
 
 // Trả về true nếu chuỗi cháy ngầm hiện tại >= 2, ngược lại false.
 // Mảng đọc theo cột, mỗi cột 6 ô. Mỗi cột có 2 chu kỳ:
 //   - Chu kỳ 1 (ô 1-3) theo màu ô 2 của cột trước
 //   - Chu kỳ 2 (ô 4-6) theo màu ô 5 của cột trước
-function CheckChay2Ngam(arr = getKetQuaListTable()) {
+function CheckChay2Ngam(arr) {
     // Cần cột 1 đủ 6 ô và ít nhất 1 ô của cột 2
-    if (!Array.isArray(arr) || arr.length < 7) return false;
+    // if (!Array.isArray(arr) || arr.length < 7) return false;
+    if (!Array.isArray(arr) || arr.length < 7) return { chuoi: 0, isDat: false };
 
     // Chia mảng thành các cột 6 ô (cột cuối có thể dở dang)
     const cols = [];
@@ -44,8 +43,9 @@ function CheckChay2Ngam(arr = getKetQuaListTable()) {
         }
     }
 
-    console.log(`⚠️ [CheckChay2Ngam] ngầm = ${chuoi} → ${chuoi >= SO_CHUOI_DAT}`);
-    return chuoi >= SO_CHUOI_DAT;
+    // console.log(`⚠️ [CheckChay2Ngam] ngầm = ${chuoi} → ${chuoi >= SO_CHUOI_DAT}`);
+    // return chuoi >= SO_CHUOI_DAT;
+    return { chuoi, isDat: chuoi >= SO_CHUOI_DAT };
 }
 
 module.exports = { CheckChay2Ngam };

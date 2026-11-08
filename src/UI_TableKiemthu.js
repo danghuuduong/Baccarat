@@ -664,6 +664,33 @@ async function UI_TableKiemthu(page) {
       setTimeout(function () { popupInput.focus(); }, 50);
     }
 
+    var autoSeq = 0;
+
+
+    async function autoCapture(x, y) {
+      var name;
+      do {
+        autoSeq++;
+        name = "anh" + autoSeq;
+      } while (captureList.some(function (it) { return it.name === name; }));
+
+      // Ẩn khung đỏ + lớp phủ để không dính vào ảnh
+      overlay.style.visibility = "hidden";
+      backdrop.style.visibility = "hidden";
+      await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
+
+      var res = await window.doCapture({ name: name, x: x, y: y, width: captureW, height: captureH });
+
+      overlay.style.visibility = "visible";
+      backdrop.style.visibility = "visible";
+
+      if (res && res.success) {
+        captureList.push(res.item);
+        renderTable();
+      }
+    }
+
+
     btnStart.addEventListener("click", async function (evt) {
       if (!btnStart.classList.contains("active")) return;
       stopCaptureMode(); // Huỷ sạch chế độ capture cũ nếu có
@@ -761,11 +788,12 @@ async function UI_TableKiemthu(page) {
           return;
         }
         if (e.key === "p" || e.key === "P") {
+          if (e.repeat) return;                                               // ← thêm dòng này
           if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
           if (currentCapturePos) {
             e.preventDefault();
             e.stopPropagation();
-            triggerCapture(currentCapturePos.x, currentCapturePos.y);
+            autoCapture(currentCapturePos.x, currentCapturePos.y);            // ← đổi triggerCapture thành autoCapture
           }
         }
       };

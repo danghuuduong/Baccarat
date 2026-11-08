@@ -2,13 +2,13 @@
 
 const { getKetQuaListTable } = require("../State/ketQuaListState");
 
-const TIE = "KetQua_Tie";
+const TIE = "T";
 
 // Đổi tên kết quả sang màu tín hiệu
 const MAU = {
-    KetQua_Player: "blue",
-    KetQua_Banker: "red",
-    KetQua_Tie: "green",
+    P: "blue",
+    B: "red",
+    T: "green",
 };
 
 // Trả về { tinhieu: "blue" | "red" | "green", thep: 1 | 2 | 3 } cho ô kế tiếp, không có tín hiệu thì trả null.
@@ -16,9 +16,10 @@ const MAU = {
 //   - Thuộc chu kỳ 1 (hàng 1-3) thì lấy màu ô 2 của cột đầy liền trước
 //   - Thuộc chu kỳ 2 (hàng 4-6) thì lấy màu ô 5 của cột đầy liền trước
 //   - thep = thứ tự của ô trong chu kỳ: hàng 1/4 → 1, hàng 2/5 → 2, hàng 3/6 → 3
-function LayTinHieu(arr = getKetQuaListTable()) {
+function LayTinHieu(arr) {
     // Cần ít nhất cột 1 đủ 6 ô để có cột chuẩn
     if (!Array.isArray(arr) || arr.length < 6) return null;
+    while (arr.length >= 24) arr = arr.slice(6);   // ← thêm: đủ 24 ô thì bỏ cột đầu (6 ô), lặp tới khi < 24
 
     const pos = arr.length;              // vị trí ô kế tiếp
     const k = Math.floor(pos / 6);       // cột chứa ô kế tiếp (tính từ 0)

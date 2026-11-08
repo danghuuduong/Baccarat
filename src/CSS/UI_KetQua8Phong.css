@@ -1,0 +1,73 @@
+/* =====================================
+   BẢNG KẾT QUẢ 8 BÀN (2 cột × 4 hàng)
+   Mỗi bàn: lưới bi 7 cột × 6 hàng
+===================================== */
+
+#ui-ket-qua {
+    position: fixed;
+    top: 40px;
+    right: 0;
+    width: fit-content;
+    /* ~138px, nằm ngoài vùng chụp (x >= 257) */
+
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 4px;
+
+    padding: 4px;
+    box-sizing: border-box;
+
+    background: rgba(15, 23, 42, .85);
+    border-radius: 0 8px 8px 0;
+
+    font: 600 9px Arial, sans-serif;
+    color: #f1f5f9;
+
+    z-index: 2147483646;
+    pointer-events: none;
+}
+
+#ui-ket-qua .kq-cell {
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 4px;
+}
+
+#ui-ket-qua .kq-title {
+    margin-bottom: 2px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+/* Lưới 6 hàng, điền theo cột (trái → phải, trong cột trên → dưới) */
+#ui-ket-qua .kq-bi {
+    display: grid;
+    grid-template-rows: repeat(6, 7px);
+    grid-auto-columns: 7px;
+    grid-auto-flow: column;
+    gap: 1px;
+}
+
+#ui-ket-qua .kq-bi span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+#ui-ket-qua .kq-bi-B {
+    background: #ef4444;
+}
+
+#ui-ket-qua .kq-bi-P {
+    background: #3b82f6;
+}
+
+#ui-ket-qua .kq-bi-T {
+    background: #22c55e;
+}
+
+#ui-ket-qua .kq-bi-X {
+    background: rgba(255, 255, 255, .08);
+}
+
+/* ô trống */

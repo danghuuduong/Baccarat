@@ -1,0 +1,162 @@
+/* =====================================
+   BUTTON BẮT ĐẦU
+===================================== */
+
+#btn-bat-dau {
+    position: fixed;
+    top: 11px;
+    left: 11px;
+    z-index: 2147483647;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    min-width: 87px;
+    height: 29px;
+    padding: 0 13px;
+
+    border: 1px solid rgba(255, 255, 255, .5);
+    border-radius: 9px;
+
+    background: linear-gradient(135deg, #2563eb, #06b6d4);
+    color: #fff;
+
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+
+    cursor: pointer;
+    user-select: none;
+
+    box-shadow: 0 3px 12px rgba(37, 99, 235, .4);
+
+    transform-origin: center;
+    transition: background .3s;
+}
+
+/* ICON */
+#btn-bat-dau .bat-dau-icon {
+    width: 16px;
+    height: 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .25);
+
+    font-size: 8px;
+    flex-shrink: 0;
+}
+
+/* =====================================
+   CHƯA CHẠY: PHÓNG TO - THU NHỎ
+===================================== */
+
+#btn-bat-dau:not(.is-active) {
+    animation: pulseStart 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseStart {
+
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 3px 10px rgba(37, 99, 235, .35);
+    }
+
+    50% {
+        transform: scale(1.12);
+        box-shadow:
+            0 0 12px rgba(59, 130, 246, .75),
+            0 0 22px rgba(6, 182, 212, .45);
+    }
+}
+
+/* =====================================
+   ĐANG CHẠY: MÀU ĐỎ
+===================================== */
+
+#btn-bat-dau.is-active {
+    background: linear-gradient(120deg,
+            #991b1b,
+            #ef4444,
+            #dc2626,
+            #7f1d1d,
+            #ef4444);
+
+    background-size: 300% 300%;
+    border-color: rgba(255, 180, 180, .9);
+
+    animation:
+        redFlow 3s linear infinite,
+        redGlow 2s ease-in-out infinite;
+}
+
+/* NỀN ĐỎ CHUYỂN ĐỘNG */
+@keyframes redFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 300% 50%;
+    }
+}
+
+/* ÁNH SÁNG ĐỎ */
+@keyframes redGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(239, 68, 68, .4);
+    }
+
+    50% {
+        box-shadow:
+            0 0 12px rgba(239, 68, 68, .8),
+            0 0 20px rgba(220, 38, 38, .5);
+    }
+}
+
+/* =====================================
+   CHỈ ICON XOAY - BUTTON ĐỨNG YÊN
+===================================== */
+
+#btn-bat-dau.is-active .bat-dau-icon {
+    animation: iconSpin .8s linear infinite;
+    transform-origin: center;
+}
+
+@keyframes iconSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =====================================
+   CLICK
+===================================== */
+
+#btn-bat-dau:active {
+    filter: brightness(1.2);
+}
+
+/* =====================================
+   ACCESSIBILITY
+===================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    #btn-bat-dau,
+    #btn-bat-dau .bat-dau-icon {
+        animation: none !important;
+    }
+}

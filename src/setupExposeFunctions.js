@@ -1,16 +1,15 @@
 // src/setupExposeFunctions.js – Đăng ký toàn bộ exposeFunction cho page
 "use strict";
 
-const fs   = require("fs");
+const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
 
 const { createChecker, checkOnce } = require("./util/checker");
-const { setupImageFinder }         = require("./util/findImageInfo");
-const ketQuaListState              = require("./State/ketQuaListState");
+const { setupImageFinder } = require("./util/findImageInfo");
+const ketQuaListState = require("./State/ketQuaListState");
 const { captureItems, saveStateTXT, IMAGES_DIR } = require("./captureState");
-
-const player    = require("play-sound")({});
+const player = require("play-sound")({});
 const SOUND_FILE = path.join(__dirname, "..", "tinh.mp3");
 
 /**
@@ -18,7 +17,6 @@ const SOUND_FILE = path.join(__dirname, "..", "tinh.mp3");
  * @param {import('playwright').Page} page
  */
 async function setupExposeFunctions(page) {
-
     // ── Chụp ảnh vùng màn hình, lưu file + thêm vào captureItems ──────────
     await page.exposeFunction("doCapture", async ({ name, x, y, width, height }) => {
         try {
@@ -27,17 +25,19 @@ async function setupExposeFunctions(page) {
 
             const shotBuf = await page.screenshot({
                 path: filePath,
+                scale: "css",
                 clip: {
                     x: Math.round(x), y: Math.round(y),
                     width: Math.round(width), height: Math.round(height),
                 },
+
             });
 
             const item = {
                 name: safeName,
                 x: Math.round(Number(x) * 100) / 100,
                 y: Math.round(Number(y) * 100) / 100,
-                width:  Math.round(Number(width)  * 100) / 100,
+                width: Math.round(Number(width) * 100) / 100,
                 height: Math.round(Number(height) * 100) / 100,
             };
             captureItems.push(item);
@@ -79,15 +79,15 @@ async function setupExposeFunctions(page) {
             if (index >= 0 && index < captureItems.length) {
                 const src = captureItems[index];
                 let baseName = src.name.replace(/_copy(\d+)?$/, "");
-                let newName  = `${src.name}_copy`;
-                let count    = 1;
+                let newName = `${src.name}_copy`;
+                let count = 1;
                 while (captureItems.some(it => it.name === newName) || fs.existsSync(path.join(IMAGES_DIR, `${newName}.png`))) {
                     newName = `${baseName}_copy${count++}`;
                 }
-                const newItem  = { name: newName, x: src.x, y: src.y, width: src.width, height: src.height };
-                const srcPath  = path.join(IMAGES_DIR, `${src.name}.png`);
+                const newItem = { name: newName, x: src.x, y: src.y, width: src.width, height: src.height };
+                const srcPath = path.join(IMAGES_DIR, `${src.name}.png`);
                 const destPath = path.join(IMAGES_DIR, `${newName}.png`);
-                let imgBase64  = null;
+                let imgBase64 = null;
                 if (fs.existsSync(srcPath)) {
                     fs.copyFileSync(srcPath, destPath);
                     imgBase64 = `data:image/png;base64,${fs.readFileSync(destPath).toString("base64")}`;
@@ -110,7 +110,7 @@ async function setupExposeFunctions(page) {
     await page.exposeFunction("updateCapture", async (index, updated) => {
         try {
             if (index >= 0 && index < captureItems.length) {
-                const oldItem  = captureItems[index];
+                const oldItem = captureItems[index];
                 const safeName = (updated.name || oldItem.name).replace(/[^a-zA-Z0-9_\-]/g, "_");
                 if (safeName !== oldItem.name) {
                     const oldPath = path.join(IMAGES_DIR, `${oldItem.name}.png`);
@@ -121,10 +121,10 @@ async function setupExposeFunctions(page) {
                     }
                 }
                 const newItem = {
-                    name:   safeName,
-                    x:      Math.round(Number(updated.x)      * 100) / 100,
-                    y:      Math.round(Number(updated.y)      * 100) / 100,
-                    width:  Math.round(Number(updated.width)  * 100) / 100,
+                    name: safeName,
+                    x: Math.round(Number(updated.x) * 100) / 100,
+                    y: Math.round(Number(updated.y) * 100) / 100,
+                    width: Math.round(Number(updated.width) * 100) / 100,
                     height: Math.round(Number(updated.height) * 100) / 100,
                 };
                 captureItems[index] = newItem;
@@ -203,24 +203,6 @@ async function setupExposeFunctions(page) {
         }
     });
 
-    // ── Phát âm thanh cảnh báo tinh.mp3 ──────────────────────────────────
-    await page.exposeFunction("playAlertSound", async () => {
-        try {
-            console.log("🔊 Phát âm thanh cảnh báo: tinh.mp3");
-            if (fs.existsSync(SOUND_FILE)) {
-                player.play(SOUND_FILE, (err) => {
-                    if (err) exec(`powershell -c "(New-Object Media.SoundPlayer '${SOUND_FILE}').PlaySync()"`, () => {});
-                });
-            } else {
-                console.warn("⚠️ Không tìm thấy file âm thanh:", SOUND_FILE);
-            }
-            return { success: true };
-        } catch (err) {
-            console.error("❌ playAlertSound lỗi:", err.message);
-            return { success: false, error: err.message };
-        }
-    });
 }
 
 module.exports = { setupExposeFunctions };
-

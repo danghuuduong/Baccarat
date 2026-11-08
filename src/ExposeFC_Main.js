@@ -1,0 +1,33 @@
+"use strict";
+
+const setting = require("./State/setting");
+const { updateBatDau } = require("./UI/UI_BatDau");
+const { vongLapChupManHinh } = require("./util/VongLapChupManHinh");
+
+/**
+ * Đăng ký tất cả exposeFunction vào page.
+ * @param {import('playwright').Page} page
+ */
+async function ExposeFC_Main(page) {
+
+    await page.exposeFunction("FC_BatDau", async () => {
+        setting.set("danhSachTimKiemRa", []);
+        setting.set("tabHienTai", 1);
+        setting.set("isRunButon", !setting.get("isRunButon"));
+
+        // Xanh
+        setting.set("isStart", setting.get("isRunButon")); // kích hoạt vòng lặp
+
+        const isRunButon = setting.get("isRunButon");
+        const isStart = setting.get("isStart");
+
+        await updateBatDau(page, {
+            text: isRunButon ? "Dừng Lại" : "Bắt đầu",
+            isActive: isRunButon
+        });
+
+        if (isStart) vongLapChupManHinh(page);
+    });
+}
+
+module.exports = { ExposeFC_Main };

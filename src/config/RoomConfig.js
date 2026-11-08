@@ -14,11 +14,72 @@ const ROOMS = [
     { id: 9, x: 950, y: 650 },
 ];
 
+const DS_PHONG = [
+    { ten: "Phòng-1", x: 511, y: 217 },
+    { ten: "Phòng-2", x: 960, y: 217 },
+
+    { ten: "Phòng-3", x: 511, y: 377 },
+    { ten: "Phòng-4", x: 960, y: 377 },
+
+    { ten: "Phòng-5", x: 511, y: 540 },
+    { ten: "Phòng-6", x: 960, y: 540 },
+
+    { ten: "Phòng-7", x: 511, y: 701 },
+    { ten: "Phòng-8", x: 960, y: 701 },
+];
+
+const ToaDoTab = [
+    { tab: 1, x: 53, y: 253 },
+    { tab: 2, x: 53, y: 297 },
+];
+
+// room-type_room_a
+
+x = 541, y = 689
+x = 584, y = 688
+x = 628, y = 691
+x = 675, y = 689
+x = 724, y = 687
+
+const typeRoom = {
+    room_a: "type_room_a",
+    roomb: "type_room_b"
+}
+const TaoDoChip_Room = {
+    [typeRoom.room_a]: {
+        chip10: { x: 492, y: 686 },
+        chip25: { x: 541, y: 686 },
+        chip50: { x: 586, y: 686 },
+        chip100: { x: 634, y: 686 },
+        chip500: { x: 677, y: 686 },
+        chip1000: { x: 716, y: 686 },
+        datCuoc_Blue: { x: 590, y: 619 },
+        datCuoc_Red: { x: 809, y: 618 },
+        buttonXacNhan: { x: 900, y: 686 }
+    },
+    [typeRoom.room_b]: {
+        chip10: { x: 938, y: 560 },
+        chip25: { x: 987, y: 560 },
+        chip50: { x: 1043, y: 560 },
+        chip100: { x: 1094, y: 560 },
+        chip500: { x: 1147, y: 560 },
+        chip1000: { x: 1195, y: 560 },
+        datCuoc_Blue: { x: 459, y: 470 },
+        datCuoc_Red: { x: 983, y: 470 },
+        buttonXacNhan: { x: 786, y: 567 }
+    }
+}
+
+
 // ── Toạ độ click nút thoát phòng ─────────────────────────────────────────────
 const TOA_DO_THOAT_PHONG = { x: 1191, y: 370 };
 
 module.exports = {
     ROOMS,
     TOA_DO_THOAT_PHONG,
+    DS_PHONG,
+    ToaDoTab,
+    TaoDoChip_Room,
+    typeRoom
 };
 
