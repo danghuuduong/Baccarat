@@ -21,7 +21,6 @@ async function lanXuongNhuNguoi(page) {
     await page.mouse.move(w / 2, h / 2);
 
     const soLan = setting.get("tabHienTai") === 1 ? 4 : 3;
-    z
     for (let i = 0; i < soLan; i++) {
         await page.mouse.wheel(0, 3333);
         await sleep(60);
