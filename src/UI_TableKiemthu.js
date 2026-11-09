@@ -391,9 +391,9 @@ async function UI_TableKiemthu(page) {
     const toggleBtn = document.createElement("div");
     toggleBtn.textContent = "▲";
     Object.assign(toggleBtn.style, {
-      position: "fixed", top: "10px", right: "5px",
-      padding: "3px 7px", background: "#fff", border: "1px solid #999",
-      borderRadius: "4px", cursor: "pointer", zIndex: 2147483647,
+      position: "fixed", top: "10px", right: "60px",
+      padding: "2px 4px", background: "#fff", border: "1px solid #999",
+      borderRadius: "2px", cursor: "pointer", zIndex: 2147483647,
     });
 
     function setPanelHidden(hidden) {

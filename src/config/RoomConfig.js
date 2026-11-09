@@ -72,7 +72,7 @@ const typeKetQuaToaDo = {
 const TaoDoChip_Room = {
     [typeRoom.room_a]: {
         chip10: { x: 492, y: 686 },
-        chip25: { x: 541, y: 686 },
+        chip20: { x: 541, y: 686 },
         chip50: { x: 586, y: 686 },
         chip100: { x: 634, y: 686 },
         chip500: { x: 677, y: 686 },
@@ -82,12 +82,12 @@ const TaoDoChip_Room = {
         buttonXacNhan: { x: 900, y: 686 }
     },
     [typeRoom.room_b]: {
-        chip10: { x: 938, y: 560 },
-        chip25: { x: 987, y: 560 },
+        chip10: { x: 933, y: 560 },
+        chip20: { x: 988, y: 560 },
         chip50: { x: 1043, y: 560 },
         chip100: { x: 1094, y: 560 },
         chip500: { x: 1147, y: 560 },
-        chip1000: { x: 1195, y: 560 },
+        chip1000: { x: 1200, y: 560 },
         datCuoc_Blue: { x: 459, y: 470 },
         datCuoc_Red: { x: 983, y: 470 },
         buttonXacNhan: { x: 786, y: 567 }
@@ -96,7 +96,7 @@ const TaoDoChip_Room = {
 
 
 // ── Toạ độ click nút thoát phòng ─────────────────────────────────────────────
-const TOA_DO_THOAT_PHONG = { x: 1191, y: 370 };
+const TOA_DO_THOAT_PHONG = { x: 1250, y: 32 };
 
 module.exports = {
     ROOMS,

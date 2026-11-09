@@ -44,6 +44,27 @@ async function update_UI_KetQua8Phong(page, ban = []) {
             document.body.appendChild(panel);
         }
 
+        // 2b. Nút tắt/bật bảng (tạo 1 lần)
+        if (!document.getElementById("ui-ket-qua-toggle")) {
+            const toggleBtn = document.createElement("div");
+            toggleBtn.id = "ui-ket-qua-toggle";
+            toggleBtn.textContent = "▼";
+            Object.assign(toggleBtn.style, {
+                position: "fixed", top: "25px", right: "35px",
+                padding: "1px 4px", fontSize: "10px", lineHeight: "1.2",
+                background: "#fff", border: "1px solid #999",
+                borderRadius: "4px", cursor: "pointer", zIndex: 2147483647,
+            });
+            toggleBtn.onclick = () => {
+                const p = document.getElementById("ui-ket-qua");
+                if (!p) return;
+                const dangAn = p.style.display === "none";
+                p.style.display = dangAn ? "" : "none";
+                toggleBtn.textContent = dangAn ? "▼" : "▲";
+            };
+            document.body.appendChild(toggleBtn);
+        }
+
         // 3. Cập nhật từng bàn (bàn nào không đổi thì bỏ qua)
         panel.querySelectorAll(".kq-cell").forEach((cell, i) => {
             const arr = ban[i] || [];

@@ -3,7 +3,7 @@ const { showThongBao, cancelThongBao } = require("../UI/UI_ThongBao");
 const setting = require("../State/setting");
 const { TimAnhDuaTrenListPop_Util } = require("./TimAnhDuaTrenListPop_Util");
 const { DocKetQuaVang } = require("./DocKetQuaVang");
-const { typeRoom, /* typeKetQua, */ TaoDoChip_Room, ToaDoTab } = require("../config/RoomConfig");
+const { typeRoom, /* typeKetQua, */ TaoDoChip_Room, ToaDoTab, TOA_DO_THOAT_PHONG } = require("../config/RoomConfig");
 const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 
@@ -80,7 +80,14 @@ async function vongLapDatCuoc(page, roomType) {
     const coords = TaoDoChip_Room[roomType];
     // const kq = typeKetQua[roomType];
     const sotienuocList = [20, 50, 110];
-    const click = async (coord) => page.mouse.click(Math.round(coord.x), Math.round(coord.y));
+
+    // Di chuột tới điểm rồi mới click (để game nhận hover)
+    const click = async (coord) => {
+        const x = Math.round(coord.x), y = Math.round(coord.y);
+        await page.mouse.move(x, y, { steps: 5 });
+        await sleep(200);
+        await page.mouse.click(x, y);
+    };
 
     // Chip ưu tiên số to trước
     const CHIP_THU_TU = [
@@ -88,7 +95,7 @@ async function vongLapDatCuoc(page, roomType) {
         ["chip500", 500],
         ["chip100", 100],
         ["chip50", 50],
-        ["chip25", 25],
+        ["chip20", 20],
         ["chip10", 10],
     ];
 
@@ -98,9 +105,9 @@ async function vongLapDatCuoc(page, roomType) {
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
                 await click(coords[ten]);
-                await sleep(300);
+                await sleep(500);
                 await click(coordBen);
-                await sleep(300);
+                await sleep(500);
                 con -= gia;
             }
         }
@@ -132,9 +139,11 @@ async function vongLapDatCuoc(page, roomType) {
             isStart: true,
         });
         showThongBao(page, `Out phòng: ${lyDo}`, 8000, "#d7f706ff");
-        sleep(1500);
+        sleep(600);
         // click tab 1 để thoát phòng
         const tab1 = ToaDoTab.find(t => t.tab === 1);
+        await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
+        sleep(600);
         await page.mouse.click(Math.round(tab1.x), Math.round(tab1.y));
         await new Promise(r => setTimeout(r, 1000));
 
@@ -167,11 +176,12 @@ async function vongLapDatCuoc(page, roomType) {
         const tenBen = tinHieu.tinhieu === "red" ? "Đỏ" : "Xanh";
         const coordBen = tinHieu.tinhieu === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
 
-        // ── 3. Chọn chip + đặt bên ─────────────────────────────────────────
+        // ── 3. Chờ bảng chip ổn định rồi chọn chip + đặt bên ───────────────
+        await sleep(600);
         await datTien(sotienuoc, coordBen);
 
         // ── 4. Xác nhận ─────────────────────────────────────────────────────
-        await sleep(1000);
+        await sleep(700);
         await click(coords.buttonXacNhan);
 
         // ── 5. Lưu trạng thái + showThongBao (giữ tới khi có kết quả) ──────
@@ -185,8 +195,8 @@ async function vongLapDatCuoc(page, roomType) {
         showThongBao(page, `Đặt ${tenBen} ${sotienuoc}K - Thếp ${tinHieu.thep}`, 999999, tenBen === "Xanh" ? "#247afbff" : "#e42727ff");
 
         // ── 6. Chờ 15s rồi tìm kết quả bằng LED vàng (30s) ─────────────────
-        await sleep(17000);
-        const ketQua = await choKetQuaVang(35000);
+        await sleep(12000);
+        const ketQua = await choKetQuaVang(70000);
 
         // (tạm comment) cách cũ: tìm ảnh kq_*
         // const anhKetQua = await TimAnhDuaTrenListPop_Util(page, [kq.red, kq.blue, kq.green], 30000);
@@ -238,12 +248,17 @@ async function vongLapDatCuoc(page, roomType) {
 
         if (ketQuaMau === bendat) {
             // ── Thắng ──────────────────────────────────────────────────────
-            const vonSau = setting.get("soVonBanDau") + sotienuoc * 2;
+            // Đỏ thắng chịu phí 5%, xanh ăn đủ
+            const lai = bendat === "red"
+                ? Math.round(sotienuoc * 0.95 * 100) / 100
+                : sotienuoc;
+
+            const vonSau = Math.round((setting.get("soVonBanDau") + sotienuoc + lai) * 100) / 100;
             setting.set("soVonBanDau", vonSau);
-            setting.set("profit", setting.get("profit") + sotienuoc);
+            setting.set("profit", Math.round((setting.get("profit") + lai) * 100) / 100);
             setting.set("solenhwin", setting.get("solenhwin") + 1);
             capNhatStats();
-            showThongBao(page, `✅ Ăn +${sotienuoc}K`, 8000, "#32fb24ff");
+            showThongBao(page, `✅ Ăn +${lai}K`, 8000, "#32fb24ff");
             await outPhong("Thắng");
             return;
 
