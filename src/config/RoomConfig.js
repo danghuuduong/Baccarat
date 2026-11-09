@@ -58,14 +58,14 @@ const typeKetQua = {
 
 const typeKetQuaToaDo = {
     [typeRoom.room_a]: {
-        blue: { x: 532, y: 678 },   // TODO: P
-        red: { x: 861, y: 678 },   // TODO: B
-        green: { x: 663, y: 678 },   // TODO: T
+        blue: { x: 531, y: 672 },   // TODO: P
+        red: { x: 860, y: 675 },   // TODO: B
+        green: { x: 737, y: 680 },   // TODO: T
     },
     [typeRoom.room_b]: {
-        blue: { x: 185, y: 480 },   // TODO: P
-        red: { x: 829, y: 438 },   // TODO: B
-        green: { x: 754, y: 506 },   // TODO: T
+        blue: { x: 187, y: 506 },   // TODO: P
+        red: { x: 1204, y: 507 },   // TODO: B
+        green: { x: 755, y: 507 },   // TODO: T
     },
 };
 

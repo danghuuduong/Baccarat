@@ -5,7 +5,7 @@ const { PNG } = require("pngjs");
 const { typeKetQuaToaDo } = require("../config/RoomConfig");
 
 const NUA = 4;                    // vùng 8x8 quanh tâm
-const SO_PIXEL_TOI_THIEU = 4;     // >= 4 pixel vàng thì tính là sáng (không dùng tỉ lệ)
+const SO_PIXEL_TOI_THIEU = 3;     // >= 4 pixel vàng thì tính là sáng (không dùng tỉ lệ)
 const LE = NUA + 2;               // lề vùng chụp
 const DEBUG = false;              // true để in số pixel vàng của từng điểm
 

@@ -1,7 +1,7 @@
 "use strict";
 
 const TIE = "T";
-const SO_CHUOI_DAT = 1; // cháy liên tiếp từ 2 chu kỳ trở lên thì đạt
+const SO_CHUOI_DAT = 2; // cháy liên tiếp từ 2 chu kỳ trở lên thì đạt
 
 // Trả về true nếu chuỗi cháy ngầm hiện tại >= 2, ngược lại false.
 // Mảng đọc theo cột, mỗi cột 6 ô. Mỗi cột có 2 chu kỳ:

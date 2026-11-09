@@ -6,14 +6,16 @@ const { DocKetQuaVang } = require("./DocKetQuaVang");
 const { typeRoom, /* typeKetQua, */ TaoDoChip_Room, ToaDoTab, TOA_DO_THOAT_PHONG } = require("../config/RoomConfig");
 const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
+const { randomSleep, sleep } = require("./Sleep_Util");
 
 // Mảng bi đang dùng để lấy tín hiệu
 let arraySuDungChinhList = [];
-let daChotSo = false;
+let isMatTienTRongPhongNay = false;
 
 async function xulyVoPhong_Util(page, danhSach) {
 
     if (!danhSach || danhSach.length === 0) return;
+    isMatTienTRongPhongNay = false;
 
     // Chọn phòng có ngam lớn nhất; bằng nhau thì chọn phòng có thép lớn nhất
     const phongTotNhat = danhSach.reduce((max, phong) => {
@@ -28,7 +30,7 @@ async function xulyVoPhong_Util(page, danhSach) {
     );
 
     // Check loại phòng
-    let roomType = await TimAnhDuaTrenListPop_Util(page, [typeRoom.room_a, typeRoom.room_b], 4000);
+    let roomType = await TimAnhDuaTrenListPop_Util(page, [typeRoom.room_a, typeRoom.room_b], 3000);
 
     if (!roomType) {
         // ── Lần 2: Click lại + tìm thêm 2 giây ──────────────────────────────
@@ -54,11 +56,12 @@ async function xulyVoPhong_Util(page, danhSach) {
 
     // Không so khớp lưới nữa: lấy thẳng arr của phòng đã chọn
     arraySuDungChinhList = [...(phongTotNhat.arr || [])];
-    daChotSo = true;
 
     // ── Phần đặt cược ─────────────────────────────────────────────────────
     const thongBao = `Tab-${phongTotNhat.tab}, Phòng: ${phongTotNhat.phong}, Ngầm: ${phongTotNhat.ngam}, Thếp: ${phongTotNhat.infoTinHieu.thep} | ${roomType}`;
     showThongBao(page, thongBao, 5000);
+
+    const tab = phongTotNhat.tab || setting.get("tabHienTai") || 1;
 
     // Hiển thị lưới bi + thống kê ban đầu
     showLuoiBi(page, arraySuDungChinhList);
@@ -67,16 +70,19 @@ async function xulyVoPhong_Util(page, danhSach) {
         profit: setting.get("profit"),
         solenhwin: setting.get("solenhwin"),
         solenhthua: setting.get("solenhthua"),
+        solenhwin_Tab1: setting.get("solenhwin_Tab1"),
+        solenhthua_Tab1: setting.get("solenhthua_Tab1"),
+        solenhwin_Tab2: setting.get("solenhwin_Tab2"),
+        solenhthua_Tab2: setting.get("solenhthua_Tab2"),
     });
 
-    await vongLapDatCuoc(page, roomType);
+    await vongLapDatCuoc(page, roomType, tab);
 
     return roomType;
 }
 
 // ─── Vòng lặp đặt cược chính ─────────────────────────────────────────────────
-async function vongLapDatCuoc(page, roomType) {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") || 1) {
     const coords = TaoDoChip_Room[roomType];
     // const kq = typeKetQua[roomType];
     const sotienuocList = [20, 50, 110];
@@ -84,8 +90,8 @@ async function vongLapDatCuoc(page, roomType) {
     // Di chuột tới điểm rồi mới click (để game nhận hover)
     const click = async (coord) => {
         const x = Math.round(coord.x), y = Math.round(coord.y);
-        await page.mouse.move(x, y, { steps: 5 });
-        await sleep(200);
+        await page.mouse.move(x, y, { steps: 4 });
+        await randomSleep(150, 222);
         await page.mouse.click(x, y);
     };
 
@@ -105,9 +111,9 @@ async function vongLapDatCuoc(page, roomType) {
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
                 await click(coords[ten]);
-                await sleep(500);
+                await randomSleep(455, 555);
                 await click(coordBen);
-                await sleep(500);
+                await randomSleep(455, 555);
                 con -= gia;
             }
         }
@@ -125,10 +131,10 @@ async function vongLapDatCuoc(page, roomType) {
     }
 
     async function outPhong(lyDo) {
+        isMatTienTRongPhongNay = false;
         cancelThongBao(page);
         hideLuoiBi(page);
         arraySuDungChinhList = [];
-        daChotSo = false;
         setting.set({
             isDatCuocXong: false,
             sotienuocHienTai: 0,
@@ -139,18 +145,19 @@ async function vongLapDatCuoc(page, roomType) {
             isStart: true,
         });
         showThongBao(page, `Out phòng: ${lyDo}`, 8000, "#d7f706ff");
-        sleep(600);
+        await randomSleep(2000, 3000);
         // click tab 1 để thoát phòng
         const tab1 = ToaDoTab.find(t => t.tab === 1);
         await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
-        sleep(600);
+        await randomSleep(70, 150);
         await page.mouse.click(Math.round(tab1.x), Math.round(tab1.y));
-        await new Promise(r => setTimeout(r, 1000));
+        setting.set("tabHienTai", 1);
+        await randomSleep(200, 333);
 
         setTimeout(() => {
             const { vongLapChupManHinh } = require("./VongLapChupManHinh");
             vongLapChupManHinh(page);
-        }, 500);
+        }, 444);
     }
 
     const capNhatStats = () => {
@@ -159,12 +166,16 @@ async function vongLapDatCuoc(page, roomType) {
             profit: setting.get("profit"),
             solenhwin: setting.get("solenhwin"),
             solenhthua: setting.get("solenhthua"),
+            solenhwin_Tab1: setting.get("solenhwin_Tab1"),
+            solenhthua_Tab1: setting.get("solenhthua_Tab1"),
+            solenhwin_Tab2: setting.get("solenhwin_Tab2"),
+            solenhthua_Tab2: setting.get("solenhthua_Tab2"),
         });
     };
 
     while (true) {
         // ── 1. Lấy tín hiệu ────────────────────────────────────────────────
-        const tinHieu = LayTinHieu([...arraySuDungChinhList]);
+        const tinHieu = LayTinHieu([...arraySuDungChinhList], isMatTienTRongPhongNay);
 
         if (!tinHieu) {
             await outPhong("Không có tín hiệu");
@@ -177,11 +188,13 @@ async function vongLapDatCuoc(page, roomType) {
         const coordBen = tinHieu.tinhieu === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
 
         // ── 3. Chờ bảng chip ổn định rồi chọn chip + đặt bên ───────────────
-        await sleep(600);
+        await sleep(555);
+        await randomSleep(555, 633);
         await datTien(sotienuoc, coordBen);
 
         // ── 4. Xác nhận ─────────────────────────────────────────────────────
-        await sleep(700);
+        await randomSleep(300, 500);
+
         await click(coords.buttonXacNhan);
 
         // ── 5. Lưu trạng thái + showThongBao (giữ tới khi có kết quả) ──────
@@ -212,6 +225,12 @@ async function vongLapDatCuoc(page, roomType) {
         if (!ketQua) {
             showThongBao(page, "Lỗi khi check kết quả", 5000, "#fb2424ff");
             setting.set("solenhthua", setting.get("solenhthua") + 1);
+            if (tab === 1) {
+                setting.set("solenhthua_Tab1", setting.get("solenhthua_Tab1") + 1);
+            } else if (tab === 2) {
+                setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
+            }
+            isMatTienTRongPhongNay = true;
             setting.set("profit", setting.get("profit") - sotienuoc);
             capNhatStats();
             await outPhong("Không đọc được kết quả - coi như thua");
@@ -233,7 +252,7 @@ async function vongLapDatCuoc(page, roomType) {
             showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 
             if (tinHieu.thep === 3) {
-                await outPhong("Hòa thép 3");
+                await outPhong("Hòa thép 3- Cút thôi");
                 return;
             }
 
@@ -257,20 +276,31 @@ async function vongLapDatCuoc(page, roomType) {
             setting.set("soVonBanDau", vonSau);
             setting.set("profit", Math.round((setting.get("profit") + lai) * 100) / 100);
             setting.set("solenhwin", setting.get("solenhwin") + 1);
+            if (tab === 1) {
+                setting.set("solenhwin_Tab1", setting.get("solenhwin_Tab1") + 1);
+            } else if (tab === 2) {
+                setting.set("solenhwin_Tab2", setting.get("solenhwin_Tab2") + 1);
+            }
             capNhatStats();
             showThongBao(page, `✅ Ăn +${lai}K`, 8000, "#32fb24ff");
-            await outPhong("Thắng");
+            await outPhong("Thắng- Chuồn thôi");
             return;
 
         } else {
             // ── Thua ───────────────────────────────────────────────────────
             setting.set("solenhthua", setting.get("solenhthua") + 1);
+            if (tab === 1) {
+                setting.set("solenhthua_Tab1", setting.get("solenhthua_Tab1") + 1);
+            } else if (tab === 2) {
+                setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
+            }
+
             setting.set("profit", setting.get("profit") - sotienuoc);
             capNhatStats();
             showThongBao(page, `❌ THUA -${sotienuoc}K `, 8000, "#fb2424ff");
 
             if (tinHieu.thep === 3) {
-                await outPhong("Thua thép 3");
+                await outPhong("Thua thép 3 - Dí rồi té thôi");
                 return;
             }
 

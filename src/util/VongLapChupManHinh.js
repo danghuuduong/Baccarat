@@ -17,17 +17,15 @@ async function lanXuongNhuNguoi(page) {
         w: window.innerWidth,
         h: window.innerHeight,
     }));
-    await page.mouse.move(w * 0.5, h * 0.5);
-    await page.mouse.wheel(0, 3333);
-    await sleep(800);
-    await page.mouse.wheel(0, 3333);
-    await sleep(800);
-    const tabHienTai = setting.get("tabHienTai");
-    if (tabHienTai === 1) {
-        await page.mouse.wheel(0, 3333);
-        await sleep(500);
-    }
 
+    await page.mouse.move(w / 2, h / 2);
+
+    const soLan = setting.get("tabHienTai") === 1 ? 4 : 3;
+    z
+    for (let i = 0; i < soLan; i++) {
+        await page.mouse.wheel(0, 3333);
+        await sleep(60);
+    }
 }
 
 /**
@@ -106,12 +104,12 @@ async function vongLapChupManHinh(page) {
 
                     const tab = ToaDoTab.find(t => t.tab === tabMoi);
                     await page.mouse.click(tab.x, tab.y);
-                    await sleep(500);
+                    await sleep(444);
                     viTri = "tren";
                 }
             }
 
-            await sleep(1000);
+            await sleep(444);
         }
 
     } finally {

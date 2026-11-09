@@ -14,7 +14,8 @@ const MAU = {
 //   - Thuộc chu kỳ 1 (hàng 1-3) thì lấy màu ô 2 của cột đầy liền trước
 //   - Thuộc chu kỳ 2 (hàng 4-6) thì lấy màu ô 5 của cột đầy liền trước
 //   - thep = thứ tự của ô trong chu kỳ: hàng 1/4 → 1, hàng 2/5 → 2, hàng 3/6 → 3
-function LayTinHieu(arr) {
+// boQuaCheckHoa = true thì không check hòa trong chu kỳ, trả như cũ (mặc định false)
+function LayTinHieu(arr, boQuaCheckHoa = false) {
     // Cần ít nhất cột 1 đủ 6 ô để có cột chuẩn
     if (!Array.isArray(arr) || arr.length < 6) return null;
     while (arr.length >= 24) arr = arr.slice(6);   // ← thêm: đủ 24 ô thì bỏ cột đầu (6 ô), lặp tới khi < 24
@@ -37,6 +38,13 @@ function LayTinHieu(arr) {
     if (!tinhieu) return null;           // dữ liệu lạ
 
     const thep = (pos % 3) + 1;          // hàng 1/4 → 1, 2/5 → 2, 3/6 → 3
+
+    // ── Check hòa trong chu kỳ (bỏ qua nếu boQuaCheckHoa = true) ──
+    if (!boQuaCheckHoa) {
+        if (thep === 2 && arr[arr.length - 1] === TIE) return null;
+        if (thep === 3 && arr.slice(-2).includes(TIE)) return null;
+    }
+
     return { tinhieu, thep };
 }
 
