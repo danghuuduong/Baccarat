@@ -8,6 +8,7 @@ const { update_UI_KetQua8Phong } = require("../UI/UI_KetQua8Phong");
 const { TimPhongDat_Util } = require("./TimPhongDat_Util");
 const { ToaDoTab } = require("../config/RoomConfig");
 const { xulyVoPhong_Util } = require("./xulyVoPhong_Util");
+const { randomSleep } = require("./Sleep_Util");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -23,7 +24,7 @@ async function lanXuongNhuNguoi(page) {
     const soLan = setting.get("tabHienTai") === 1 ? 4 : 3;
     for (let i = 0; i < soLan; i++) {
         await page.mouse.wheel(0, 3333);
-        await sleep(60);
+        await randomSleep(55, 60);
     }
 }
 
@@ -103,12 +104,12 @@ async function vongLapChupManHinh(page) {
 
                     const tab = ToaDoTab.find(t => t.tab === tabMoi);
                     await page.mouse.click(tab.x, tab.y);
-                    await sleep(444);
+                    await randomSleep(410, 450);
                     viTri = "tren";
                 }
             }
 
-            await sleep(444);
+            await randomSleep(410, 460);
         }
 
     } finally {

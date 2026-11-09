@@ -120,7 +120,7 @@ function showStats(page, stats) {
                 #ui-stats {
                     position: fixed;
                     bottom: 0;
-                    left: -3px;
+                    left: 0px;
                     z-index: 2147483646;
                     pointer-events: none;
                     background: rgba(255, 255, 255, 0.9);
@@ -131,7 +131,7 @@ function showStats(page, stats) {
                     padding: 5px 5px;
                     font: 600 11px/1.6 monospace;
                     color: #000000ff;
-                    min-width: 125px;
+                    min-width: 110px;
                 }
                 #ui-stats .s-label { color: #353f4bff; font-size: 10px; }
                 #ui-stats .s-win   { color: #16a34a; }
@@ -154,12 +154,18 @@ function showStats(page, stats) {
         const profitSign = s.profit >= 0 ? "+" : "";
 
         panel.innerHTML = `
-            <div><span class="s-label">Vốn </span>${s.soVonBanDau}K</div>
-            <div><span class="s-label">Lãi </span><span class="${profitClass}">${profitSign}${s.profit}K</span></div>
-            <div><span class="s-label">Win </span><span class="s-win">${s.solenhwin}</span>  <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
-            <div><span class="s-label">Tab1 win: </span><span class="s-win">${s.solenhwin_Tab1 || 0}</span>  <span class="s-label">Thua: </span><span class="s-lose">${s.solenhthua_Tab1 || 0}</span></div>
-            <div><span class="s-label">Tab2 win: </span><span class="s-win">${s.solenhwin_Tab2 || 0}</span>  <span class="s-label">Thua: </span><span class="s-lose">${s.solenhthua_Tab2 || 0}</span></div>
-        `;
+        <div><span class="s-label">Vốn </span>${s.soVonBanDau}K</div>
+        <div><span class="s-label">Lãi </span><span class="${profitClass}">${profitSign}${s.profit}K</span></div>
+        <div><span class="s-label">Win </span><span class="s-win">${s.solenhwin}</span>  <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
+
+        <div><span class="s-label">Tab1 :</span></div>
+        <div><span class="s-label">Win : </span><span class="s-win">${s.solenhwin_Tab1 || 0}</span></div>
+        <div><span class="s-label">Thua : </span><span class="s-lose">${s.solenhthua_Tab1 || 0}</span></div>
+
+        <div><span class="s-label">Tab2 :</span></div>
+        <div><span class="s-label">Win : </span><span class="s-win">${s.solenhwin_Tab2 || 0}</span></div>
+        <div><span class="s-label">Thua : </span><span class="s-lose">${s.solenhthua_Tab2 || 0}</span></div>
+`;
     }, stats).catch(() => { });
 }
 
