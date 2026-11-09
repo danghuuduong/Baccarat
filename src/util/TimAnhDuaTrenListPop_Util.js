@@ -1,8 +1,8 @@
-// src/util/waitForRoomType_Util.js – Chờ nhận ra loại phòng trong danh sách tên truyền vào
+
 "use strict";
 
 const { checkOnce } = require("./checker");
-const { captureItems, IMAGES_DIR } = require("../captureState");
+const { captureItems, IMAGES_DIR } = require("../TXT/captureState");
 
 /**
  * Bounding box bao phủ tất cả item trong captureItems có tên nằm trong danhSachTen.

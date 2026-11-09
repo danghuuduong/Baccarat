@@ -33,18 +33,42 @@ const ToaDoTab = [
     { tab: 2, x: 53, y: 297 },
 ];
 
-// room-type_room_a
-
-x = 541, y = 689
-x = 584, y = 688
-x = 628, y = 691
-x = 675, y = 689
-x = 724, y = 687
+// room-type_room_a – toạ độ chip (ghi chú tham khảo, không phải code)
+// x=541,y=689 | x=584,y=688 | x=628,y=691 | x=675,y=689 | x=724,y=687
 
 const typeRoom = {
     room_a: "type_room_a",
-    roomb: "type_room_b"
+    room_b: "type_room_b"
 }
+
+const typeKetQua = {
+    [typeRoom.room_a]: {
+        blue: "kq_blue_type_A",
+        red: "kq_red_type_A",
+        green: "kq_green_type_A",
+
+    },
+    [typeRoom.room_b]: {
+        blue: "kq_blue_type_B",
+        red: "kq_red_type_B",
+        green: "kq_green_type_B",
+
+    },
+}
+
+const typeKetQuaToaDo = {
+    [typeRoom.room_a]: {
+        blue: { x: 532, y: 678 },   // TODO: P
+        red: { x: 861, y: 678 },   // TODO: B
+        green: { x: 663, y: 678 },   // TODO: T
+    },
+    [typeRoom.room_b]: {
+        blue: { x: 185, y: 480 },   // TODO: P
+        red: { x: 829, y: 438 },   // TODO: B
+        green: { x: 754, y: 506 },   // TODO: T
+    },
+};
+
 const TaoDoChip_Room = {
     [typeRoom.room_a]: {
         chip10: { x: 492, y: 686 },
@@ -80,6 +104,8 @@ module.exports = {
     DS_PHONG,
     ToaDoTab,
     TaoDoChip_Room,
-    typeRoom
+    typeRoom,
+    typeKetQua,
+    typeKetQuaToaDo
 };
 

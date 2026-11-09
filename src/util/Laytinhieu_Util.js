@@ -1,7 +1,5 @@
 "use strict";
 
-const { getKetQuaListTable } = require("../State/ketQuaListState");
-
 const TIE = "T";
 
 // Đổi tên kết quả sang màu tín hiệu

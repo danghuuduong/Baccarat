@@ -1,11 +1,10 @@
-// src/captureState.js – Quản lý captureItems và lưu/load state.txt
 "use strict";
 
-const fs   = require("fs");
+const fs = require("fs");
 const path = require("path");
 
-const STATE_FILE = path.join(__dirname, "..", "state.txt");
-const IMAGES_DIR = path.join(__dirname, "Images");
+const STATE_FILE = path.join(__dirname, "..", "..", "state.txt");
+const IMAGES_DIR = path.join(__dirname, "..", "Images");
 
 // Đảm bảo thư mục Images tồn tại
 fs.mkdirSync(IMAGES_DIR, { recursive: true });

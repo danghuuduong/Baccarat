@@ -3,15 +3,9 @@
 
 const fs = require("fs");
 const path = require("path");
-const { exec } = require("child_process");
 
-const { createChecker, checkOnce } = require("./util/checker");
-const { setupImageFinder } = require("./util/findImageInfo");
-const ketQuaListState = require("./State/ketQuaListState");
-const { captureItems, saveStateTXT, IMAGES_DIR } = require("./captureState");
-const player = require("play-sound")({});
-const SOUND_FILE = path.join(__dirname, "..", "tinh.mp3");
-
+const { createChecker, checkOnce } = require("../Util/checker");
+const { captureItems, saveStateTXT, IMAGES_DIR } = require("../TXT/captureState");
 /**
  * Đăng ký tất cả exposeFunction vào page.
  * @param {import('playwright').Page} page
@@ -43,7 +37,6 @@ async function setupExposeFunctions(page) {
             captureItems.push(item);
             saveStateTXT();
 
-            console.log(`📸 Đã chụp: ${filePath}`);
             return { success: true, item: { ...item, imgBase64: `data:image/png;base64,${shotBuf.toString("base64")}` } };
         } catch (err) {
             console.error("❌ doCapture lỗi:", err.message);
@@ -190,19 +183,6 @@ async function setupExposeFunctions(page) {
     });
 
     // ── Tìm thông tin ảnh từ captureItems theo name ───────────────────────
-    await setupImageFinder(page, () => captureItems);
-
-    // ── Lưu kết quả vào ketQuaListState (gọi từ browser) ─────────────────
-    await page.exposeFunction("FcSetKetQuaListTable", async (list) => {
-        try {
-            ketQuaListState.setKetQuaListTable(list);
-            return { success: true };
-        } catch (err) {
-            console.error("❌ FcSetKetQuaListTable lỗi:", err.message);
-            return { success: false, error: err.message };
-        }
-    });
-
 }
 
 module.exports = { setupExposeFunctions };

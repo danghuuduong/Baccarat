@@ -4,7 +4,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const CSS_PATH = path.join(__dirname, "..", "CSS", "UI_BatDau.css");
+const CSS_PATH = path.join(__dirname, "..", "CSS", "UI_Btn_BatDau.css");
 
 async function updateBatDau(page, state = {}) {
     if (!page) return;
@@ -70,11 +70,11 @@ async function updateBatDau(page, state = {}) {
     }).catch(() => { });
 }
 
-async function UI_BatDau(page, state = {}) {
+async function UI_Btn_BatDau(page, state = {}) {
     await updateBatDau(page, state);
 }
 
 module.exports = {
-    UI_BatDau,
+    UI_Btn_BatDau,
     updateBatDau
 };

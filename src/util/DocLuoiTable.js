@@ -1,4 +1,4 @@
-// src/util/DocLuoi.js – Chụp 1 lần, đọc 1 lưới bi (cột x hàng) → mảng "B" | "P" | "T"
+// src/Util/DocLuoi.js – Chụp 1 lần, đọc 1 lưới bi (cột x hàng) → mảng "B" | "P" | "T"
 "use strict";
 
 const { PNG } = require("pngjs");

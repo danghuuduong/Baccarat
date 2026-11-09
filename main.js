@@ -1,16 +1,17 @@
-// main.js – Entry point: khởi động browser và load trang
 "use strict";
 
 const { chromium } = require("playwright");
-const { UI_BatDau, updateBatDau } = require("./src/UI/UI_BatDau");
+const { UI_Btn_BatDau, updateBatDau } = require("./src/UI/UI_Btn_BatDau");
 require("dotenv").config();
 const setting = require("./src/State/setting");   // đường dẫn tuỳ file bạn đứng
 
-const { loadStateTXT } = require("./src/captureState");
-const { setupExposeFunctions } = require("./src/setupExposeFunctions");
+const { loadStateTXT } = require("./src/TXT/captureState");
+
 const { UI_KetQua8Phong } = require("./src/UI/UI_KetQua8Phong");
 const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
-const { ExposeFC_Main } = require("./src/ExposeFC_Main");
+const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
+const { showStats } = require("./src/UI/UI_InGame");
+const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -20,9 +21,15 @@ const BAT_TAM_XANH = true;
 // Gắn UI vào trang (gọi lần đầu và mỗi khi trang load lại / chuyển trang)
 // → Sau này bỏ UI vào đây
 async function ganUI(page) {
-    await UI_BatDau(page, { text: "Bắt đầu" })
+    await UI_Btn_BatDau(page, { text: "Bắt đầu" })
     await UI_KetQua8Phong(page, setting.get("phongRoomS"));
     await UI_TableKiemthu(page);
+    showStats(page, {
+        soVonBanDau: setting.get("soVonBanDau"),
+        profit: setting.get("profit"),
+        solenhwin: setting.get("solenhwin"),
+        solenhthua: setting.get("solenhthua"),
+    });
 }
 
 // =========== MAIN ==================
@@ -110,6 +117,21 @@ async function ganUI(page) {
         try { await ganUI(page); } catch (e) { }
     });
     // ____________________________________________________________subscribe
+    setting.subscribe((state, patch) => {
+        if (
+            patch.soVonBanDau !== undefined ||
+            patch.profit !== undefined ||
+            patch.solenhwin !== undefined ||
+            patch.solenhthua !== undefined
+        ) {
+            showStats(page, {
+                soVonBanDau: state.soVonBanDau,
+                profit: state.profit,
+                solenhwin: state.solenhwin,
+                solenhthua: state.solenhthua,
+            });
+        }
+    });
 
 })();
 // =========== HẾT MAIN ==================

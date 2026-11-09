@@ -1,8 +1,8 @@
 "use strict";
 
-const setting = require("./State/setting");
-const { updateBatDau } = require("./UI/UI_BatDau");
-const { vongLapChupManHinh } = require("./util/VongLapChupManHinh");
+const setting = require("../State/setting");
+const { updateBatDau } = require("../UI/UI_Btn_BatDau");
+const { vongLapChupManHinh } = require("../Util/VongLapChupManHinh");
 
 /**
  * Đăng ký tất cả exposeFunction vào page.

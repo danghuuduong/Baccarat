@@ -1,4 +1,4 @@
-// src/util/DocBi.js – Chụp 1 lần, đọc 8 bàn → mảng 8 phần tử, mỗi phần tử là mảng "B" | "P" | "T"
+// src/Util/DocBi.js – Chụp 1 lần, đọc 8 bàn → mảng 8 phần tử, mỗi phần tử là mảng "B" | "P" | "T"
 "use strict";
 
 const { PNG } = require("pngjs");

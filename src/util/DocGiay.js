@@ -1,4 +1,4 @@
-// src/util/DocGiay.js – Kiểm tra 8 ô số giây: có chữ trắng và không có màu đỏ → đạt
+// src/Util/DocGiay.js – Kiểm tra 8 ô số giây: có chữ trắng và không có màu đỏ → đạt
 // Làm giống DocBi: toạ độ là TÂM ô, tính các ô khác bằng công thức, đếm pixel quanh tâm
 "use strict";
 

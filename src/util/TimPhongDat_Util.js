@@ -1,4 +1,4 @@
-// src/util/TimPhongDat_Util.js – Từ 8 mảng phòng, trả về danh sách phòng đạt điều kiện
+// src/Util/TimPhongDat_Util.js – Từ 8 mảng phòng, trả về danh sách phòng đạt điều kiện
 "use strict";
 
 const { DS_PHONG } = require("../config/RoomConfig");

@@ -1,4 +1,4 @@
-// src/util/VongLapChupManHinh.js – Vòng lặp đọc 8 phòng, tìm phòng đạt và vào phòng
+// src/Util/VongLapChupManHinh.js – Vòng lặp đọc 8 phòng, tìm phòng đạt và vào phòng
 "use strict";
 
 const setting = require("../State/setting");
@@ -11,6 +11,25 @@ const { xulyVoPhong_Util } = require("./xulyVoPhong_Util");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Đưa chuột vào giữa màn hình rồi lăn xuống như người: 2 nhịp x 600px = 1200px
+async function lanXuongNhuNguoi(page) {
+    const { w, h } = await page.evaluate(() => ({
+        w: window.innerWidth,
+        h: window.innerHeight,
+    }));
+    await page.mouse.move(w * 0.5, h * 0.5);
+    await page.mouse.wheel(0, 3333);
+    await sleep(800);
+    await page.mouse.wheel(0, 3333);
+    await sleep(800);
+    const tabHienTai = setting.get("tabHienTai");
+    if (tabHienTai === 1) {
+        await page.mouse.wheel(0, 3333);
+        await sleep(500);
+    }
+
+}
+
 /**
  * @param {import('playwright').Page} page
  */
@@ -20,6 +39,7 @@ async function vongLapChupManHinh(page) {
     try {
         const SO_LAN_TRUOT_DE_XOA = 2;
         const demTruot = Array(8).fill(0);
+        let viTri = "tren"; // "tren" | "duoi"
 
         while (setting.get("isStart")) {
 
@@ -74,16 +94,24 @@ async function vongLapChupManHinh(page) {
                     break;
                 }
 
-                // Rỗng: tab 1 -> tab 2, tab 2 -> về tab 1
-                const tabMoi = tabHienTai === 1 ? 2 : 1;
-                setting.set("tabHienTai", tabMoi);
+                // Rỗng: clear sạch trước
+                if (viTri === "tren") {
+                    // chụp xong phần trên không có -> lăn xuống chụp tiếp
+                    await lanXuongNhuNguoi(page);
+                    viTri = "duoi";
+                } else {
+                    // chụp xong phần dưới không có -> tab 1 -> tab 2, tab 2 -> về tab 1
+                    const tabMoi = tabHienTai === 1 ? 2 : 1;
+                    setting.set("tabHienTai", tabMoi);
 
-                const tab = ToaDoTab.find(t => t.tab === tabMoi);
-                await page.mouse.click(tab.x, tab.y);
-                await sleep(500);
+                    const tab = ToaDoTab.find(t => t.tab === tabMoi);
+                    await page.mouse.click(tab.x, tab.y);
+                    await sleep(500);
+                    viTri = "tren";
+                }
             }
 
-            await sleep(333);
+            await sleep(1000);
         }
 
     } finally {
