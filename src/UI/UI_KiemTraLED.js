@@ -1,32 +1,36 @@
-// src/UI/UI_KiemTraVang.js – Nút kiểm tra DocKetQuaVang (gắn ở góc dưới trái)
+// src/UI/UI_KiemTraLED.js – Nút kiểm tra LED (vàng / xanh lá), gắn ở góc dưới trái
 "use strict";
 
 const { DocKetQuaVang } = require("../Util/DocKetQuaVang");
+const { DocKetQuaXanh } = require("../Util/DocKetQuaXanh");
 const { typeKetQuaToaDo } = require("../config/RoomConfig");
 
+const DUNG_VANG = false;   // true = vàng | false = xanh lá
+const DocKetQua = DUNG_VANG ? DocKetQuaVang : DocKetQuaXanh;
+const TEN_NUT = DUNG_VANG ? "Kiểm tra vàng" : "Kiểm tra xanh lá";
+
 // Gọi 1 lần duy nhất (exposeFunction giữ nguyên khi trang load lại)
-async function setupKiemTraVang(page) {
-    await page.exposeFunction("FC_KiemTraVang", async (roomType) => {
+async function setupKiemTraLED(page) {
+    await page.exposeFunction("FC_KiemTraLED", async (roomType) => {
         try {
-            const kq = await DocKetQuaVang(page, roomType);
-            // console.log("[KiemTraVang]", roomType, "→", kq);
+            const kq = await DocKetQua(page, roomType);
             return String(kq);
         } catch (e) {
-            console.log("[KiemTraVang] lỗi:", e.message);
+            console.log("[KiemTraLED] lỗi:", e.message);
             return "LỖI: " + e.message;
         }
     });
 }
 
 // Gọi mỗi lần trang load (nằm trong ganUI)
-async function UI_KiemTraVang(page) {
+async function UI_KiemTraLED(page) {
     const rooms = Object.keys(typeKetQuaToaDo);
 
-    await page.evaluate((rooms) => {
-        if (document.getElementById("__kiemTraVang")) return;
+    await page.evaluate(({ rooms, tenNut }) => {
+        if (document.getElementById("__kiemTraLED")) return;
 
         const box = document.createElement("div");
-        box.id = "__kiemTraVang";
+        box.id = "__kiemTraLED";
         box.style.cssText =
             "position:fixed !important;left:0px !important;bottom:3px !important;z-index:2147483647 !important;" +
             "display:flex !important;flex-direction:column !important;gap:3px !important;align-items:stretch !important;" +
@@ -50,7 +54,7 @@ async function UI_KiemTraVang(page) {
         hang2.style.cssText = "display:flex !important;gap:6px !important;align-items:center !important;";
 
         const btn = document.createElement("button");
-        btn.textContent = "Kiểm tra vàng";
+        btn.textContent = tenNut;
         btn.style.cssText =
             "background:#f59e0b !important;color:#000 !important;border:none !important;" +
             "cursor:pointer !important;padding:3px 6px !important;border-radius:4px !important;" +
@@ -64,13 +68,13 @@ async function UI_KiemTraVang(page) {
 
         btn.onclick = async () => {
             kq.textContent = "...";
-            kq.textContent = await window.FC_KiemTraVang(sel.value);
+            kq.textContent = await window.FC_KiemTraLED(sel.value);
         };
 
         hang2.append(btn, kq);
         box.append(sel, hang2);
         document.body.appendChild(box);
-    }, rooms);
+    }, { rooms, tenNut: TEN_NUT });
 }
 
-module.exports = { setupKiemTraVang, UI_KiemTraVang };
+module.exports = { setupKiemTraLED, UI_KiemTraLED };

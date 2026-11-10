@@ -64,11 +64,20 @@ const typeKetQuaToaDo = {
     },
     [typeRoom.room_b]: {
         blue: { x: 187, y: 506 },   // TODO: P
-        red: { x: 1204, y: 507 },   // TODO: B
+        red: { x: 1204, y: 506 },   // TODO: B
         green: { x: 756, y: 507 },   // TODO: T
     },
 };
 
+
+const typeStatusBatDauToaDo = {
+    [typeRoom.room_a]: {
+        xanh: { x: 197, y: 78 },   // TODO: P
+    },
+    [typeRoom.room_b]: {
+        xanh: { x: 181, y: 108 },   // TODO: P
+    },
+};
 const TaoDoChip_Room = {
     [typeRoom.room_a]: {
         chip10: { x: 492, y: 686 },
@@ -106,6 +115,7 @@ module.exports = {
     TaoDoChip_Room,
     typeRoom,
     typeKetQua,
-    typeKetQuaToaDo
+    typeKetQuaToaDo,
+    typeStatusBatDauToaDo
 };
 

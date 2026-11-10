@@ -7,6 +7,7 @@ const { typeRoom, /* typeKetQua, */ TaoDoChip_Room, ToaDoTab, TOA_DO_THOAT_PHONG
 const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 const { randomSleep, sleep } = require("./Sleep_Util");
+const { DocKetQuaXanh } = require("./DocKetQuaXanh");
 
 // Mảng bi đang dùng để lấy tín hiệu
 let arraySuDungChinhList = [];
@@ -75,6 +76,7 @@ async function xulyVoPhong_Util(page, danhSach) {
         solenhwin_Tab2: setting.get("solenhwin_Tab2"),
         solenhthua_Tab2: setting.get("solenhthua_Tab2"),
         soChuoiDat: setting.get("soChuoiDat"),
+        SoTienLonNhatTungSoHuu: setting.get("SoTienLonNhatTungSoHuu"),
     });
 
     await vongLapDatCuoc(page, roomType, tab);
@@ -126,11 +128,29 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         while (Date.now() - start < timeoutMs) {
             const r = await DocKetQuaVang(page, roomType);
             if (r) return r;
-            await sleep(200);
+            await sleep(133);
         }
         return null;
     }
 
+    // Chờ ván mới: thấy ảnh Status_BatDauVandau HOẶC điểm xanh lá là qua
+    async function choVanMoi(timeoutMs) {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            if (await DocKetQuaXanh(page, roomType)) {
+                console.log(`[choVanMoi] 🟢 XANH LÁ tìm thấy (sau ${Date.now() - start}ms)`);
+                return true;
+            }
+            const anh = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 200);
+            if (anh) {
+                console.log(`[choVanMoi] 🖼️ ẢNH tìm thấy (sau ${Date.now() - start}ms)`);
+                return true;
+            }
+            await sleep(100);
+        }
+        console.log(`[choVanMoi] ❌ Hết giờ ${timeoutMs}ms, không ai tìm thấy`);
+        return false;
+    }
     async function outPhong(lyDo, cl = "#d7f706ff") {
         isMatTienTRongPhongNay = false;
         cancelThongBao(page);
@@ -172,6 +192,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             solenhwin_Tab2: setting.get("solenhwin_Tab2"),
             solenhthua_Tab2: setting.get("solenhthua_Tab2"),
             soChuoiDat: setting.get("soChuoiDat"),
+            SoTienLonNhatTungSoHuu: setting.get("SoTienLonNhatTungSoHuu"),
         });
     };
 
@@ -258,7 +279,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             }
 
             // Hòa thép 1, 2 → chờ ván mới rồi tiếp tục
-            const found = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 80000);
+            const found = await choVanMoi(80000);
             if (!found) { await outPhong("Dính Hoà rồi - chạy"); return; }
             continue;
         }
@@ -307,7 +328,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             isMatTienTRongPhongNay = true;
 
             // Thép 1 hoặc 2 → chờ ván mới rồi tiếp tục
-            const found = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 80000);
+            const found = await choVanMoi(80000);
             if (!found) { await outPhong("OutPhong -> Không tìm được Status Start"); return; }
             continue;
         }

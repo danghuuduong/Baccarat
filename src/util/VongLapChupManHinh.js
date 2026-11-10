@@ -12,6 +12,9 @@ const { randomSleep } = require("./Sleep_Util");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// true = dùng cả tab 1 và tab 2 | false = chỉ tab 1, chụp xong thì lăn ngược lên
+const BAT_TAB_2 = false;
+
 // Đưa chuột vào giữa màn hình rồi lăn xuống như người: 2 nhịp x 600px = 1200px
 async function lanXuongNhuNguoi(page) {
     const { w, h } = await page.evaluate(() => ({
@@ -24,6 +27,21 @@ async function lanXuongNhuNguoi(page) {
     const soLan = setting.get("tabHienTai") === 1 ? 4 : 3;
     for (let i = 0; i < soLan; i++) {
         await page.mouse.wheel(0, 3333);
+        await randomSleep(55, 60);
+    }
+}
+
+// Lăn ngược lên đầu trang (dư 1 lần cho chắc)
+async function lanLenNhuNguoi(page) {
+    const { w, h } = await page.evaluate(() => ({
+        w: window.innerWidth,
+        h: window.innerHeight,
+    }));
+
+    await page.mouse.move(w / 2, h / 2);
+
+    for (let i = 0; i < 5; i++) {
+        await page.mouse.wheel(0, -3333);
         await randomSleep(55, 60);
     }
 }
@@ -97,7 +115,7 @@ async function vongLapChupManHinh(page) {
                     // chụp xong phần trên không có -> lăn xuống chụp tiếp
                     await lanXuongNhuNguoi(page);
                     viTri = "duoi";
-                } else {
+                } else if (BAT_TAB_2) {
                     // chụp xong phần dưới không có -> tab 1 -> tab 2, tab 2 -> về tab 1
                     const tabMoi = tabHienTai === 1 ? 2 : 1;
                     setting.set("tabHienTai", tabMoi);
@@ -105,6 +123,10 @@ async function vongLapChupManHinh(page) {
                     const tab = ToaDoTab.find(t => t.tab === tabMoi);
                     await page.mouse.click(tab.x, tab.y);
                     await randomSleep(410, 450);
+                    viTri = "tren";
+                } else {
+                    // chỉ tab 1: lăn ngược lên đầu rồi chụp lại
+                    await lanLenNhuNguoi(page);
                     viTri = "tren";
                 }
             }

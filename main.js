@@ -6,14 +6,14 @@ require("dotenv").config();
 const setting = require("./src/State/setting");   // đường dẫn tuỳ file bạn đứng
 
 const { loadStateTXT } = require("./src/TXT/captureState");
+const { loadSettingTXT } = require("./src/TXT/settingState");
 
 const { UI_KetQua8Phong } = require("./src/UI/UI_KetQua8Phong");
 const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
 const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
 const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
-const { UI_KiemTraVang, setupKiemTraVang } = require("./src/UI/UI_KiemTraVang");
-
+const { setupKiemTraLED, UI_KiemTraLED } = require("./src/UI/UI_KiemTraLED");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
@@ -25,9 +25,10 @@ async function ganUI(page) {
     await UI_Btn_BatDau(page, { text: "Bắt đầu" })
     await UI_KetQua8Phong(page, setting.get("phongRoomS"));
     await UI_TableKiemthu(page);
-    // await UI_KiemTraVang(page);
+    // await UI_KiemTraLED(page);
     showStats(page, {
         soVonBanDau: setting.get("soVonBanDau"),
+        SoTienLonNhatTungSoHuu: setting.get("SoTienLonNhatTungSoHuu"),
         profit: setting.get("profit"),
         solenhwin: setting.get("solenhwin"),
         solenhthua: setting.get("solenhthua"),
@@ -42,6 +43,7 @@ async function ganUI(page) {
 // =========== MAIN ==================
 (async () => {
     loadStateTXT();
+    loadSettingTXT();
 
     const browser = await chromium.launch({
         headless: false,
@@ -105,7 +107,7 @@ async function ganUI(page) {
 
     await setupExposeFunctions(page);
     await ExposeFC_Main(page);
-    // await setupKiemTraVang(page);
+    // await setupKiemTraLED(page);
     // Trong iframe, clientX chỉ tính từ góc iframe → cộng vị trí iframe để ra toạ độ thật
     await page.exposeBinding("FC_Log", async ({ frame }, x, y) => {
         let ox = 0, oy = 0;
@@ -127,6 +129,7 @@ async function ganUI(page) {
     setting.subscribe((state, patch) => {
         if (
             patch.soVonBanDau !== undefined ||
+            patch.SoTienLonNhatTungSoHuu !== undefined ||
             patch.profit !== undefined ||
             patch.solenhwin !== undefined ||
             patch.solenhthua !== undefined ||
@@ -138,6 +141,7 @@ async function ganUI(page) {
         ) {
             showStats(page, {
                 soVonBanDau: state.soVonBanDau,
+                SoTienLonNhatTungSoHuu: state.SoTienLonNhatTungSoHuu,
                 profit: state.profit,
                 solenhwin: state.solenhwin,
                 solenhthua: state.solenhthua,

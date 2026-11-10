@@ -107,7 +107,7 @@ function hideLuoiBi(page) {
 /**
  * Hiển thị / cập nhật panel thống kê góc trái dưới.
  * @param {import('playwright').Page} page
- * @param {{ soVonBanDau: number, profit: number, solenhwin: number, solenhthua: number, solenhwin_Tab1?: number, solenhthua_Tab1?: number, solenhwin_Tab2?: number, solenhthua_Tab2?: number, soChuoiDat?: number }} stats
+ * @param {{ soVonBanDau: number, SoTienLonNhatTungSoHuu?: number, profit: number, solenhwin: number, solenhthua: number, solenhwin_Tab1?: number, solenhthua_Tab1?: number, solenhwin_Tab2?: number, solenhthua_Tab2?: number, soChuoiDat?: number }} stats
  */
 function showStats(page, stats) {
     if (!page) return;
@@ -236,6 +236,7 @@ function showStats(page, stats) {
 
         statsInfo.innerHTML = `
             <div><span class="s-label">Vốn </span>${s.soVonBanDau}K</div>
+            <div><span class="s-label">$Max </span><span style="color:#d97706;font-weight:bold">${s.SoTienLonNhatTungSoHuu}K</span></div>
             <div><span class="s-label">Lãi </span><span class="${profitClass}">${profitSign}${s.profit}K</span></div>
             <div><span class="s-label">Win </span><span class="s-win">${s.solenhwin}</span>  <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
 
