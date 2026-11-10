@@ -28,6 +28,16 @@ async function ExposeFC_Main(page) {
 
         if (isStart) vongLapChupManHinh(page);
     });
+
+    await page.exposeFunction("FC_CapNhatSoChuoiDat", async (val) => {
+        const num = parseInt(val, 10);
+        if (!isNaN(num) && num >= 0 && num <= 10) {
+            if (setting.get("soChuoiDat") !== num) {
+                setting.set("soChuoiDat", num);
+                console.log(`[Config] Cập nhật soChuoiDat = ${num}`);
+            }
+        }
+    });
 }
 
 module.exports = { ExposeFC_Main };

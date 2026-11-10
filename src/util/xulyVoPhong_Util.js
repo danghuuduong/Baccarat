@@ -58,7 +58,7 @@ async function xulyVoPhong_Util(page, danhSach) {
     arraySuDungChinhList = [...(phongTotNhat.arr || [])];
 
     // ── Phần đặt cược ─────────────────────────────────────────────────────
-    const thongBao = `Tab-${phongTotNhat.tab}, Phòng: ${phongTotNhat.phong}, Ngầm: ${phongTotNhat.ngam}, Thếp: ${phongTotNhat.infoTinHieu.thep} | ${roomType}`;
+    const thongBao = `Phòng: ${phongTotNhat.phong} =>  ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"}`;
     showThongBao(page, thongBao, 5000);
 
     const tab = phongTotNhat.tab || setting.get("tabHienTai") || 1;
@@ -74,6 +74,7 @@ async function xulyVoPhong_Util(page, danhSach) {
         solenhthua_Tab1: setting.get("solenhthua_Tab1"),
         solenhwin_Tab2: setting.get("solenhwin_Tab2"),
         solenhthua_Tab2: setting.get("solenhthua_Tab2"),
+        soChuoiDat: setting.get("soChuoiDat"),
     });
 
     await vongLapDatCuoc(page, roomType, tab);
@@ -130,7 +131,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         return null;
     }
 
-    async function outPhong(lyDo) {
+    async function outPhong(lyDo, cl = "#d7f706ff") {
         isMatTienTRongPhongNay = false;
         cancelThongBao(page);
         hideLuoiBi(page);
@@ -144,8 +145,8 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             tabHienTai: 1,
             isStart: true,
         });
-        showThongBao(page, `Out phòng: ${lyDo}`, 8000, "#d7f706ff");
-        await randomSleep(2000, 3000);
+        showThongBao(page, `${lyDo}`, 8000, cl);
+        await randomSleep(2500, 3500);
         // click tab 1 để thoát phòng
         const tab1 = ToaDoTab.find(t => t.tab === 1);
         await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
@@ -170,6 +171,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             solenhthua_Tab1: setting.get("solenhthua_Tab1"),
             solenhwin_Tab2: setting.get("solenhwin_Tab2"),
             solenhthua_Tab2: setting.get("solenhthua_Tab2"),
+            soChuoiDat: setting.get("soChuoiDat"),
         });
     };
 
@@ -178,7 +180,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         const tinHieu = LayTinHieu([...arraySuDungChinhList], isMatTienTRongPhongNay);
 
         if (!tinHieu) {
-            await outPhong("Không có tín hiệu");
+            await outPhong("OutPhong- Không có tín hiệu");
             return;
         }
 
@@ -230,10 +232,9 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             } else if (tab === 2) {
                 setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
             }
-            isMatTienTRongPhongNay = true;
             setting.set("profit", setting.get("profit") - sotienuoc);
             capNhatStats();
-            await outPhong("Không đọc được kết quả - coi như thua");
+            await outPhong("OutPhong -> Không đọc được kết quả - coi như thua");
             return;
         }
 
@@ -252,13 +253,13 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 
             if (tinHieu.thep === 3) {
-                await outPhong("Hòa thép 3- Cút thôi");
+                await outPhong(`🤝Lượn thôi  HÒA`, "#36ca0dff");
                 return;
             }
 
             // Hòa thép 1, 2 → chờ ván mới rồi tiếp tục
-            const found = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 60000);
-            if (!found) { await outPhong("Timeout chờ ván mới (sau hòa)"); return; }
+            const found = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 80000);
+            if (!found) { await outPhong("Dính Hoà rồi - chạy"); return; }
             continue;
         }
 
@@ -282,8 +283,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
                 setting.set("solenhwin_Tab2", setting.get("solenhwin_Tab2") + 1);
             }
             capNhatStats();
-            showThongBao(page, `✅ Ăn +${lai}K`, 8000, "#32fb24ff");
-            await outPhong("Thắng- Chuồn thôi");
+            await outPhong(`✅ Chuồn thôi- Ăn +${lai}K`, "#00fd59ff");
             return;
 
         } else {
@@ -297,16 +297,18 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
 
             setting.set("profit", setting.get("profit") - sotienuoc);
             capNhatStats();
-            showThongBao(page, `❌ THUA -${sotienuoc}K `, 8000, "#fb2424ff");
 
             if (tinHieu.thep === 3) {
-                await outPhong("Thua thép 3 - Dí rồi té thôi");
+                await outPhong(`❌Biến thôi -> THUA -${sotienuoc}K - Thếp 3 - Nhà cái bóp Dí rồi `, "#fb2424ff");
                 return;
+            } else {
+                showThongBao(page, `❌ THUA -${sotienuoc}K `, 8000, "#fb2424ff");
             }
+            isMatTienTRongPhongNay = true;
 
             // Thép 1 hoặc 2 → chờ ván mới rồi tiếp tục
-            const found = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 60000);
-            if (!found) { await outPhong("Timeout chờ ván mới (sau thua)"); return; }
+            const found = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 80000);
+            if (!found) { await outPhong("OutPhong -> Không tìm được Status Start"); return; }
             continue;
         }
     }

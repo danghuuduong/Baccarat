@@ -4,28 +4,35 @@
 const { PNG } = require("pngjs");
 const { typeKetQuaToaDo } = require("../config/RoomConfig");
 
-const NUA = 4;                    // vùng 8x8 quanh tâm
-const SO_PIXEL_TOI_THIEU = 3;     // >= 4 pixel vàng thì tính là sáng (không dùng tỉ lệ)
+const NUA = 4;                    // 4 vùng 8x8 quanh tâm
 const LE = NUA + 2;               // lề vùng chụp
-const DEBUG = false;              // true để in số pixel vàng của từng điểm
+const DEBUG = true;               // true để in chi tiết từng điểm
+
+// Ngưỡng % pixel vàng tối thiểu để tính là sáng, riêng cho từng type
+const PHAN_TRAM_TOI_THIEU = {
+    type_room_a: 25,
+    type_room_b: 10,
+};
+const NGUONG_MAC_DINH = 15;       // type nào chưa khai báo ở trên thì dùng số này
 
 function laVang(r, g, b) {
     return r > 180 && g > 140 && b < 140 && r - b > 90 && g - b > 50;
 }
 
-// Đếm pixel vàng quanh tâm
+// Trả về { vang, tong, phanTram } quanh tâm
 function demVang(png, vung, cx, cy) {
-    let vang = 0;
+    let vang = 0, tong = 0;
     for (let dy = -NUA; dy < NUA; dy++) {
         for (let dx = -NUA; dx < NUA; dx++) {
             const px = Math.round(cx - vung.x + dx);
             const py = Math.round(cy - vung.y + dy);
             if (px < 0 || py < 0 || px >= png.width || py >= png.height) continue;
+            tong++;
             const i = (py * png.width + px) * 4;
             if (laVang(png.data[i], png.data[i + 1], png.data[i + 2])) vang++;
         }
     }
-    return vang;
+    return { vang, tong, phanTram: tong ? (vang / tong) * 100 : 0 };
 }
 
 /**
@@ -46,17 +53,27 @@ async function DocKetQuaVang(page, roomType) {
     const buf = await page.screenshot({ clip: vung, type: "png", scale: "css" });
     const png = PNG.sync.read(buf);
 
-    // Lấy điểm nhiều pixel vàng nhất
+    // Lấy điểm có % pixel vàng cao nhất
     let best = null, max = 0;
     const log = [];
     for (const [ten, p] of diem) {
-        const n = demVang(png, vung, p.x, p.y);
-        log.push(`${ten}=${n}`);
-        if (n > max) { max = n; best = ten; }
+        const r = demVang(png, vung, p.x, p.y);
+        log.push(`${ten}=${r.vang}/${r.tong}px (${r.phanTram.toFixed(1)}%)`);
+        if (r.phanTram > max) { max = r.phanTram; best = ten; }
     }
-    if (DEBUG) console.log("[DocKetQuaVang]", roomType, log.join(" "));
 
-    return max >= SO_PIXEL_TOI_THIEU ? best : null;
+    const nguong = PHAN_TRAM_TOI_THIEU[roomType] ?? NGUONG_MAC_DINH;
+    const ketQua = max >= nguong ? best : null;
+
+    if (DEBUG) {
+        console.clear();
+        console.log(
+            "[DocKetQuaVang]😍", roomType, "|", log.join(" | "),
+            `| ngưỡng=${nguong}% | cao nhất=${best} ${max.toFixed(1)}% → ${ketQua}`
+        );
+    }
+
+    return ketQua;
 }
 
 module.exports = { DocKetQuaVang };

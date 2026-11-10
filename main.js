@@ -12,6 +12,7 @@ const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
 const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
 const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
+const { UI_KiemTraVang, setupKiemTraVang } = require("./src/UI/UI_KiemTraVang");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -24,11 +25,17 @@ async function ganUI(page) {
     await UI_Btn_BatDau(page, { text: "Bắt đầu" })
     await UI_KetQua8Phong(page, setting.get("phongRoomS"));
     await UI_TableKiemthu(page);
+    // await UI_KiemTraVang(page);
     showStats(page, {
         soVonBanDau: setting.get("soVonBanDau"),
         profit: setting.get("profit"),
         solenhwin: setting.get("solenhwin"),
         solenhthua: setting.get("solenhthua"),
+        solenhwin_Tab1: setting.get("solenhwin_Tab1"),
+        solenhthua_Tab1: setting.get("solenhthua_Tab1"),
+        solenhwin_Tab2: setting.get("solenhwin_Tab2"),
+        solenhthua_Tab2: setting.get("solenhthua_Tab2"),
+        soChuoiDat: setting.get("soChuoiDat"),
     });
 }
 
@@ -98,7 +105,7 @@ async function ganUI(page) {
 
     await setupExposeFunctions(page);
     await ExposeFC_Main(page);
-
+    // await setupKiemTraVang(page);
     // Trong iframe, clientX chỉ tính từ góc iframe → cộng vị trí iframe để ra toạ độ thật
     await page.exposeBinding("FC_Log", async ({ frame }, x, y) => {
         let ox = 0, oy = 0;
@@ -122,13 +129,23 @@ async function ganUI(page) {
             patch.soVonBanDau !== undefined ||
             patch.profit !== undefined ||
             patch.solenhwin !== undefined ||
-            patch.solenhthua !== undefined
+            patch.solenhthua !== undefined ||
+            patch.solenhwin_Tab1 !== undefined ||
+            patch.solenhthua_Tab1 !== undefined ||
+            patch.solenhwin_Tab2 !== undefined ||
+            patch.solenhthua_Tab2 !== undefined ||
+            patch.soChuoiDat !== undefined
         ) {
             showStats(page, {
                 soVonBanDau: state.soVonBanDau,
                 profit: state.profit,
                 solenhwin: state.solenhwin,
                 solenhthua: state.solenhthua,
+                solenhwin_Tab1: state.solenhwin_Tab1,
+                solenhthua_Tab1: state.solenhthua_Tab1,
+                solenhwin_Tab2: state.solenhwin_Tab2,
+                solenhthua_Tab2: state.solenhthua_Tab2,
+                soChuoiDat: state.soChuoiDat,
             });
         }
     });

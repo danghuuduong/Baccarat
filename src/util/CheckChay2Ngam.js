@@ -1,9 +1,10 @@
 "use strict";
 
-const TIE = "T";
-const SO_CHUOI_DAT = 2; // cháy liên tiếp từ 2 chu kỳ trở lên thì đạt
+const setting = require("../State/setting");
 
-// Trả về true nếu chuỗi cháy ngầm hiện tại >= 2, ngược lại false.
+const TIE = "T";
+
+// Trả về true nếu chuỗi cháy ngầm hiện tại >= soChuoiDat (mặc định 2), ngược lại false.
 // Mảng đọc theo cột, mỗi cột 6 ô. Mỗi cột có 2 chu kỳ:
 //   - Chu kỳ 1 (ô 1-3) theo màu ô 2 của cột trước
 //   - Chu kỳ 2 (ô 4-6) theo màu ô 5 của cột trước
@@ -45,7 +46,8 @@ function CheckChay2Ngam(arr) {
 
     // console.log(`⚠️ [CheckChay2Ngam] ngầm = ${chuoi} → ${chuoi >= SO_CHUOI_DAT}`);
     // return chuoi >= SO_CHUOI_DAT;
-    return { chuoi, isDat: chuoi >= SO_CHUOI_DAT };
+    const soChuoiDat = setting.get("soChuoiDat") ?? 2;
+    return { chuoi, isDat: chuoi >= soChuoiDat };
 }
 
 module.exports = { CheckChay2Ngam };

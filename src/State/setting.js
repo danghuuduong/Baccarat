@@ -7,6 +7,7 @@ module.exports = createStore({
     dangChay: false,             // vòng lặp đang chạy
     danhSachTimKiemRa: [],       // phòng đạt của tab đang đứng
     tabHienTai: 1,               // 1 | 2
+    soChuoiDat: 2,               // cháy liên tiếp từ X chu kỳ trở lên thì đạt
 
     // ── Trạng thái đặt cược ──────────────────────────────────────────────
     isDatCuocXong: false,        // đã xác nhận đặt cược thành công
