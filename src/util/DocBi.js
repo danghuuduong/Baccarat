@@ -4,11 +4,29 @@
 const { PNG } = require("pngjs");
 
 // ── Số đo (từ 4 điểm A, Z, D, E) ─────────────────────────────────────────────
-const A = { x: 133, y: 113 };
-const BUOC_BI_X = (234 - 133) / 6;   // ≈ 16.83
+// ── Số đo (đo lại các số này khi đổi kích thước) ─────────────────────────────
+
+// Bước 1: A = Ô chữ nhật 1 (cột 1 - hàng 1), 
+// Grid thuộc (cột 1 - hàng 1)  → lấy x, y
+const A = { x: 208, y: 114 };
+
+// Bước 2: 234 = Ô chữ nhật 1 (cột 1 - hàng 1), 
+// Grid thuộc (cột 7 - hàng 1)  → lấy x
+const BUOC_BI_X = (309 - 114) / 6;   // ≈ 16.83
+
+// Bước 3: 196 = Ô chữ nhật 1 (cột 1 - hàng 1), 
+// Grid thuộc (cột 1 - hàng 6)  → lấy y
 const BUOC_BI_Y = (196 - 113) / 5;   // ≈ 16.6
+
+// Bước 4: 579 = Ô chữ nhật 2 (cột 2 - hàng 1), 
+// Grid thuộc (cột 1 - hàng 1)  → lấy x
 const BUOC_BAN_X = 579 - 133;        // 446
-const BUOC_BAN_Y = 274 - 113;        // 161      // 189      khoảng cách giữa 2 ô to (dọc)
+
+// Bước 5: 274 = Ô chữ nhật 3 (cột 1 - hàng 2), 
+// Grid thuộc (cột 1 - hàng 1)  → lấy y
+const BUOC_BAN_Y = 227 - 113;        // 161
+
+
 
 const COT_BAN = 2, HANG_BAN = 4;         // 8 ô to: 2 cột × 4 hàng
 const COT_BI = 7, HANG_BI = 6;           // mỗi ô to: lưới bi 7 cột × 6 hàng
@@ -89,4 +107,61 @@ async function docBan(page) {
     return kq;
 }
 
-module.exports = { docBan, VUNG };
+// ── Vẽ khung kiểm tra lên web đang chạy (chỉ để nhìn, test xong thì xoá) ─────
+async function hienKhung(page) {
+    await page.evaluate((cfg) => {
+        const cu = document.getElementById("khung-kiem-tra");
+        if (cu) cu.remove();
+
+        const goc = document.createElement("div");
+        goc.id = "khung-kiem-tra";
+        goc.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;pointer-events:none;";
+
+        const ve = (x, y, w, h, mau) => {
+            const d = document.createElement("div");
+            d.style.cssText =
+                `position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;` +
+                `border:1px solid ${mau};box-sizing:border-box;`;
+            goc.appendChild(d);
+        };
+
+        for (let j = 0; j < cfg.HANG_BAN; j++) {
+            for (let i = 0; i < cfg.COT_BAN; i++) {
+                const ox = cfg.A.x + i * cfg.BUOC_BAN_X;
+                const oy = cfg.A.y + j * cfg.BUOC_BAN_Y;
+
+                // Khung xanh lá: bao cả lưới bi của ô chữ nhật này
+                ve(
+                    ox - cfg.NUA,
+                    oy - cfg.NUA,
+                    (cfg.COT_BI - 1) * cfg.BUOC_BI_X + 2 * cfg.NUA,
+                    (cfg.HANG_BI - 1) * cfg.BUOC_BI_Y + 2 * cfg.NUA,
+                    "lime"
+                );
+
+                // Khung đỏ: vùng lấy màu quanh tâm từng viên bi
+                for (let c = 0; c < cfg.COT_BI; c++) {
+                    for (let r = 0; r < cfg.HANG_BI; r++) {
+                        ve(
+                            ox + c * cfg.BUOC_BI_X - cfg.NUA,
+                            oy + r * cfg.BUOC_BI_Y - cfg.NUA,
+                            2 * cfg.NUA,
+                            2 * cfg.NUA,
+                            "red"
+                        );
+                    }
+                }
+            }
+        }
+        document.body.appendChild(goc);
+    }, { A, BUOC_BI_X, BUOC_BI_Y, BUOC_BAN_X, BUOC_BAN_Y, COT_BAN, HANG_BAN, COT_BI, HANG_BI, NUA });
+}
+
+async function xoaKhung(page) {
+    await page.evaluate(() => {
+        const d = document.getElementById("khung-kiem-tra");
+        if (d) d.remove();
+    });
+}
+
+module.exports = { docBan, VUNG, hienKhung, xoaKhung };

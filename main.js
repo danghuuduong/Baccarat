@@ -14,10 +14,11 @@ const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
 const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
 const { setupKiemTraLED, UI_KiemTraLED } = require("./src/UI/UI_KiemTraLED");
+const { hienKhung } = require("./src/Util/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
-const BAT_TAM_XANH = false;
+const BAT_TAM_XANH = true;
 
 // Gắn UI vào trang (gọi lần đầu và mỗi khi trang load lại / chuyển trang)
 // → Sau này bỏ UI vào đây
@@ -50,7 +51,10 @@ async function ganUI(page) {
         args: ["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"],
     });
 
-    const page = await browser.newPage();   // cửa sổ cố định 1280×720, DPR = 1
+    // const page = await browser.newPage();   // cửa sổ cố định 1280×720, DPR = 1
+    // const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1440, height: 810 } });
+    // const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 
 
     // Ép popup / link target=_blank mở ngay trong tab hiện tại (để UI không bị mất ở tab mới)
@@ -69,32 +73,93 @@ async function ganUI(page) {
                 if (window.__tamXanh) return;
                 window.__tamXanh = true;
 
+                const laTop = window === window.top;
+
                 const st = document.createElement("style");
                 st.textContent = "* { cursor: none !important; }";
                 document.head.appendChild(st);
 
-                const tam = document.createElement("div");
-                tam.style.cssText = "position:fixed;left:-100px;top:-100px;width:0;height:0;z-index:2147483647;pointer-events:none;";
-                tam.innerHTML =
-                    '<div style="position:absolute;left:-12px;top:-1px;width:24px;height:2px;background:#22c55e"></div>' +
-                    '<div style="position:absolute;left:-1px;top:-12px;width:2px;height:24px;background:#22c55e"></div>';
-                document.body.appendChild(tam);
+                let px = 100, py = 100;   // vị trí chấm (toạ độ trang chính)
+                let capNhat = () => { };
 
+                // Chỉ frame trên cùng mới có chấm
+                if (laTop) {
+                    const cham = document.createElement("div");
+                    cham.style.cssText =
+                        "position:fixed;width:6px;height:6px;border-radius:50%;background:#2563eb;" +
+                        "z-index:2147483647;pointer-events:none;";
+                    document.body.appendChild(cham);
+
+                    capNhat = () => {
+                        cham.style.left = (px - 3) + "px";
+                        cham.style.top = (py - 3) + "px";
+                    };
+                    capNhat();
+                }
+
+                // Xử lý sự kiện ở frame trên cùng
+                const xuLy = (d) => {
+                    if (d.loai === "move") { px = d.x; py = d.y; capNhat(); }
+                    else if (d.loai === "key") {
+                        if (d.key === "ArrowLeft") px -= 1;
+                        else if (d.key === "ArrowRight") px += 1;
+                        else if (d.key === "ArrowUp") py -= 1;
+                        else if (d.key === "ArrowDown") py += 1;
+                        capNhat();
+                    }
+                    else if (d.loai === "log") window.FC_Log(px, py);
+                };
+
+                // Gửi sự kiện: top thì xử lý luôn, frame con thì đẩy lên cha
+                const gui = (d) => {
+                    if (laTop) xuLy(d);
+                    else window.parent.postMessage({ tamXanh: true, ...d }, "*");
+                };
+
+                // Nhận từ frame con: cộng vị trí iframe rồi xử lý / đẩy tiếp lên
+                window.addEventListener("message", (e) => {
+                    const d = e.data;
+                    if (!d || !d.tamXanh) return;
+                    const x = { ...d };
+                    if (d.loai === "move") {
+                        for (const f of document.querySelectorAll("iframe,frame")) {
+                            if (f.contentWindow === e.source) {
+                                const b = f.getBoundingClientRect();
+                                x.x = d.x + b.left + f.clientLeft;
+                                x.y = d.y + b.top + f.clientTop;
+                                break;
+                            }
+                        }
+                    }
+                    if (laTop) xuLy(x);
+                    else window.parent.postMessage(x, "*");
+                });
+
+                // Chuột: ở frame nào cũng gửi về top
                 document.addEventListener("mousemove", (e) => {
-                    tam.style.left = e.clientX + "px";
-                    tam.style.top = e.clientY + "px";
+                    gui({ loai: "move", x: e.clientX, y: e.clientY });
                 }, true);
 
+                // Phím mũi tên chỉnh 1px
+                document.addEventListener("keydown", (e) => {
+                    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+                        e.preventDefault();
+                        gui({ loai: "key", key: e.key });
+                    }
+                }, true);
+
+                // Phím + (hoặc =) : in toạ độ
+                document.addEventListener("keydown", (e) => {
+                    if (e.key === "+" || e.key === "=" || e.code === "NumpadAdd") {
+                        e.preventDefault();
+                        gui({ loai: "log" });
+                    }
+                }, true);
+
+                // Chuột phải: in toạ độ
                 document.addEventListener("contextmenu", (e) => {
                     e.preventDefault();
-                    window.FC_Log(e.clientX, e.clientY);
-
-                    const dot = document.createElement("div");
-                    dot.style.cssText = `position:fixed;left:${e.clientX - 3}px;top:${e.clientY - 3}px;
-                    width:6px;height:6px;border-radius:50%;background:red;
-                    z-index:2147483647;pointer-events:none;`;
-                    document.body.appendChild(dot);
-                    setTimeout(() => dot.remove(), 3000);
+                    gui({ loai: "log" });
                 }, true);
             };
 
@@ -121,9 +186,13 @@ async function ganUI(page) {
     });
 
     await ganUI(page);
-
+    await hienKhung(page);   // ← test xong thì xoá dòng này
     page.on("load", async () => {
-        try { await ganUI(page); } catch (e) { }
+        try {
+            await ganUI(page);
+            await hienKhung(page);
+        }
+        catch (e) { }
     });
     // ____________________________________________________________subscribe
     setting.subscribe((state, patch) => {
