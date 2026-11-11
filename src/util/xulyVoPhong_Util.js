@@ -19,10 +19,19 @@ async function xulyVoPhong_Util(page, danhSach) {
     isMatTienTRongPhongNay = false;
 
     // Chọn phòng có ngam lớn nhất; bằng nhau thì chọn phòng có thép lớn nhất
-    const phongTotNhat = danhSach.reduce((max, phong) => {
-        if (phong.ngam !== max.ngam) return phong.ngam > max.ngam ? phong : max;
-        return phong.infoTinHieu.thep > max.infoTinHieu.thep ? phong : max;
-    });
+    let ungVien = [];
+    for (const phong of danhSach) {
+        if (ungVien.length === 0) { ungVien = [phong]; continue; }
+        const best = ungVien[0];
+        if (phong.ngam > best.ngam ||
+            (phong.ngam === best.ngam && phong.infoTinHieu.thep > best.infoTinHieu.thep)) {
+            ungVien = [phong];          // có thằng mạnh hơn, reset
+        } else if (phong.ngam === best.ngam &&
+            phong.infoTinHieu.thep === best.infoTinHieu.thep) {
+            ungVien.push(phong);        // hòa hoàn toàn, thêm vào
+        }
+    }
+    const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
 
     // ── Lần 1: Click vào phòng được chọn ──────────────────────────────────
     await page.mouse.click(
