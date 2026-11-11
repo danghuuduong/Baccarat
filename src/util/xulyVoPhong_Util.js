@@ -43,7 +43,7 @@ async function xulyVoPhong_Util(page, danhSach) {
     }
 
     if (!roomType) {
-        showThongBao(page, "Có lỗi khi vô phòng, khởi động tìm lại vòng lặp", 10000, "#e91f1fff");
+        outPhong("Out Phòng- Không tìm được type Phòng")
         setting.set("danhSachTimKiemRa", []);
         setting.set("tabHienTai", 1);
         setting.set("isStart", true);

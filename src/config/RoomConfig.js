@@ -1,36 +1,25 @@
 // src/config/RoomConfig.js – Cấu hình phòng chơi (toạ độ tiêu điểm các phòng, nút thoát phòng)
 "use strict";
 
-// ── Toạ độ tiêu điểm từng phòng (x, y) ──────────────────────────────────────
-const ROOMS = [
-    { id: 1, x: 320, y: 380 },
-    { id: 2, x: 640, y: 380 },
-    { id: 3, x: 950, y: 380 },
-    { id: 4, x: 320, y: 530 },
-    { id: 5, x: 640, y: 530 },
-    { id: 6, x: 950, y: 530 },
-    { id: 7, x: 320, y: 650 },
-    { id: 8, x: 640, y: 650 },
-    { id: 9, x: 950, y: 650 },
-];
 
+// Tìm phòng đạt để click
 const DS_PHONG = [
-    { ten: "Phòng-1", x: 511, y: 217 },
-    { ten: "Phòng-2", x: 960, y: 217 },
+    { ten: "Phòng-1", x: 189.46, y: 82.5 },
+    { ten: "Phòng-2", x: 590.1, y: 82.5 },
 
-    { ten: "Phòng-3", x: 511, y: 377 },
-    { ten: "Phòng-4", x: 960, y: 377 },
+    { ten: "Phòng-3", x: 189.46, y: 226.8 },
+    { ten: "Phòng-4", x: 590.1, y: 226.8 },
 
-    { ten: "Phòng-5", x: 511, y: 540 },
-    { ten: "Phòng-6", x: 960, y: 540 },
+    { ten: "Phòng-5", x: 189.46, y: 371.4 },
+    { ten: "Phòng-6", x: 590.1, y: 371.4 },
 
-    { ten: "Phòng-7", x: 511, y: 701 },
-    { ten: "Phòng-8", x: 960, y: 701 },
+    { ten: "Phòng-7", x: 189.46, y: 516.06 },
+    { ten: "Phòng-8", x: 590.1, y: 516.06 },
 ];
 
 const ToaDoTab = [
-    { tab: 1, x: 53, y: 253 },
-    { tab: 2, x: 53, y: 297 },
+    { tab: 1, x: 114, y: 231 },
+    { tab: 2, x: 114, y: 262 },
 ];
 
 // room-type_room_a – toạ độ chip (ghi chú tham khảo, không phải code)
@@ -58,57 +47,56 @@ const typeKetQua = {
 
 const typeKetQuaToaDo = {
     [typeRoom.room_a]: {
-        blue: { x: 530, y: 653 },   // TODO: P
-        red: { x: 860, y: 652 },   // TODO: B
-        green: { x: 655, y: 657 },   // TODO: T
+        blue: { x: 541.25, y: 562 },   // TODO: P
+        red: { x: 839, y: 562 },   // TODO: B
+        green: { x: 729.923, y: 610 },   // TODO: T
     },
     [typeRoom.room_b]: {
-        blue: { x: 187, y: 506 },   // TODO: P
-        red: { x: 1204, y: 506 },   // TODO: B
-        green: { x: 756, y: 507 },   // TODO: T
+        blue: { x: 232.8, y: 452.7 },   // TODO: P
+        red: { x: 1146, y: 452.243 },   // TODO: B
+        green: { x: 604.743, y: 454.765 },   // TODO: T
     },
 };
 
 
 const typeStatusBatDauToaDo = {
     [typeRoom.room_a]: {
-        xanh: { x: 197, y: 78 },   // TODO: P
+        xanh: { x: 241.59, y: 70.165 },   // TODO: P
     },
     [typeRoom.room_b]: {
-        xanh: { x: 181, y: 108 },   // TODO: P
+        xanh: { x: 228.95, y: 96.245 },   // TODO: P
     },
 };
 const TaoDoChip_Room = {
     [typeRoom.room_a]: {
-        chip10: { x: 492, y: 686 },
-        chip20: { x: 541, y: 686 },
-        chip50: { x: 586, y: 686 },
-        chip100: { x: 634, y: 686 },
-        chip500: { x: 677, y: 686 },
-        chip1000: { x: 716, y: 686 },
-        datCuoc_Blue: { x: 590, y: 619 },
-        datCuoc_Red: { x: 809, y: 618 },
-        buttonXacNhan: { x: 900, y: 686 }
+        chip10: { x: 510.4, y: 615.8 },
+        chip20: { x: 549, y: 615.8 },
+        chip50: { x: 590, y: 615.8 },
+        chip100: { x: 630, y: 615.8 },
+        chip500: { x: 670, y: 615.8 },
+        chip1000: { x: 715, y: 615.8 },
+        datCuoc_Blue: { x: 600, y: 550 },
+        datCuoc_Red: { x: 792, y: 550.8 },
+        buttonXacNhan: { x: 870, y: 615.8 }
     },
     [typeRoom.room_b]: {
-        chip10: { x: 933, y: 560 },
-        chip20: { x: 988, y: 560 },
-        chip50: { x: 1043, y: 560 },
-        chip100: { x: 1094, y: 560 },
-        chip500: { x: 1147, y: 560 },
-        chip1000: { x: 1200, y: 560 },
-        datCuoc_Blue: { x: 459, y: 470 },
-        datCuoc_Red: { x: 983, y: 470 },
-        buttonXacNhan: { x: 786, y: 567 }
+        chip10: { x: 905, y: 504 },
+        chip20: { x: 950, y: 504 },
+        chip50: { x: 1000, y: 504 },
+        chip100: { x: 1045, y: 504 },
+        chip500: { x: 1092, y: 504 },
+        chip1000: { x: 1139, y: 504 },
+        datCuoc_Blue: { x: 400, y: 427 },
+        datCuoc_Red: { x: 970, y: 427 },
+        buttonXacNhan: { x: 778, y: 508 }
     }
 }
 
 
 // ── Toạ độ click nút thoát phòng ─────────────────────────────────────────────
-const TOA_DO_THOAT_PHONG = { x: 1250, y: 32 };
+const TOA_DO_THOAT_PHONG = { x: 1180, y: 25 };
 
 module.exports = {
-    ROOMS,
     TOA_DO_THOAT_PHONG,
     DS_PHONG,
     ToaDoTab,

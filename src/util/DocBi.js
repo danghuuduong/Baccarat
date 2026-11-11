@@ -6,25 +6,29 @@ const { PNG } = require("pngjs");
 // ── Số đo (từ 4 điểm A, Z, D, E) ─────────────────────────────────────────────
 // ── Số đo (đo lại các số này khi đổi kích thước) ─────────────────────────────
 
-// Bước 1: A = Ô chữ nhật 1 (cột 1 - hàng 1), 
-// Grid thuộc (cột 1 - hàng 1)  → lấy x, y
-const A = { x: 208, y: 114 };
+// Quy tắc: bước theo x thì CHỈ lấy x trừ x, bước theo y thì CHỈ lấy y trừ y.
+// Luôn là: điểm sau - điểm đầu (A). Không bao giờ trộn x với y.
+// Mỗi điểm đo bằng chấm xanh, chép nguyên văn "x, y" (trái là x, phải là y).
 
-// Bước 2: 234 = Ô chữ nhật 1 (cột 1 - hàng 1), 
-// Grid thuộc (cột 7 - hàng 1)  → lấy x
-const BUOC_BI_X = (309 - 114) / 6;   // ≈ 16.83
+// Bước 1: A = tâm viên bi (cột 1 - hàng 1) của Ô chữ nhật 1 → lấy x, y
+// Đo được: 184.5, 101.5
+const A = { x: 184.5, y: 101.5 };
 
-// Bước 3: 196 = Ô chữ nhật 1 (cột 1 - hàng 1), 
-// Grid thuộc (cột 1 - hàng 6)  → lấy y
-const BUOC_BI_Y = (196 - 113) / 5;   // ≈ 16.6
+// Bước 2: Ô chữ nhật 1, viên (cột 7 - hàng 1) → lấy x
+// Đo được: 276, 102  → chỉ dùng x = 276
+const BUOC_BI_X = (276 - 184.5) / 6;   // ≈ 15.25
 
-// Bước 4: 579 = Ô chữ nhật 2 (cột 2 - hàng 1), 
-// Grid thuộc (cột 1 - hàng 1)  → lấy x
-const BUOC_BAN_X = 579 - 133;        // 446
+// Bước 3: Ô chữ nhật 1, viên (cột 1 - hàng 6) → lấy y
+// Đo được: 184.5, 176  → chỉ dùng y = 176
+const BUOC_BI_Y = (176 - 101.5) / 5;   // = 14.9
 
-// Bước 5: 274 = Ô chữ nhật 3 (cột 1 - hàng 2), 
-// Grid thuộc (cột 1 - hàng 1)  → lấy y
-const BUOC_BAN_Y = 227 - 113;        // 161
+// Bước 4: Ô chữ nhật 2 (cột 2, hàng 1), viên (cột 1 - hàng 1) → lấy x
+// Đo được: 585.6, 101.5  → chỉ dùng x = 585.6
+const BUOC_BAN_X = 585.6 - 184.5;      // = 401.1
+
+// Bước 5: Ô chữ nhật 3 (cột 1, hàng 2), viên (cột 1 - hàng 1) → lấy y
+// Đo được: 184.5, 246.3  → chỉ dùng y = 246.3
+const BUOC_BAN_Y = 246.3 - 101.5;      // = 144.8
 
 
 

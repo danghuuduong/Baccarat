@@ -6,7 +6,7 @@ const { typeStatusBatDauToaDo } = require("../config/RoomConfig");
 
 const NUA = 12;                   // vùng 24x24 quanh tâm
 const LE = NUA + 2;               // lề vùng chụp
-const DEBUG = false;               // true để in chi tiết
+const DEBUG = true;               // true để in chi tiết
 
 // Ngưỡng % pixel xanh lá tối thiểu để tính là có xanh, riêng cho từng type
 const PHAN_TRAM_TOI_THIEU = {

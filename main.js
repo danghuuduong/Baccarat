@@ -18,7 +18,7 @@ const { hienKhung } = require("./src/Util/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
-const BAT_TAM_XANH = true;
+const BAT_TAM_XANH = false;
 
 // Gắn UI vào trang (gọi lần đầu và mỗi khi trang load lại / chuyển trang)
 // → Sau này bỏ UI vào đây
@@ -51,10 +51,7 @@ async function ganUI(page) {
         args: ["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"],
     });
 
-    // const page = await browser.newPage();   // cửa sổ cố định 1280×720, DPR = 1
-    // const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
-    const page = await browser.newPage({ viewport: { width: 1440, height: 810 } });
-    // const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    const page = await browser.newPage();   // cửa sổ cố định 1280×720, DPR = 1
 
 
     // Ép popup / link target=_blank mở ngay trong tab hiện tại (để UI không bị mất ở tab mới)
@@ -125,8 +122,13 @@ async function ganUI(page) {
                         for (const f of document.querySelectorAll("iframe,frame")) {
                             if (f.contentWindow === e.source) {
                                 const b = f.getBoundingClientRect();
-                                x.x = d.x + b.left + f.clientLeft;
-                                x.y = d.y + b.top + f.clientTop;
+                                const cs = getComputedStyle(f);
+                                const pl = parseFloat(cs.paddingLeft) || 0;
+                                const pt = parseFloat(cs.paddingTop) || 0;
+                                const sx = f.offsetWidth ? b.width / f.offsetWidth : 1;
+                                const sy = f.offsetHeight ? b.height / f.offsetHeight : 1;
+                                x.x = b.left + (f.clientLeft + pl + d.x) * sx;
+                                x.y = b.top + (f.clientTop + pt + d.y) * sy;
                                 break;
                             }
                         }
@@ -173,6 +175,7 @@ async function ganUI(page) {
     await setupExposeFunctions(page);
     await ExposeFC_Main(page);
     // await setupKiemTraLED(page);
+
     // Trong iframe, clientX chỉ tính từ góc iframe → cộng vị trí iframe để ra toạ độ thật
     await page.exposeBinding("FC_Log", async ({ frame }, x, y) => {
         let ox = 0, oy = 0;
@@ -186,11 +189,11 @@ async function ganUI(page) {
     });
 
     await ganUI(page);
-    await hienKhung(page);   // ← test xong thì xoá dòng này
+    // await hienKhung(page);   // ← test xong thì xoá dòng này
     page.on("load", async () => {
         try {
             await ganUI(page);
-            await hienKhung(page);
+            // await hienKhung(page);
         }
         catch (e) { }
     });

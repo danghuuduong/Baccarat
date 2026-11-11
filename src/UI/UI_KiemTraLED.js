@@ -5,7 +5,7 @@ const { DocKetQuaVang } = require("../Util/DocKetQuaVang");
 const { DocKetQuaXanh } = require("../Util/DocKetQuaXanh");
 const { typeKetQuaToaDo } = require("../config/RoomConfig");
 
-const DUNG_VANG = false;   // true = vàng | false = xanh lá
+const DUNG_VANG = true;   // true = vàng | false = xanh lá
 const DocKetQua = DUNG_VANG ? DocKetQuaVang : DocKetQuaXanh;
 const TEN_NUT = DUNG_VANG ? "Kiểm tra vàng" : "Kiểm tra xanh lá";
 

@@ -3,11 +3,19 @@
 "use strict";
 
 const { PNG } = require("pngjs");
-
+// A: tâm ô số giây của phòng 1
+// Điểm 2: tâm ô số giây của phòng 2
+// Điểm 3: tâm ô số giây của phòng 3
 // ── Số đo (đo bằng chuột phải, là tâm ô số) ─────────────────────────────────
-const A = { x: 138, y: 92 };             // tâm ô số của phòng cột 1, hàng 1
-const BUOC_BAN_X = 446.5;                // khoảng cách giữa 2 phòng (ngang)
-const BUOC_BAN_Y = 161.1;                // khoảng cách giữa 2 phòng (dọc)
+// Điền 3 điểm đo (tâm ô số giây), chép nguyên văn x, y
+const D1 = { x: 189.46, y: 82.5 };    // phòng 1
+const D2 = { x: 590.1, y: 82.5 };    // phòng 2 (chỉ dùng x)
+const D3 = { x: 189.46, y: 226.8 };   // phòng 3 (chỉ dùng y)
+
+// Tự tính, không cần đụng
+const A = { x: D1.x, y: D1.y };
+const BUOC_BAN_X = D2.x - D1.x;
+const BUOC_BAN_Y = D3.y - D1.y;
 const COT_BAN = 2, HANG_BAN = 4;         // 8 phòng: 2 cột × 4 hàng
 
 const NUA_X = 5, NUA_Y = 4;              // nửa kích thước vùng đếm quanh tâm (vùng 8×10)

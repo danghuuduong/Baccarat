@@ -10,8 +10,8 @@ const DEBUG = true;               // true để in chi tiết từng điểm
 
 // Ngưỡng % pixel vàng tối thiểu để tính là sáng, riêng cho từng type
 const PHAN_TRAM_TOI_THIEU = {
-    type_room_a: 23,
-    type_room_b: 10,
+    type_room_a: 32,
+    type_room_b: 15,
 };
 const NGUONG_MAC_DINH = 15;       // type nào chưa khai báo ở trên thì dùng số này
 

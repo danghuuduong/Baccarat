@@ -27,7 +27,7 @@ function showLuoiBi(page, arr) {
                     backdrop-filter: blur(10px);
                     border: 1.5px solid rgba(0,0,0,0.12);
                     border-radius: 8px;
-                    padding: 6px 8px;
+                    padding: 3px 4px;
                     display: none;
                 }
                 #ui-luoi-bi table {
@@ -106,8 +106,9 @@ function hideLuoiBi(page) {
 
 /**
  * Hiển thị / cập nhật panel thống kê góc trái dưới.
+ * Vốn, $Max, Ngầm là input sửa được (gọi FC_CapNhatVon / FC_CapNhatMax / FC_CapNhatSoChuoiDat bên Node).
  * @param {import('playwright').Page} page
- * @param {{ soVonBanDau: number, SoTienLonNhatTungSoHuu?: number, profit: number, solenhwin: number, solenhthua: number, solenhwin_Tab1?: number, solenhthua_Tab1?: number, solenhwin_Tab2?: number, solenhthua_Tab2?: number, soChuoiDat?: number }} stats
+ * @param {{ soVonBanDau: number, SoTienLonNhatTungSoHuu?: number, profit: number, solenhwin: number, solenhthua: number, solenhwin_Tab1?: number, solenhthua_Tab1?: number, soChuoiDat?: number }} stats
  */
 function showStats(page, stats) {
     if (!page) return;
@@ -131,13 +132,20 @@ function showStats(page, stats) {
                     padding: 5px 6px;
                     font: 600 11px/1.5 monospace;
                     color: #000000ff;
-                    min-width: 115px;
+                    min-width: 100px;
+                    text-align: left;
                 }
                 #ui-stats .s-label { color: #353f4bff; font-size: 10px; }
                 #ui-stats .s-win   { color: #16a34a; }
                 #ui-stats .s-lose  { color: #dc2626; }
                 #ui-stats .s-profit-pos { color: #16a34a; }
                 #ui-stats .s-profit-neg { color: #dc2626; }
+                #ui-stats .s-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 4px;
+                }
                 #ui-stats input {
                     pointer-events: auto;
                     width: 38px;
@@ -147,9 +155,10 @@ function showStats(page, stats) {
                     border-radius: 4px;
                     background: #ffffff;
                     color: #0f172a;
-                    text-align: center;
+                    text-align: left;
                     outline: none;
                 }
+                #ui-stats input.wide { width: 52px; }
                 #ui-stats input:focus {
                     border-color: #2563eb;
                     box-shadow: 0 0 0 1px #2563eb;
@@ -169,20 +178,57 @@ function showStats(page, stats) {
         const profitClass = s.profit >= 0 ? "s-profit-pos" : "s-profit-neg";
         const profitSign = s.profit >= 0 ? "+" : "";
 
+        // Gắn sự kiện lưu cho 1 input (Enter/blur/change lưu, Escape huỷ)
+        const ganInput = (inputEl, tenHam, giaTriCu) => {
+            const save = () => {
+                if (inputEl.value === "" || isNaN(parseFloat(inputEl.value))) {
+                    inputEl.value = giaTriCu();
+                    return;
+                }
+                if (typeof window[tenHam] === "function") window[tenHam](inputEl.value);
+            };
+            inputEl.addEventListener("change", save);
+            inputEl.addEventListener("blur", save);
+            inputEl.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") { save(); inputEl.blur(); }
+                else if (e.key === "Escape") { inputEl.value = giaTriCu(); inputEl.blur(); }
+            });
+        };
+
         let statsInfo = document.getElementById("ui-stats-info");
+        let editRow = document.getElementById("ui-stats-edit");
         let inputRow = document.getElementById("ui-stats-input-row");
 
-        if (!statsInfo || !inputRow) {
+        if (!statsInfo || !editRow || !inputRow) {
             panel.innerHTML = "";
 
+            // Vốn + $Max: sửa được
+            editRow = document.createElement("div");
+            editRow.id = "ui-stats-edit";
+            editRow.innerHTML = `
+                <div class="s-row">
+                    <span class="s-label">Vốn</span>
+                    <input id="input-von" class="wide" type="number" min="0" value="${s.soVonBanDau}" />
+                </div>
+                <div class="s-row" style="margin-top:2px">
+                    <span class="s-label">$Max</span>
+                    <input id="input-max" class="wide" type="number" min="0" value="${s.SoTienLonNhatTungSoHuu ?? 0}" />
+                </div>
+            `;
+            panel.appendChild(editRow);
+            ganInput(editRow.querySelector("#input-von"), "FC_CapNhatVon", () => s.soVonBanDau);
+            ganInput(editRow.querySelector("#input-max"), "FC_CapNhatMax", () => s.SoTienLonNhatTungSoHuu ?? 0);
+
+            // Thống kê (vẽ lại liên tục)
             statsInfo = document.createElement("div");
             statsInfo.id = "ui-stats-info";
             panel.appendChild(statsInfo);
 
+            // Ngầm: sửa được
             inputRow = document.createElement("div");
             inputRow.id = "ui-stats-input-row";
             inputRow.innerHTML = `
-                <div style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between; gap: 4px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 3px;">
+                <div class="s-row" style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 3px;">
                     <span class="s-label">Ngầm:</span>
                     <input id="input-so-chuoi-dat" type="number" min="0" max="10" value="${s.soChuoiDat ?? 2}" />
                 </div>
@@ -199,52 +245,41 @@ function showStats(page, stats) {
                         window.FC_CapNhatSoChuoiDat(inputEl.value);
                     }
                 };
-
                 inputEl.addEventListener("change", saveValue);
-
                 inputEl.addEventListener("keydown", (e) => {
-                    if (e.key === "Enter") {
-                        saveValue();
-                        inputEl.blur();
-                    } else if (e.key === "Escape") {
-                        inputEl.value = s.soChuoiDat ?? 2;
-                        inputEl.blur();
-                    }
+                    if (e.key === "Enter") { saveValue(); inputEl.blur(); }
+                    else if (e.key === "Escape") { inputEl.value = s.soChuoiDat ?? 2; inputEl.blur(); }
                 });
-
-                inputEl.addEventListener("blur", () => {
-                    saveValue();
-                });
+                inputEl.addEventListener("blur", () => { saveValue(); });
             }
         } else {
-            const inputEl = document.getElementById("input-so-chuoi-dat");
-            if (inputEl && document.activeElement !== inputEl && s.soChuoiDat !== undefined) {
-                inputEl.value = s.soChuoiDat;
-            }
+            // Cập nhật giá trị, không đè khi đang gõ
+            const capNhatInput = (id, v) => {
+                const el = document.getElementById(id);
+                if (el && document.activeElement !== el && v !== undefined) el.value = v;
+            };
+            capNhatInput("input-von", s.soVonBanDau);
+            capNhatInput("input-max", s.SoTienLonNhatTungSoHuu);
+            capNhatInput("input-so-chuoi-dat", s.soChuoiDat);
         }
 
-        // Bấm chuột ra bất kỳ đâu ngoài input sẽ nhả focus (blur) ngay lập tức
+        // Bấm chuột ra ngoài input thì nhả focus (áp dụng cho cả 3 input)
         if (!window.__uiStatsInputBlurAttached) {
             window.__uiStatsInputBlurAttached = true;
             window.addEventListener("pointerdown", (e) => {
-                const inp = document.getElementById("input-so-chuoi-dat");
-                if (inp && document.activeElement === inp && e.target !== inp) {
-                    inp.blur();
+                const a = document.activeElement;
+                if (a && a.tagName === "INPUT" && a.closest("#ui-stats") && e.target !== a) {
+                    a.blur();
                 }
             }, true);
         }
 
         statsInfo.innerHTML = `
-            <div><span class="s-label">Vốn </span>${s.soVonBanDau}K</div>
-            <div><span class="s-label">$Max </span><span style="color:#d97706;font-weight:bold">${s.SoTienLonNhatTungSoHuu}K</span></div>
             <div><span class="s-label">Lãi </span><span class="${profitClass}">${profitSign}${s.profit}K</span></div>
-            <div><span class="s-label">Win </span><span class="s-win">${s.solenhwin}</span>  <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
+            <div><span class="s-label">Win </span><span class="s-win">${s.solenhwin}</span> <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
 
             <div><span class="s-label">Tab-1</span></div>
-            <div> <span class="s-label">win: </span><span class="s-win">${s.solenhwin_Tab1 || 0}</span>   <span class="s-label">Thua: </span><span class="s-lose">${s.solenhthua_Tab1 || 0}</span></div>
-
-            <div><span class="s-label">Tab-2</span></div>
-            <div> <span class="s-label">win: </span><span class="s-win">${s.solenhwin_Tab2 || 0}</span>   <span class="s-label">Thua: </span><span class="s-lose">${s.solenhthua_Tab2 || 0}</span></div>
+            <div><span class="s-label">win: </span><span class="s-win">${s.solenhwin_Tab1 || 0}</span> <span class="s-label">Thua: </span><span class="s-lose">${s.solenhthua_Tab1 || 0}</span></div>
         `;
     }, stats).catch(() => { });
 }
