@@ -14,7 +14,7 @@ const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
 const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
 const { setupKiemTraLED, UI_KiemTraLED } = require("./src/UI/UI_KiemTraLED");
-const { hienKhung } = require("./src/Util/DocBi");
+const { hienKhung } = require("./src/util/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
@@ -38,6 +38,13 @@ async function ganUI(page) {
         solenhwin_Tab2: setting.get("solenhwin_Tab2"),
         solenhthua_Tab2: setting.get("solenhthua_Tab2"),
         soChuoiDat: setting.get("soChuoiDat"),
+
+        TonThat_Max: setting.get("TonThat_Max"),
+        tiSoDuong: setting.get("tiSoDuong"),
+        tiSoAm: setting.get("tiSoAm"),
+        VSTISO: setting.get("VSTISO"),
+        VSTISO_Duong_Max: setting.get("VSTISO_Duong_Max"),
+        VSTISO_Am_Max: setting.get("VSTISO_Am_Max"),
     });
 }
 
@@ -209,7 +216,14 @@ async function ganUI(page) {
             patch.solenhthua_Tab1 !== undefined ||
             patch.solenhwin_Tab2 !== undefined ||
             patch.solenhthua_Tab2 !== undefined ||
-            patch.soChuoiDat !== undefined
+            patch.soChuoiDat !== undefined ||
+
+            patch.TonThat_Max !== undefined ||
+            patch.tiSoDuong !== undefined ||
+            patch.tiSoAm !== undefined ||
+            patch.VSTISO !== undefined ||
+            patch.VSTISO_Duong_Max !== undefined ||
+            patch.VSTISO_Am_Max !== undefined
         ) {
             showStats(page, {
                 soVonBanDau: state.soVonBanDau,
@@ -222,6 +236,13 @@ async function ganUI(page) {
                 solenhwin_Tab2: state.solenhwin_Tab2,
                 solenhthua_Tab2: state.solenhthua_Tab2,
                 soChuoiDat: state.soChuoiDat,
+
+                TonThat_Max: state.TonThat_Max,
+                tiSoDuong: state.tiSoDuong,
+                tiSoAm: state.tiSoAm,
+                VSTISO: state.VSTISO,
+                VSTISO_Duong_Max: state.VSTISO_Duong_Max,
+                VSTISO_Am_Max: state.VSTISO_Am_Max,
             });
         }
     });

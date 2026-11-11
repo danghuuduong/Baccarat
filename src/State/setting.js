@@ -26,4 +26,15 @@ module.exports = createStore({
 
 
     bendat: null,                // "red" | "blue" | null – bên vừa đặt cược
+
+
+    soDuMoc: 0,
+    tiSoDuong: 0,
+    tiSoAm: 0,
+    VSTISO: 0,
+    VSTISO_Duong_Max: 0,
+    VSTISO_Am_Max: 0,
+    TonThat_Max: 0,
+
+
 });

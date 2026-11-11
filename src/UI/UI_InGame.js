@@ -107,8 +107,9 @@ function hideLuoiBi(page) {
 /**
  * Hiển thị / cập nhật panel thống kê góc trái dưới.
  * Vốn, $Max, Ngầm là input sửa được (gọi FC_CapNhatVon / FC_CapNhatMax / FC_CapNhatSoChuoiDat bên Node).
+ * Nút Reset gọi FC_ResetThongKe.
  * @param {import('playwright').Page} page
- * @param {{ soVonBanDau: number, SoTienLonNhatTungSoHuu?: number, profit: number, solenhwin: number, solenhthua: number, solenhwin_Tab1?: number, solenhthua_Tab1?: number, soChuoiDat?: number }} stats
+ * @param {object} stats
  */
 function showStats(page, stats) {
     if (!page) return;
@@ -163,6 +164,16 @@ function showStats(page, stats) {
                     border-color: #2563eb;
                     box-shadow: 0 0 0 1px #2563eb;
                 }
+                #ui-stats button {
+                    pointer-events: auto;
+                    margin-top: 4px;
+                    width: 100%;
+                    font: 700 10px monospace;
+                    border: 1px solid #94a3b8;
+                    border-radius: 4px;
+                    background: #f1f5f9;
+                    cursor: pointer;
+                }
             `;
             document.head.appendChild(st);
         }
@@ -198,11 +209,12 @@ function showStats(page, stats) {
         let statsInfo = document.getElementById("ui-stats-info");
         let editRow = document.getElementById("ui-stats-edit");
         let inputRow = document.getElementById("ui-stats-input-row");
+        let extraInfo = document.getElementById("ui-stats-extra");
 
-        if (!statsInfo || !editRow || !inputRow) {
+        if (!statsInfo || !editRow || !inputRow || !extraInfo) {
             panel.innerHTML = "";
 
-            // Vốn + $Max: sửa được
+            // Vốn + $Max: sửa được; Tổn: chỉ hiển thị
             editRow = document.createElement("div");
             editRow.id = "ui-stats-edit";
             editRow.innerHTML = `
@@ -213,6 +225,10 @@ function showStats(page, stats) {
                 <div class="s-row" style="margin-top:2px">
                     <span class="s-label">$Max</span>
                     <input id="input-max" class="wide" type="number" min="0" value="${s.SoTienLonNhatTungSoHuu ?? 0}" />
+                </div>
+                <div class="s-row" style="margin-top:2px">
+                    <span class="s-label">Tổn</span>
+                    <span id="ui-ton-that" class="s-profit-neg">0</span>
                 </div>
             `;
             panel.appendChild(editRow);
@@ -252,6 +268,19 @@ function showStats(page, stats) {
                 });
                 inputEl.addEventListener("blur", () => { saveValue(); });
             }
+
+            // 5 dòng tỉ số dưới cùng
+            extraInfo = document.createElement("div");
+            extraInfo.id = "ui-stats-extra";
+            panel.appendChild(extraInfo);
+
+            // Nút Reset
+            const btnReset = document.createElement("button");
+            btnReset.textContent = "Reset";
+            btnReset.addEventListener("click", () => {
+                if (typeof window.FC_ResetThongKe === "function") window.FC_ResetThongKe();
+            });
+            panel.appendChild(btnReset);
         } else {
             // Cập nhật giá trị, không đè khi đang gõ
             const capNhatInput = (id, v) => {
@@ -280,6 +309,22 @@ function showStats(page, stats) {
 
             <div><span class="s-label">Tab-1</span></div>
             <div><span class="s-label">win: </span><span class="s-win">${s.solenhwin_Tab1 || 0}</span> <span class="s-label">Thua: </span><span class="s-lose">${s.solenhthua_Tab1 || 0}</span></div>
+        `;
+
+        // Tổn (TonThat_Max)
+        const tonEl = document.getElementById("ui-ton-that");
+        if (tonEl) tonEl.textContent = s.TonThat_Max || 0;
+
+        // 5 dòng tỉ số
+        const vs = s.VSTISO || 0;
+        extraInfo.innerHTML = `
+            <div style="margin-top:4px;border-top:1px solid rgba(0,0,0,0.08);padding-top:3px">
+                <div><span class="s-label">Dương: </span><span class="s-win">${s.tiSoDuong || 0}</span></div>
+                <div><span class="s-label">Âm: </span><span class="s-lose">${s.tiSoAm || 0}</span></div>
+                <div><span class="s-label">VS: </span><span class="${vs >= 0 ? "s-win" : "s-lose"}">${vs > 0 ? "+" : ""}${vs}</span></div>
+                <div><span class="s-label">VS Âm Max: </span><span class="s-lose">${s.VSTISO_Am_Max || 0}</span></div>
+                <div><span class="s-label">VS Dương Max: </span><span class="s-win">${s.VSTISO_Duong_Max || 0}</span></div>
+            </div>
         `;
     }, stats).catch(() => { });
 }

@@ -2,7 +2,7 @@
 
 const setting = require("../State/setting");
 const { updateBatDau } = require("../UI/UI_Btn_BatDau");
-const { vongLapChupManHinh } = require("../Util/VongLapChupManHinh");
+const { vongLapChupManHinh } = require("../util/VongLapChupManHinh");
 
 /**
  * Đăng ký tất cả exposeFunction vào page.
@@ -38,6 +38,38 @@ async function ExposeFC_Main(page) {
             }
         }
     });
+
+    await page.exposeFunction("FC_CapNhatVon", async (val) => {
+        const num = parseFloat(val);
+        if (!isNaN(num) && num >= 0) {
+            if (setting.get("soVonBanDau") !== num) {
+                setting.set("soVonBanDau", num);
+                console.log(`[Config] Cập nhật soVonBanDau = ${num}`);
+            }
+        }
+    });
+
+    await page.exposeFunction("FC_CapNhatMax", async (val) => {
+        const num = parseFloat(val);
+        if (!isNaN(num) && num >= 0) {
+            if (setting.get("SoTienLonNhatTungSoHuu") !== num) {
+                setting.set("SoTienLonNhatTungSoHuu", num);
+                console.log(`[Config] Cập nhật SoTienLonNhatTungSoHuu = ${num}`);
+            }
+        }
+    });
+    await page.exposeFunction("FC_ResetThongKe", async () => {
+        setting.set({
+            TonThat_Max: 0,
+            tiSoDuong: 0,
+            tiSoAm: 0,
+            VSTISO: 0,
+            VSTISO_Duong_Max: 0,
+            VSTISO_Am_Max: 0,
+        });
+        console.log("[Config] Reset thống kê");
+    });
+
 }
 
 module.exports = { ExposeFC_Main };
