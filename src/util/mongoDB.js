@@ -106,16 +106,26 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
             return false;
         }
 
+        const phanTram = Number(account.phanTramChiuThue ?? 50);
+        const hoaHongDelta = Math.round(delta * (phanTram / 100) * 100) / 100;
+
         const tools = Array.isArray(account.tools) ? account.tools : [];
         const existingTool = tools.find((t) => String(t.toolName) === tName);
 
         if (!existingTool) {
-            // Chưa có toolName này -> push phần tử mới vào mảng
+            const curWin = isWin ? 1 : 0;
+            const curLoss = isThua ? 1 : 0;
             const newTool = {
                 toolName: tName,
                 win: isWin ? 1 : 0,
                 Thua: isThua ? 1 : 0,
                 profit: delta,
+                currentWinStreak: curWin,
+                currentLossStreak: curLoss,
+                chuoiThangLienTiepCaoNhat: curWin,
+                chuoiThuaLienTiepCaoNhat: curLoss,
+                hoaHongHienTai: hoaHongDelta,
+                tongHoaHongDaThu: 0,
             };
 
             await database.collection("accounts").updateOne(
@@ -125,24 +135,42 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
                     $set: { updatedAt: new Date() }
                 }
             );
-            console.log(`[MongoDB] Đã thêm mới Tool [${tName}] cho tài khoản ${tk}`);
+            console.log(`[MongoDB] Đã thêm Tool [${tName}] cho ${tk} | Hoa Hồng: ${hoaHongDelta > 0 ? `+${hoaHongDelta}` : hoaHongDelta}K`);
         } else {
-            // Đã có -> cộng dồn
+            let curWin = Number(existingTool.currentWinStreak) || 0;
+            let curLoss = Number(existingTool.currentLossStreak) || 0;
+            let maxWin = Number(existingTool.chuoiThangLienTiepCaoNhat) || 0;
+            let maxLoss = Number(existingTool.chuoiThuaLienTiepCaoNhat) || 0;
+
+            if (isWin) {
+                curWin += 1;
+                curLoss = 0;
+                if (curWin > maxWin) maxWin = curWin;
+            } else if (isThua) {
+                curLoss += 1;
+                curWin = 0;
+                if (curLoss > maxLoss) maxLoss = curLoss;
+            }
+
             await database.collection("accounts").updateOne(
-                { taiKhoan: tk },
+                { taiKhoan: tk, "tools.toolName": tName },
                 {
                     $inc: {
-                        "tools.$[elem].win": isWin ? 1 : 0,
-                        "tools.$[elem].Thua": isThua ? 1 : 0,
-                        "tools.$[elem].profit": delta,
+                        "tools.$.win": isWin ? 1 : 0,
+                        "tools.$.Thua": isThua ? 1 : 0,
+                        "tools.$.profit": delta,
+                        "tools.$.hoaHongHienTai": hoaHongDelta,
                     },
-                    $set: { updatedAt: new Date() }
-                },
-                {
-                    arrayFilters: [{ "elem.toolName": tName }]
+                    $set: {
+                        "tools.$.currentWinStreak": curWin,
+                        "tools.$.currentLossStreak": curLoss,
+                        "tools.$.chuoiThangLienTiepCaoNhat": maxWin,
+                        "tools.$.chuoiThuaLienTiepCaoNhat": maxLoss,
+                        updatedAt: new Date()
+                    }
                 }
             );
-            console.log(`[MongoDB] Cập nhật Tool [${tName}] (${result}, profit: ${delta}K) cho tài khoản ${tk}`);
+            console.log(`[MongoDB] Cập nhật Tool [${tName}] (${result}, ${delta}K) | Hoa Hồng: ${hoaHongDelta > 0 ? `+${hoaHongDelta}` : hoaHongDelta}K`);
         }
 
         return true;
@@ -152,8 +180,68 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
     }
 }
 
+/**
+ * Lấy thông số mới nhất của Tool từ MongoDB
+ * @param {string} taiKhoan 
+ * @param {string} toolName 
+ */
+async function getToolStats(taiKhoan, toolName) {
+    try {
+        const database = await getDB();
+        if (!database) return null;
+        const tk = String(taiKhoan || "").trim();
+        const tName = String(toolName || "01").trim();
+        const account = await database.collection("accounts").findOne({ taiKhoan: tk });
+        if (!account) return null;
+        const tools = Array.isArray(account.tools) ? account.tools : [];
+        const tool = tools.find((t) => String(t.toolName) === tName);
+        return tool || null;
+    } catch (error) {
+        console.error("[MongoDB] getToolStats lỗi:", error.message);
+        return null;
+    }
+}
+
+/**
+ * Đưa toàn bộ thông số của Tool về 0 trên MongoDB
+ * @param {string} taiKhoan 
+ * @param {string} toolName 
+ */
+async function resetAllToolStats(taiKhoan, toolName) {
+    try {
+        const database = await getDB();
+        if (!database) return false;
+        const tk = String(taiKhoan || "").trim();
+        const tName = String(toolName || "01").trim();
+
+        await database.collection("accounts").updateOne(
+            { taiKhoan: tk, "tools.toolName": tName },
+            {
+                $set: {
+                    "tools.$.win": 0,
+                    "tools.$.Thua": 0,
+                    "tools.$.profit": 0,
+                    "tools.$.currentWinStreak": 0,
+                    "tools.$.currentLossStreak": 0,
+                    "tools.$.chuoiThangLienTiepCaoNhat": 0,
+                    "tools.$.chuoiThuaLienTiepCaoNhat": 0,
+                    "tools.$.hoaHongHienTai": 0,
+                    updatedAt: new Date()
+                }
+            }
+        );
+        console.log(`[MongoDB] Đã reset ALL Tool [${tName}] của ${tk} về 0`);
+        return true;
+    } catch (error) {
+        console.error("[MongoDB] resetAllToolStats lỗi:", error.message);
+        return false;
+    }
+}
+
 module.exports = {
     getDB,
     verifyLogin,
-    pushToolStats
+    pushToolStats,
+    getToolStats,
+    resetAllToolStats
 };

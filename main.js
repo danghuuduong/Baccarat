@@ -8,7 +8,7 @@ require("dotenv").config();
 const setting = require("./src/State/setting");   // đường dẫn tuỳ file bạn đứng
 
 const { loadStateTXT } = require("./src/TXT/captureState");
-const { loadSettingTXT } = require("./src/TXT/settingState");
+const { loadSettingTXT, saveSettingTXT } = require("./src/TXT/settingState");
 
 const { UI_KetQua8Phong } = require("./src/UI/UI_KetQua8Phong");
 const { UI_TableKiemthu } = require("./src/UI_TableKiemthu");
@@ -206,9 +206,23 @@ async function ganUI(page) {
 
         const toolName = process.env.TOOL_NAME || "01";
 
+        // Lấy thông số của tool tương ứng từ BE / CSDL
+        const tool = (result.account.tools || []).find((t) => String(t.toolName) === String(toolName));
+        const profit = tool ? (Number(tool.profit) || 0) : 0;
+        const solenhwin = tool ? (Number(tool.win) || 0) : 0;
+        const solenhthua = tool ? (Number(tool.Thua) || 0) : 0;
+
         // Lưu thông tin account & tool vào setting
         setting.set("currentAccount", result.account);
         setting.set("currentToolName", toolName);
+
+        // Set lại 3 thông số từ BE vào setting và lưu đồng bộ vào state2.txt
+        setting.set({
+            profit: profit,
+            solenhwin: solenhwin,
+            solenhthua: solenhthua,
+        });
+        saveSettingTXT();
 
         // Gỡ bỏ modal Login
         await removeLoginUI(page);

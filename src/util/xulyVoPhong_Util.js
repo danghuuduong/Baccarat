@@ -58,6 +58,35 @@ function buildStats() {
 // Mảng bi đang dùng để lấy tín hiệu
 let arraySuDungChinhList = [];
 
+async function outPhong(page, lyDo, cl = "#d7f706ff") {
+    cancelThongBao(page);
+    hideLuoiBi(page);
+    arraySuDungChinhList = [];
+    setting.set({
+        isDatCuocXong: false,
+        sotienuocHienTai: 0,
+        bendat: null,
+        danhSachTimKiemRa: [],
+        phongRoomS: [],
+        tabHienTai: 1,
+        isStart: true,
+    });
+    showThongBao(page, `${lyDo}`, 8000, cl);
+    await randomSleep(2500, 3500);
+    // click tab 1 để thoát phòng
+    const tab1 = ToaDoTab.find(t => t.tab === 1);
+    await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
+    await randomSleep(70, 150);
+    if (tab1) await page.mouse.click(Math.round(tab1.x), Math.round(tab1.y));
+    setting.set("tabHienTai", 1);
+    await randomSleep(200, 333);
+
+    setTimeout(() => {
+        const { vongLapChupManHinh } = require("./VongLapChupManHinh");
+        vongLapChupManHinh(page);
+    }, 444);
+}
+
 async function xulyVoPhong_Util(page, danhSach) {
 
     if (!danhSach || danhSach.length === 0) return;
@@ -103,15 +132,7 @@ async function xulyVoPhong_Util(page, danhSach) {
     }
 
     if (!roomType) {
-        outPhong("Out Phòng- Không tìm được type Phòng")
-        setting.set("danhSachTimKiemRa", []);
-        setting.set("tabHienTai", 1);
-        setting.set("isStart", true);
-
-        setTimeout(() => {
-            const { vongLapChupManHinh } = require("./VongLapChupManHinh");
-            vongLapChupManHinh(page);
-        }, 0);
+        await outPhong(page, "Out Phòng- Không tìm được type Phòng");
         return;
     }
 
@@ -141,8 +162,8 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
     // Di chuột tới điểm rồi mới click (để game nhận hover)
     const click = async (coord) => {
         const x = Math.round(coord.x), y = Math.round(coord.y);
-        await page.mouse.move(x, y, { steps: 4 });
-        await randomSleep(150, 222);
+        await page.mouse.move(x, y, { steps: 3 });
+        await randomSleep(100, 150);
         await page.mouse.click(x, y);
     };
 
@@ -162,9 +183,9 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
                 await click(coords[ten]);
-                await randomSleep(455, 555);
+                await randomSleep(222, 333);
                 await click(coordBen);
-                await randomSleep(455, 555);
+                await randomSleep(222, 333);
                 con -= gia;
             }
         }
@@ -186,46 +207,18 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         const start = Date.now();
         while (Date.now() - start < timeoutMs) {
             if (await DocKetQuaXanh(page, roomType)) {
-                console.log(`[choVanMoi] 🟢 XANH LÁ tìm thấy (sau ${Date.now() - start}ms)`);
+                // console.log(`[choVanMoi] 🟢 XANH LÁ tìm thấy (sau ${Date.now() - start}ms)`);
                 return true;
             }
             const anh = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 200);
             if (anh) {
-                console.log(`[choVanMoi] 🖼️ ẢNH tìm thấy (sau ${Date.now() - start}ms)`);
+                // console.log(`[choVanMoi] 🖼️ ẢNH tìm thấy (sau ${Date.now() - start}ms)`);
                 return true;
             }
             await sleep(100);
         }
-        console.log(`[choVanMoi] ❌ Hết giờ ${timeoutMs}ms, không ai tìm thấy`);
+        // console.log(`[choVanMoi] ❌ Hết giờ ${timeoutMs}ms, không ai tìm thấy`);
         return false;
-    }
-    async function outPhong(lyDo, cl = "#d7f706ff") {
-        cancelThongBao(page);
-        hideLuoiBi(page);
-        arraySuDungChinhList = [];
-        setting.set({
-            isDatCuocXong: false,
-            sotienuocHienTai: 0,
-            bendat: null,
-            danhSachTimKiemRa: [],
-            phongRoomS: [],
-            tabHienTai: 1,
-            isStart: true,
-        });
-        showThongBao(page, `${lyDo}`, 8000, cl);
-        await randomSleep(2500, 3500);
-        // click tab 1 để thoát phòng
-        const tab1 = ToaDoTab.find(t => t.tab === 1);
-        await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
-        await randomSleep(70, 150);
-        await page.mouse.click(Math.round(tab1.x), Math.round(tab1.y));
-        setting.set("tabHienTai", 1);
-        await randomSleep(200, 333);
-
-        setTimeout(() => {
-            const { vongLapChupManHinh } = require("./VongLapChupManHinh");
-            vongLapChupManHinh(page);
-        }, 444);
     }
 
     const capNhatStats = () => {
@@ -239,7 +232,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         const tinHieu = LayTinHieu([...arraySuDungChinhList]);
 
         if (!tinHieu) {
-            await outPhong("OutPhong- Không có tín hiệu");
+            await outPhong(page, "OutPhong- Không có tín hiệu");
             return;
         }
 
@@ -249,12 +242,10 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         const coordBen = tinHieu.tinhieu === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
 
         // ── 3. Chờ bảng chip ổn định rồi chọn chip + đặt bên ───────────────
-        await sleep(555);
-        await randomSleep(555, 633);
+        await randomSleep(111, 155);
         await datTien(sotienuoc, coordBen);
-
         // ── 4. Xác nhận ─────────────────────────────────────────────────────
-        await randomSleep(300, 500);
+        await randomSleep(222, 333);
 
         await click(coords.buttonXacNhan);
 
@@ -295,7 +286,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             syncKetQua("thua", -sotienuoc);
             capNhatMoc(-sotienuoc);
             capNhatStats();
-            await outPhong("OutPhong -> Không đọc được kết quả - coi như thua");
+            await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
             return;
         }
 
@@ -314,13 +305,13 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 
             if (tinHieu.thep === 3) {
-                await outPhong(`🤝Lượn thôi  HÒA`, "#36ca0dff");
+                await outPhong(page, `🤝Lượn thôi  HÒA`, "#36ca0dff");
                 return;
             }
 
             // Hòa thép 1, 2 → chờ ván mới rồi tiếp tục
             const found = await choVanMoi(80000);
-            if (!found) { await outPhong("Dính Hoà rồi - chạy"); return; }
+            if (!found) { await outPhong(page, "Dính Hoà rồi - chạy"); return; }
             continue;
         }
 
@@ -346,7 +337,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             }
             capNhatMoc(lai);
             capNhatStats();
-            await outPhong(`✅ Chuồn thôi- Ăn +${lai}K`, "#00fd59ff");
+            await outPhong(page, `✅ Chuồn thôi- Ăn +${lai}K`, "#00fd59ff");
             return;
 
         } else {
@@ -364,14 +355,14 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             capNhatStats();
 
             if (tinHieu.thep === 3) {
-                await outPhong(`❌Biến thôi -> THUA -${sotienuoc}K - Thếp 3 - Nhà cái bóp Dí rồi `, "#fb2424ff");
+                await outPhong(page, `❌Biến thôi -> THUA -${sotienuoc}K - Thếp 3 - Nhà cái bóp Dí rồi `, "#fb2424ff");
                 return;
             } else {
                 showThongBao(page, `❌ THUA -${sotienuoc}K `, 8000, "#fb2424ff");
             }
             // Thép 1 hoặc 2 → chờ ván mới rồi tiếp tục
             const found = await choVanMoi(80000);
-            if (!found) { await outPhong("OutPhong -> Không tìm được Status Start"); return; }
+            if (!found) { await outPhong(page, "OutPhong -> Không tìm được Status Start"); return; }
             continue;
         }
     }
