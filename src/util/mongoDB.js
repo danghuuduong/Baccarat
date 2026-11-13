@@ -1,5 +1,13 @@
 "use strict";
 
+const dns = require("dns");
+try {
+    // Ép Node.js phân giải qua Google/Cloudflare DNS để tránh lỗi querySrv ECONNREFUSED trên một số mạng/máy
+    dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+} catch (e) {
+    // Bỏ qua nếu môi trường không hỗ trợ
+}
+
 const { MongoClient } = require("mongodb");
 require("dotenv").config();
 
