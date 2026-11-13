@@ -210,46 +210,9 @@ async function getToolStats(taiKhoan, toolName) {
     }
 }
 
-/**
- * Đưa toàn bộ thông số của Tool về 0 trên MongoDB
- * @param {string} taiKhoan 
- * @param {string} toolName 
- */
-async function resetAllToolStats(taiKhoan, toolName) {
-    try {
-        const database = await getDB();
-        if (!database) return false;
-        const tk = String(taiKhoan || "").trim();
-        const tName = String(toolName || "01").trim();
-
-        await database.collection("accounts").updateOne(
-            { taiKhoan: tk, "tools.toolName": tName },
-            {
-                $set: {
-                    "tools.$.win": 0,
-                    "tools.$.Thua": 0,
-                    "tools.$.profit": 0,
-                    "tools.$.currentWinStreak": 0,
-                    "tools.$.currentLossStreak": 0,
-                    "tools.$.chuoiThangLienTiepCaoNhat": 0,
-                    "tools.$.chuoiThuaLienTiepCaoNhat": 0,
-                    "tools.$.hoaHongHienTai": 0,
-                    updatedAt: new Date()
-                }
-            }
-        );
-        console.log(`[MongoDB] Đã reset ALL Tool [${tName}] của ${tk} về 0`);
-        return true;
-    } catch (error) {
-        console.error("[MongoDB] resetAllToolStats lỗi:", error.message);
-        return false;
-    }
-}
-
 module.exports = {
     getDB,
     verifyLogin,
     pushToolStats,
-    getToolStats,
-    resetAllToolStats
+    getToolStats
 };

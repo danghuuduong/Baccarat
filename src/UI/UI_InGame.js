@@ -274,44 +274,21 @@ function showStats(page, stats) {
             extraInfo.id = "ui-stats-extra";
             panel.appendChild(extraInfo);
 
-            // Khung chứa 2 nút: Reset và Reset All
-            const btnRow = document.createElement("div");
-            btnRow.id = "ui-stats-btn-row";
-            btnRow.style.cssText = "display: flex; gap: 4px; margin-top: 4px;";
-
-            // Nút Reset cũ (giữ nguyên tỉ số, gọi DB/API fill Lãi/Win/Thua mới nhất vào UI)
-            const btnReset = document.createElement("button");
-            btnReset.id = "btn-reset-stats";
-            btnReset.textContent = "Reset";
-            btnReset.title = "Reset tỉ số & Lấy Lãi/Win/Thua mới nhất từ CSDL";
-            btnReset.style.cssText = "flex: 1; margin-top: 0; padding: 2px 4px;";
-            btnReset.addEventListener("click", async () => {
-                btnReset.textContent = "...";
-                if (typeof window.FC_ResetThongKe === "function") {
+            // Nút Reload: Tải lại Lãi, Win, Thua mới nhất từ CSDL và cập nhật giao diện
+            const btnReload = document.createElement("button");
+            btnReload.id = "btn-reload-stats";
+            btnReload.textContent = "Reload";
+            btnReload.title = "Tải lại dữ liệu Lãi/Win/Thua từ CSDL & Reset tỉ số";
+            btnReload.addEventListener("click", async () => {
+                btnReload.textContent = "...";
+                if (typeof window.FC_ReloadThongKe === "function") {
+                    await window.FC_ReloadThongKe();
+                } else if (typeof window.FC_ResetThongKe === "function") {
                     await window.FC_ResetThongKe();
                 }
-                btnReset.textContent = "Reset";
+                btnReload.textContent = "Reload";
             });
-
-            // Nút Reset All (mới: reset toàn bộ cả tỉ số lẫn Lãi/Win/Thua trên DB và UI)
-            const btnResetAll = document.createElement("button");
-            btnResetAll.id = "btn-reset-all-stats";
-            btnResetAll.textContent = "Reset All";
-            btnResetAll.title = "Đưa tất cả về 0 (cả CSDL và UI)";
-            btnResetAll.style.cssText = "flex: 1; margin-top: 0; padding: 2px 4px; color: #dc2626; border-color: #fca5a5; background: #fef2f2;";
-            btnResetAll.addEventListener("click", async () => {
-                if (confirm("Bạn có chắc chắn muốn Reset ALL toàn bộ chỉ số về 0 (cả trên CSDL)?")) {
-                    btnResetAll.textContent = "...";
-                    if (typeof window.FC_ResetAllThongKe === "function") {
-                        await window.FC_ResetAllThongKe();
-                    }
-                    btnResetAll.textContent = "Reset All";
-                }
-            });
-
-            btnRow.appendChild(btnReset);
-            btnRow.appendChild(btnResetAll);
-            panel.appendChild(btnRow);
+            panel.appendChild(btnReload);
         } else {
             // Cập nhật giá trị, không đè khi đang gõ
             const capNhatInput = (id, v) => {

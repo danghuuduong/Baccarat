@@ -4,7 +4,7 @@ const setting = require("../State/setting");
 const { updateBatDau } = require("../UI/UI_Btn_BatDau");
 const { vongLapChupManHinh } = require("../util/VongLapChupManHinh");
 const { saveSettingTXT } = require("../TXT/settingState");
-const { getToolStats, resetAllToolStats } = require("../util/mongoDB");
+const { getToolStats } = require("../util/mongoDB");
 
 /**
  * Đăng ký tất cả exposeFunction vào page.
@@ -60,7 +60,7 @@ async function ExposeFC_Main(page) {
             }
         }
     });
-    await page.exposeFunction("FC_ResetThongKe", async () => {
+    const xuLyReloadThongKe = async () => {
         try {
             const currentAccount = setting.get("currentAccount");
             const taiKhoan = currentAccount?.taiKhoan;
@@ -88,45 +88,14 @@ async function ExposeFC_Main(page) {
 
             setting.set(patch);
             saveSettingTXT();
-            console.log("[Config] Reset thống kê tỉ số & đồng bộ Lãi/Win/Thua từ MongoDB vào UI");
+            console.log("[Config] Reload dữ liệu từ MongoDB thành công & reset tỉ số");
         } catch (err) {
-            console.error("❌ FC_ResetThongKe lỗi:", err.message);
+            console.error("❌ Reload dữ liệu lỗi:", err.message);
         }
-    });
+    };
 
-    await page.exposeFunction("FC_ResetAllThongKe", async () => {
-        try {
-            const currentAccount = setting.get("currentAccount");
-            const taiKhoan = currentAccount?.taiKhoan;
-            const toolName = setting.get("currentToolName") || process.env.TOOL_NAME || "01";
-
-            // Đưa toàn bộ chỉ số trên CSDL về 0
-            if (taiKhoan) {
-                await resetAllToolStats(taiKhoan, toolName);
-            }
-
-            // Đưa toàn bộ chỉ số trong game & UI về 0
-            setting.set({
-                TonThat_Max: 0,
-                tiSoDuong: 0,
-                tiSoAm: 0,
-                VSTISO: 0,
-                VSTISO_Duong_Max: 0,
-                VSTISO_Am_Max: 0,
-                profit: 0,
-                solenhwin: 0,
-                solenhthua: 0,
-                solenhwin_Tab1: 0,
-                solenhthua_Tab1: 0,
-                solenhwin_Tab2: 0,
-                solenhthua_Tab2: 0,
-            });
-            saveSettingTXT();
-            console.log(`[Config] Đã Reset ALL thống kê và đưa Tool [${toolName}] về 0`);
-        } catch (err) {
-            console.error("❌ FC_ResetAllThongKe lỗi:", err.message);
-        }
-    });
+    await page.exposeFunction("FC_ReloadThongKe", xuLyReloadThongKe);
+    await page.exposeFunction("FC_ResetThongKe", xuLyReloadThongKe);
 
 }
 
