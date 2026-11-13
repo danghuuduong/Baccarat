@@ -182,9 +182,9 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         let con = tien;
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
-                await click(coords[ten]);
+                // await click(coords[ten]);
                 await randomSleep(222, 333);
-                await click(coordBen);
+                // await click(coordBen);
                 await randomSleep(222, 333);
                 con -= gia;
             }

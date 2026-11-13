@@ -20,7 +20,7 @@ const { hienKhung } = require("./src/util/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
-const BAT_TAM_XANH = true;
+const BAT_TAM_XANH = false;
 
 // Gắn UI vào trang (gọi lần đầu và mỗi khi trang load lại / chuyển trang)
 // → Sau này bỏ UI vào đây
