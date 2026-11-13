@@ -3,12 +3,11 @@
 
 const { PNG } = require("pngjs");
 
-
-const D1 = { x: 184.5, y: 101.5 };   // Ô 1: viên (cột 1 - hàng 1)
-const D2 = { x: 276, y: 102 };     // Ô 1: viên (cột 7 - hàng 1)  → chỉ dùng x
-const D3 = { x: 184.5, y: 176 };     // Ô 1: viên (cột 1 - hàng 6)  → chỉ dùng y
-const D4 = { x: 585.6, y: 101.5 };   // Ô 2 (cột 2, hàng 1): viên (cột 1 - hàng 1) → chỉ dùng x
-const D5 = { x: 184.5, y: 246.3 };   // Ô 3 (cột 1, hàng 2): viên (cột 1 - hàng 1) → chỉ dùng y
+const D1 = { x: 133, y: 113 };   // Ô 1: viên (cột 1 - hàng 1)
+const D2 = { x: 234, y: 113 };   // Ô 1: viên (cột 7 - hàng 1)  → chỉ dùng x
+const D3 = { x: 133, y: 196 };   // Ô 1: viên (cột 1 - hàng 6)  → chỉ dùng y
+const D4 = { x: 579, y: 113 };   // Ô 2 (cột 2, hàng 1): viên (cột 1 - hàng 1) → chỉ dùng x
+const D5 = { x: 133, y: 274 };   // Ô 3 (cột 1, hàng 2): viên (cột 1 - hàng 1) → chỉ dùng y
 
 // Cấu trúc lưới (ít khi đổi)
 const COT_BAN = 2, HANG_BAN = 4;     // 8 ô to: 2 cột × 4 hàng

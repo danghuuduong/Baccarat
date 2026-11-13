@@ -274,13 +274,44 @@ function showStats(page, stats) {
             extraInfo.id = "ui-stats-extra";
             panel.appendChild(extraInfo);
 
-            // Nút Reset
+            // Khung chứa 2 nút: Reset và Reset All
+            const btnRow = document.createElement("div");
+            btnRow.id = "ui-stats-btn-row";
+            btnRow.style.cssText = "display: flex; gap: 4px; margin-top: 4px;";
+
+            // Nút Reset cũ (giữ nguyên tỉ số, gọi DB/API fill Lãi/Win/Thua mới nhất vào UI)
             const btnReset = document.createElement("button");
+            btnReset.id = "btn-reset-stats";
             btnReset.textContent = "Reset";
-            btnReset.addEventListener("click", () => {
-                if (typeof window.FC_ResetThongKe === "function") window.FC_ResetThongKe();
+            btnReset.title = "Reset tỉ số & Lấy Lãi/Win/Thua mới nhất từ CSDL";
+            btnReset.style.cssText = "flex: 1; margin-top: 0; padding: 2px 4px;";
+            btnReset.addEventListener("click", async () => {
+                btnReset.textContent = "...";
+                if (typeof window.FC_ResetThongKe === "function") {
+                    await window.FC_ResetThongKe();
+                }
+                btnReset.textContent = "Reset";
             });
-            panel.appendChild(btnReset);
+
+            // Nút Reset All (mới: reset toàn bộ cả tỉ số lẫn Lãi/Win/Thua trên DB và UI)
+            const btnResetAll = document.createElement("button");
+            btnResetAll.id = "btn-reset-all-stats";
+            btnResetAll.textContent = "Reset All";
+            btnResetAll.title = "Đưa tất cả về 0 (cả CSDL và UI)";
+            btnResetAll.style.cssText = "flex: 1; margin-top: 0; padding: 2px 4px; color: #dc2626; border-color: #fca5a5; background: #fef2f2;";
+            btnResetAll.addEventListener("click", async () => {
+                if (confirm("Bạn có chắc chắn muốn Reset ALL toàn bộ chỉ số về 0 (cả trên CSDL)?")) {
+                    btnResetAll.textContent = "...";
+                    if (typeof window.FC_ResetAllThongKe === "function") {
+                        await window.FC_ResetAllThongKe();
+                    }
+                    btnResetAll.textContent = "Reset All";
+                }
+            });
+
+            btnRow.appendChild(btnReset);
+            btnRow.appendChild(btnResetAll);
+            panel.appendChild(btnRow);
         } else {
             // Cập nhật giá trị, không đè khi đang gõ
             const capNhatInput = (id, v) => {
@@ -306,9 +337,6 @@ function showStats(page, stats) {
         statsInfo.innerHTML = `
             <div><span class="s-label">Lãi </span><span class="${profitClass}">${profitSign}${s.profit}K</span></div>
             <div><span class="s-label">Win </span><span class="s-win">${s.solenhwin}</span> <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
-
-            <div><span class="s-label">Tab-1</span></div>
-            <div><span class="s-label">win: </span><span class="s-win">${s.solenhwin_Tab1 || 0}</span> <span class="s-label">Thua: </span><span class="s-lose">${s.solenhthua_Tab1 || 0}</span></div>
         `;
 
         // Tổn (TonThat_Max)
