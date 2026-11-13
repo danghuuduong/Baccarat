@@ -2,6 +2,8 @@
 
 const { chromium } = require("playwright");
 const { UI_Btn_BatDau, updateBatDau } = require("./src/UI/UI_Btn_BatDau");
+const { UI_Login, removeLoginUI } = require("./src/UI/UI_Login");
+const { verifyLogin } = require("./src/util/mongoDB");
 require("dotenv").config();
 const setting = require("./src/State/setting");   // đường dẫn tuỳ file bạn đứng
 
@@ -18,7 +20,7 @@ const { hienKhung } = require("./src/util/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
-const BAT_TAM_XANH = false;
+const BAT_TAM_XANH = true;
 
 // Gắn UI vào trang (gọi lần đầu và mỗi khi trang load lại / chuyển trang)
 // → Sau này bỏ UI vào đây
@@ -195,17 +197,48 @@ async function ganUI(page) {
         console.log(`x=${x + ox}, y=${y + oy}`);
     });
 
-    await ganUI(page);
+    // Đăng ký hàm đăng nhập FC_Login
+    await page.exposeFunction("FC_Login", async (taiKhoan, pass) => {
+        const result = await verifyLogin(taiKhoan, pass);
+        if (!result.success) {
+            return result;
+        }
+
+        const toolName = process.env.TOOL_NAME || "01";
+
+        // Lưu thông tin account & tool vào setting
+        setting.set("currentAccount", result.account);
+        setting.set("currentToolName", toolName);
+
+        // Gỡ bỏ modal Login
+        await removeLoginUI(page);
+
+        // Kích hoạt toàn bộ UI chức năng (Nút Bắt đầu, Stats, Bảng 8 phòng...)
+        await ganUI(page);
+
+        return { success: true };
+    });
+
+    const kiemTraVaGanUI = async () => {
+        if (setting.get("currentAccount")) {
+            await ganUI(page);
+        } else {
+            await UI_Login(page);
+        }
+    };
+
+    await kiemTraVaGanUI();
     // await hienKhung(page);   // ← test xong thì xoá dòng này
     page.on("load", async () => {
         try {
-            await ganUI(page);
+            await kiemTraVaGanUI();
             // await hienKhung(page);
         }
         catch (e) { }
     });
     // ____________________________________________________________subscribe
     setting.subscribe((state, patch) => {
+        if (!setting.get("currentAccount")) return; // Chưa đăng nhập thì không update stats
         if (
             patch.soVonBanDau !== undefined ||
             patch.SoTienLonNhatTungSoHuu !== undefined ||

@@ -1,1 +1,1 @@
-settingData={"soVonBanDau":41.5,"SoTienLonNhatTungSoHuu":91.5,"profit":883,"solenhwin":165,"solenhthua":154,"solenhwin_Tab1":165,"solenhthua_Tab1":154,"solenhwin_Tab2":0,"solenhthua_Tab2":0,"soChuoiDat":2}
+settingData={"soVonBanDau":41.5,"SoTienLonNhatTungSoHuu":91.5,"profit":883,"solenhwin":165,"solenhthua":154,"solenhwin_Tab1":165,"solenhthua_Tab1":154,"solenhwin_Tab2":0,"solenhthua_Tab2":0,"soChuoiDat":0}

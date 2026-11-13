@@ -3,37 +3,23 @@
 
 const { PNG } = require("pngjs");
 
-// ── Số đo (từ 4 điểm A, Z, D, E) ─────────────────────────────────────────────
-// ── Số đo (đo lại các số này khi đổi kích thước) ─────────────────────────────
 
-// Quy tắc: bước theo x thì CHỈ lấy x trừ x, bước theo y thì CHỈ lấy y trừ y.
-// Luôn là: điểm sau - điểm đầu (A). Không bao giờ trộn x với y.
-// Mỗi điểm đo bằng chấm xanh, chép nguyên văn "x, y" (trái là x, phải là y).
+const D1 = { x: 184.5, y: 101.5 };   // Ô 1: viên (cột 1 - hàng 1)
+const D2 = { x: 276, y: 102 };     // Ô 1: viên (cột 7 - hàng 1)  → chỉ dùng x
+const D3 = { x: 184.5, y: 176 };     // Ô 1: viên (cột 1 - hàng 6)  → chỉ dùng y
+const D4 = { x: 585.6, y: 101.5 };   // Ô 2 (cột 2, hàng 1): viên (cột 1 - hàng 1) → chỉ dùng x
+const D5 = { x: 184.5, y: 246.3 };   // Ô 3 (cột 1, hàng 2): viên (cột 1 - hàng 1) → chỉ dùng y
 
-// Bước 1: A = tâm viên bi (cột 1 - hàng 1) của Ô chữ nhật 1 → lấy x, y
-// Đo được: 184.5, 101.5
-const A = { x: 184.5, y: 101.5 };
+// Cấu trúc lưới (ít khi đổi)
+const COT_BAN = 2, HANG_BAN = 4;     // 8 ô to: 2 cột × 4 hàng
+const COT_BI = 7, HANG_BI = 6;       // mỗi ô to: 7 cột × 6 hàng bi
 
-// Bước 2: Ô chữ nhật 1, viên (cột 7 - hàng 1) → lấy x
-// Đo được: 276, 102  → chỉ dùng x = 276
-const BUOC_BI_X = (276 - 184.5) / 6;   // ≈ 15.25
-
-// Bước 3: Ô chữ nhật 1, viên (cột 1 - hàng 6) → lấy y
-// Đo được: 184.5, 176  → chỉ dùng y = 176
-const BUOC_BI_Y = (176 - 101.5) / 5;   // = 14.9
-
-// Bước 4: Ô chữ nhật 2 (cột 2, hàng 1), viên (cột 1 - hàng 1) → lấy x
-// Đo được: 585.6, 101.5  → chỉ dùng x = 585.6
-const BUOC_BAN_X = 585.6 - 184.5;      // = 401.1
-
-// Bước 5: Ô chữ nhật 3 (cột 1, hàng 2), viên (cột 1 - hàng 1) → lấy y
-// Đo được: 184.5, 246.3  → chỉ dùng y = 246.3
-const BUOC_BAN_Y = 246.3 - 101.5;      // = 144.8
-
-
-
-const COT_BAN = 2, HANG_BAN = 4;         // 8 ô to: 2 cột × 4 hàng
-const COT_BI = 7, HANG_BI = 6;           // mỗi ô to: lưới bi 7 cột × 6 hàng
+// ── Tự tính, không cần đụng ──────────────────────────────────────────────────
+const A = { x: D1.x, y: D1.y };
+const BUOC_BI_X = (D2.x - D1.x) / (COT_BI - 1);
+const BUOC_BI_Y = (D3.y - D1.y) / (HANG_BI - 1);
+const BUOC_BAN_X = D4.x - D1.x;
+const BUOC_BAN_Y = D5.y - D1.y;
 
 const NUA = 5;                           // đếm vùng 12×12 quanh tâm viên bi
 const TI_LE_TOI_THIEU = 0.25;            // màu chiếm >= 25% vùng thì tính

@@ -8,6 +8,7 @@ const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
+const { syncKetQua } = require("./syncStats");
 
 const SO_TIEN_UOC_LIST = [20, 50, 110];
 const MOC = SO_TIEN_UOC_LIST.reduce((a, b) => a + b, 0); // 180
@@ -291,6 +292,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
                 setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
             }
             setting.set("profit", setting.get("profit") - sotienuoc);
+            syncKetQua("thua", -sotienuoc);
             capNhatMoc(-sotienuoc);
             capNhatStats();
             await outPhong("OutPhong -> Không đọc được kết quả - coi như thua");
@@ -336,6 +338,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             setting.set("soVonBanDau", vonSau);
             setting.set("profit", Math.round((setting.get("profit") + lai) * 100) / 100);
             setting.set("solenhwin", setting.get("solenhwin") + 1);
+            syncKetQua("win", lai);
             if (tab === 1) {
                 setting.set("solenhwin_Tab1", setting.get("solenhwin_Tab1") + 1);
             } else if (tab === 2) {
@@ -356,6 +359,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             }
 
             setting.set("profit", setting.get("profit") - sotienuoc);
+            syncKetQua("thua", -sotienuoc);
             capNhatMoc(-sotienuoc);
             capNhatStats();
 
