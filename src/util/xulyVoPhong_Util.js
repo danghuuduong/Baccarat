@@ -56,12 +56,10 @@ function buildStats() {
 
 // Mảng bi đang dùng để lấy tín hiệu
 let arraySuDungChinhList = [];
-let isMatTienTRongPhongNay = false;
 
 async function xulyVoPhong_Util(page, danhSach) {
 
     if (!danhSach || danhSach.length === 0) return;
-    isMatTienTRongPhongNay = false;
 
     // Chọn phòng có ngam lớn nhất; bằng nhau thì chọn phòng có thép lớn nhất
 
@@ -201,7 +199,6 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         return false;
     }
     async function outPhong(lyDo, cl = "#d7f706ff") {
-        isMatTienTRongPhongNay = false;
         cancelThongBao(page);
         hideLuoiBi(page);
         arraySuDungChinhList = [];
@@ -238,7 +235,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
 
     while (true) {
         // ── 1. Lấy tín hiệu ────────────────────────────────────────────────
-        const tinHieu = LayTinHieu([...arraySuDungChinhList], isMatTienTRongPhongNay);
+        const tinHieu = LayTinHieu([...arraySuDungChinhList]);
 
         if (!tinHieu) {
             await outPhong("OutPhong- Không có tín hiệu");
@@ -368,8 +365,6 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             } else {
                 showThongBao(page, `❌ THUA -${sotienuoc}K `, 8000, "#fb2424ff");
             }
-            isMatTienTRongPhongNay = true;
-
             // Thép 1 hoặc 2 → chờ ván mới rồi tiếp tục
             const found = await choVanMoi(80000);
             if (!found) { await outPhong("OutPhong -> Không tìm được Status Start"); return; }
