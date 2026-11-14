@@ -38,7 +38,7 @@ async function UI_Login(page, defaultValues = {}) {
             <div id="ui-login-box">
                 <div class="ui-login-header">
                     <div class="ui-login-icon">🔐</div>
-                    <h2 class="ui-login-title">Tool ${process.env.TOOL_NAME}</h2>
+                    <h2 class="ui-login-title">Tool ${defaultToolName || ""}</h2>
                     <div class="ui-login-subtitle">Đăng nhập tài khoản để kích hoạt tool tự động</div>
                 </div>
 
@@ -128,7 +128,8 @@ async function UI_Login(page, defaultValues = {}) {
 
     }, {
         cssText: css,
-        defaultTaiKhoan: defaultValues.taiKhoan || ""
+        defaultTaiKhoan: defaultValues.taiKhoan || "",
+        defaultToolName: process.env.TOOL_NAME || ""
     }).catch(() => { });
 }
 

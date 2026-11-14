@@ -31,6 +31,7 @@ async function update_UI_KetQua8Phong(page, ban = []) {
         if (!panel) {
             panel = document.createElement("div");
             panel.id = "ui-ket-qua";
+            panel.style.display = "none";
 
             for (let i = 0; i < 8; i++) {
                 const cell = document.createElement("div");
@@ -48,7 +49,7 @@ async function update_UI_KetQua8Phong(page, ban = []) {
         if (!document.getElementById("ui-ket-qua-toggle")) {
             const toggleBtn = document.createElement("div");
             toggleBtn.id = "ui-ket-qua-toggle";
-            toggleBtn.textContent = "▼";
+            toggleBtn.textContent = "▲";
             Object.assign(toggleBtn.style, {
                 position: "fixed", top: "25px", right: "35px",
                 padding: "1px 4px", fontSize: "10px", lineHeight: "1.2",
