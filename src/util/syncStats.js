@@ -7,10 +7,11 @@ const { pushToolStats } = require("./mongoDB");
  * Gửi kết quả ván cược lên MongoDB của account đang đăng nhập
  * @param {"win" | "thua"} result 
  * @param {number} profitDelta 
+ * @param {string} [customToolName] - Tự truyền tên tool vào (nếu không truyền sẽ lấy mặc định)
  */
-async function syncKetQua(result, profitDelta) {
+async function syncKetQua(result, profitDelta, customToolName) {
     const currentAccount = setting.get("currentAccount");
-    const toolName = setting.get("currentToolName") || "01";
+    const toolName = customToolName || setting.get("currentToolName") || "01";
 
     if (!currentAccount || !currentAccount.taiKhoan) {
         console.log("[Sync] Bỏ qua sync: Chưa đăng nhập tài khoản");

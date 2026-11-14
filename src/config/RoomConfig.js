@@ -1,7 +1,7 @@
 // src/config/RoomConfig.js – Cấu hình phòng chơi (toạ độ tiêu điểm các phòng, nút thoát phòng)
 "use strict";
 
-
+// Vị trí bấm phòng vô
 const DS_PHONG = [
     { ten: "Phòng-1", x: 511, y: 217 },
     { ten: "Phòng-2", x: 960, y: 217 },
@@ -24,11 +24,12 @@ const ToaDoTab = [
 // room-type_room_a – toạ độ chip (ghi chú tham khảo, không phải code)
 // x=541,y=689 | x=584,y=688 | x=628,y=691 | x=675,y=689 | x=724,y=687
 
+// Thuộc phòng BCR hay Sexy
 const typeRoom = {
     room_a: "type_room_a",
     room_b: "type_room_b"
 }
-
+// đéo nhớ, chắc là  cũng là kết quả , nhưng cái này để dùng cho logic cũ là so sánh ảnh
 const typeKetQua = {
     [typeRoom.room_a]: {
         blue: "kq_blue_type_A",
@@ -43,7 +44,7 @@ const typeKetQua = {
 
     },
 }
-
+// Toạ độ để lấy kết quả ván
 const typeKetQuaToaDo = {
     [typeRoom.room_a]: {
         blue: { x: 530, y: 653 },   // TODO: P
@@ -57,7 +58,7 @@ const typeKetQuaToaDo = {
     },
 };
 
-
+//Toạ độ lấy cái 20s chạy ván mới ý
 const typeStatusBatDauToaDo = {
     [typeRoom.room_a]: {
         xanh: { x: 197, y: 78 },   // TODO: P
@@ -66,25 +67,27 @@ const typeStatusBatDauToaDo = {
         xanh: { x: 181, y: 108 },   // TODO: P
     },
 };
+
+// Toạ Độ của đồng chip
 const TaoDoChip_Room = {
     [typeRoom.room_a]: {
-        chip10: { x: 492, y: 686 },
-        chip20: { x: 541, y: 686 },
-        chip50: { x: 586, y: 686 },
-        chip100: { x: 634, y: 686 },
-        chip500: { x: 677, y: 686 },
-        chip1000: { x: 716, y: 686 },
+        chip1: { x: 492, y: 686 },
+        chip5: { x: 541, y: 686 },
+        chip10: { x: 586, y: 686 },
+        chip20: { x: 634, y: 686 },
+        chip50: { x: 677, y: 686 },
+        chip100: { x: 716, y: 686 },
         datCuoc_Blue: { x: 590, y: 619 },
         datCuoc_Red: { x: 809, y: 618 },
         buttonXacNhan: { x: 900, y: 686 }
     },
     [typeRoom.room_b]: {
-        chip10: { x: 933, y: 560 },
-        chip20: { x: 988, y: 560 },
-        chip50: { x: 1043, y: 560 },
-        chip100: { x: 1094, y: 560 },
-        chip500: { x: 1147, y: 560 },
-        chip1000: { x: 1200, y: 560 },
+        chip1: { x: 933, y: 560 },
+        chip5: { x: 988, y: 560 },
+        chip10: { x: 1043, y: 560 },
+        chip20: { x: 1094, y: 560 },
+        chip50: { x: 1147, y: 560 },
+        chip100: { x: 1200, y: 560 },
         datCuoc_Blue: { x: 459, y: 470 },
         datCuoc_Red: { x: 983, y: 470 },
         buttonXacNhan: { x: 786, y: 567 }

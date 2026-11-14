@@ -11,23 +11,16 @@ module.exports = createStore({
 
     // ── Trạng thái đặt cược ──────────────────────────────────────────────
     isDatCuocXong: false,        // đã xác nhận đặt cược thành công
-    soVonBanDau: 0,           // vốn hiện tại (tự trừ khi đặt, cộng khi thắng/hòa)
-    SoTienLonNhatTungSoHuu: 0,// vốn cao nhất từng sở hữu
+    soVonBanDau: 0,              // giữ để tương thích code cũ
+    SoTienLonNhatTungSoHuu: 0,   // giữ để tương thích code cũ
     sotienuocHienTai: 0,         // số tiền cược của ván đang chờ kết quả
-    profit: 0,                   // tổng lãi/lỗ tính từ lúc khởi động
-    solenhwin: 0,                // số lệnh thắng
-    solenhthua: 0,               // số lệnh thua
-
-    solenhwin_Tab1: 0,           // số lệnh thắng Tab 1
-    solenhthua_Tab1: 0,          // số lệnh thua Tab 1
-
-    solenhwin_Tab2: 0,           // số lệnh thắng Tab 2
-    solenhthua_Tab2: 0,          // số lệnh thua Tab 2
-
+    profit: 0,                   // giữ để tương thích code cũ
+    solenhwin: 0,                // giữ để tương thích code cũ
+    solenhthua: 0,               // giữ để tương thích code cũ
 
     bendat: null,                // "red" | "blue" | null – bên vừa đặt cược
 
-
+    // ── Mốc tỉ số ────────────────────────────────────────────────────────
     soDuMoc: 0,
     tiSoDuong: 0,
     tiSoAm: 0,
@@ -36,5 +29,23 @@ module.exports = createStore({
     VSTISO_Am_Max: 0,
     TonThat_Max: 0,
 
+    // ── BOT 1: 02-DCA ─────────────────────────────────────────────────────
+    soVonBanDau_DCA: 0,
+    SoTienLonNhatTungSoHuu_DCA: 0,
+    TonThat_Max_DCA: 0,
+    profit_DCA: 0,
+    solenhwin_DCA: 0,
+    solenhthua_DCA: 0,
+    bcr: 0,                      // bộ đếm chuỗi (dương: đang thắng, âm: đang thua)
+    bcrSauNhat: 0,               // mức sâu nhất bcr từng chạm (luôn <= 0)
+    laiChuKy: 0,                 // tổng lãi/thua trong chu kỳ DCA hiện tại
 
+    // ── BOT 2: 03-SW ──────────────────────────────────────────────────────
+    soVonBanDau_SW: 0,
+    SoTienLonNhatTungSoHuu_SW: 0,
+    TonThat_Max_SW: 0,
+    profit_SW: 0,
+    solenhwin_SW: 0,
+    solenhthua_SW: 0,
+    bcr_sw: 0,                   // bộ đếm chuỗi SW (luôn <= 0)
 });

@@ -254,17 +254,17 @@ async function ganUI(page) {
     setting.subscribe((state, patch) => {
         if (!setting.get("currentAccount")) return; // Chưa đăng nhập thì không update stats
         if (
-            patch.soVonBanDau !== undefined ||
-            patch.SoTienLonNhatTungSoHuu !== undefined ||
-            patch.profit !== undefined ||
-            patch.solenhwin !== undefined ||
-            patch.solenhthua !== undefined ||
-            patch.solenhwin_Tab1 !== undefined ||
-            patch.solenhthua_Tab1 !== undefined ||
-            patch.solenhwin_Tab2 !== undefined ||
-            patch.solenhthua_Tab2 !== undefined ||
+            patch.profit_DCA !== undefined ||
+            patch.profit_SW !== undefined ||
+            patch.solenhwin_DCA !== undefined ||
+            patch.solenhthua_DCA !== undefined ||
+            patch.solenhwin_SW !== undefined ||
+            patch.solenhthua_SW !== undefined ||
+            patch.bcr !== undefined ||
+            patch.bcrSauNhat !== undefined ||
+            patch.laiChuKy !== undefined ||
+            patch.bcr_sw !== undefined ||
             patch.soChuoiDat !== undefined ||
-
             patch.TonThat_Max !== undefined ||
             patch.tiSoDuong !== undefined ||
             patch.tiSoAm !== undefined ||
@@ -273,17 +273,23 @@ async function ganUI(page) {
             patch.VSTISO_Am_Max !== undefined
         ) {
             showStats(page, {
-                soVonBanDau: state.soVonBanDau,
-                SoTienLonNhatTungSoHuu: state.SoTienLonNhatTungSoHuu,
-                profit: state.profit,
-                solenhwin: state.solenhwin,
-                solenhthua: state.solenhthua,
-                solenhwin_Tab1: state.solenhwin_Tab1,
-                solenhthua_Tab1: state.solenhthua_Tab1,
-                solenhwin_Tab2: state.solenhwin_Tab2,
-                solenhthua_Tab2: state.solenhthua_Tab2,
+                soVonBanDau_DCA: state.soVonBanDau_DCA,
+                SoTienLonNhatTungSoHuu_DCA: state.SoTienLonNhatTungSoHuu_DCA,
+                TonThat_Max_DCA: state.TonThat_Max_DCA,
+                profit_DCA: state.profit_DCA,
+                solenhwin_DCA: state.solenhwin_DCA,
+                solenhthua_DCA: state.solenhthua_DCA,
+                bcr: state.bcr,
+                bcrSauNhat: state.bcrSauNhat,
+                laiChuKy: state.laiChuKy,
+                soVonBanDau_SW: state.soVonBanDau_SW,
+                SoTienLonNhatTungSoHuu_SW: state.SoTienLonNhatTungSoHuu_SW,
+                TonThat_Max_SW: state.TonThat_Max_SW,
+                profit_SW: state.profit_SW,
+                solenhwin_SW: state.solenhwin_SW,
+                solenhthua_SW: state.solenhthua_SW,
+                bcr_sw: state.bcr_sw,
                 soChuoiDat: state.soChuoiDat,
-
                 TonThat_Max: state.TonThat_Max,
                 tiSoDuong: state.tiSoDuong,
                 tiSoAm: state.tiSoAm,

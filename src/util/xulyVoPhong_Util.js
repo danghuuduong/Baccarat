@@ -10,6 +10,7 @@ const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
 const { syncKetQua } = require("./syncStats");
 
+// Chỉ giữ để tính MOC = 180
 const SO_TIEN_UOC_LIST = [20, 50, 110];
 const MOC = SO_TIEN_UOC_LIST.reduce((a, b) => a + b, 0); // 180
 
@@ -34,17 +35,41 @@ function capNhatMoc(delta) {
     if (vs < setting.get("VSTISO_Am_Max")) setting.set("VSTISO_Am_Max", vs);
 }
 
+// ── Tính volDCA dựa theo bcrSauNhat (giá trị âm hoặc 0) ──────────────────────
+function tinhVolDCA() {
+    const sauNhat = setting.get("bcrSauNhat") || 0;
+    const abs = Math.abs(Math.min(0, sauNhat));
+    return Math.min(50, 20 + 5 * Math.floor(abs / 5));
+}
+
+// ── Tính volSW dựa theo bcr_sw (giá trị âm hoặc 0) ──────────────────────────
+function tinhVolSW() {
+    const bcrSW = setting.get("bcr_sw") || 0;
+    const abs = Math.abs(Math.min(0, bcrSW));
+    return Math.min(50, 2 * (1 + abs));
+}
+
 function buildStats() {
     return {
-        soVonBanDau: setting.get("soVonBanDau"),
-        SoTienLonNhatTungSoHuu: setting.get("SoTienLonNhatTungSoHuu"),
-        profit: setting.get("profit"),
-        solenhwin: setting.get("solenhwin"),
-        solenhthua: setting.get("solenhthua"),
-        solenhwin_Tab1: setting.get("solenhwin_Tab1"),
-        solenhthua_Tab1: setting.get("solenhthua_Tab1"),
-        solenhwin_Tab2: setting.get("solenhwin_Tab2"),
-        solenhthua_Tab2: setting.get("solenhthua_Tab2"),
+        // DCA
+        soVonBanDau_DCA: setting.get("soVonBanDau_DCA"),
+        SoTienLonNhatTungSoHuu_DCA: setting.get("SoTienLonNhatTungSoHuu_DCA"),
+        TonThat_Max_DCA: setting.get("TonThat_Max_DCA"),
+        profit_DCA: setting.get("profit_DCA"),
+        solenhwin_DCA: setting.get("solenhwin_DCA"),
+        solenhthua_DCA: setting.get("solenhthua_DCA"),
+        bcr: setting.get("bcr"),
+        bcrSauNhat: setting.get("bcrSauNhat"),
+        laiChuKy: setting.get("laiChuKy"),
+        // SW
+        soVonBanDau_SW: setting.get("soVonBanDau_SW"),
+        SoTienLonNhatTungSoHuu_SW: setting.get("SoTienLonNhatTungSoHuu_SW"),
+        TonThat_Max_SW: setting.get("TonThat_Max_SW"),
+        profit_SW: setting.get("profit_SW"),
+        solenhwin_SW: setting.get("solenhwin_SW"),
+        solenhthua_SW: setting.get("solenhthua_SW"),
+        bcr_sw: setting.get("bcr_sw"),
+        // Mốc tỉ số (giữ nguyên)
         soChuoiDat: setting.get("soChuoiDat"),
         TonThat_Max: setting.get("TonThat_Max"),
         tiSoDuong: setting.get("tiSoDuong"),
@@ -68,7 +93,6 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
         bendat: null,
         danhSachTimKiemRa: [],
         phongRoomS: [],
-        tabHienTai: 1,
         isStart: true,
     });
     showThongBao(page, `${lyDo}`, 8000, cl);
@@ -78,7 +102,6 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
     await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
     await randomSleep(70, 150);
     if (tab1) await page.mouse.click(Math.round(tab1.x), Math.round(tab1.y));
-    setting.set("tabHienTai", 1);
     await randomSleep(200, 333);
 
     setTimeout(() => {
@@ -143,19 +166,17 @@ async function xulyVoPhong_Util(page, danhSach) {
     const thongBao = `Phòng: ${phongTotNhat.phong} =>  ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"}`;
     showThongBao(page, thongBao, 5000);
 
-    const tab = phongTotNhat.tab || setting.get("tabHienTai") || 1;
-
     // Hiển thị lưới bi + thống kê ban đầu
     showLuoiBi(page, arraySuDungChinhList);
     showStats(page, buildStats());
 
-    await vongLapDatCuoc(page, roomType, tab);
+    await vongLapDatCuoc(page, roomType);
 
     return roomType;
 }
 
 // ─── Vòng lặp đặt cược chính ─────────────────────────────────────────────────
-async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") || 1) {
+async function vongLapDatCuoc(page, roomType) {
     const coords = TaoDoChip_Room[roomType];
     // const kq = typeKetQua[roomType];
 
@@ -169,12 +190,12 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
 
     // Chip ưu tiên số to trước
     const CHIP_THU_TU = [
-        ["chip1000", 1000],
-        ["chip500", 500],
         ["chip100", 100],
         ["chip50", 50],
         ["chip20", 20],
         ["chip10", 10],
+        ["chip5", 5],
+        ["chip1", 1],
     ];
 
     // Mỗi chip: chọn chip -> click bên cược
@@ -222,8 +243,14 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
     }
 
     const capNhatStats = () => {
-        const tt = setting.get("SoTienLonNhatTungSoHuu") - setting.get("soVonBanDau");
-        if (tt > setting.get("TonThat_Max")) setting.set("TonThat_Max", tt);
+        // Tổn thất DCA
+        const ttDCA = setting.get("SoTienLonNhatTungSoHuu_DCA") - setting.get("soVonBanDau_DCA");
+        if (ttDCA > setting.get("TonThat_Max_DCA")) setting.set("TonThat_Max_DCA", ttDCA);
+
+        // Tổn thất SW
+        const ttSW = setting.get("SoTienLonNhatTungSoHuu_SW") - setting.get("soVonBanDau_SW");
+        if (ttSW > setting.get("TonThat_Max_SW")) setting.set("TonThat_Max_SW", ttSW);
+
         showStats(page, buildStats());
     };
 
@@ -236,30 +263,38 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             return;
         }
 
-        // ── 2. Tính mức cược và tên bên ────────────────────────────────────
-        const sotienuoc = SO_TIEN_UOC_LIST[tinHieu.thep - 1];
+        // ── 2. Tính vol DCA và SW ───────────────────────────────────────────
+        const volDCA = tinhVolDCA();
+        const volSW = tinhVolSW();
+        const tongCuoc = volDCA + volSW;
         const tenBen = tinHieu.tinhieu === "red" ? "Đỏ" : "Xanh";
         const coordBen = tinHieu.tinhieu === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
 
         // ── 3. Chờ bảng chip ổn định rồi chọn chip + đặt bên ───────────────
         await randomSleep(111, 155);
-        await datTien(sotienuoc, coordBen);
+        await datTien(tongCuoc, coordBen);
+
         // ── 4. Xác nhận ─────────────────────────────────────────────────────
         await randomSleep(222, 333);
-
         await click(coords.buttonXacNhan);
 
-        // ── 5. Lưu trạng thái + showThongBao (giữ tới khi có kết quả) ──────
+        // ── 5. Lưu trạng thái + showThongBao ────────────────────────────────
         setting.set({
             isDatCuocXong: true,
-            sotienuocHienTai: sotienuoc,
+            sotienuocHienTai: tongCuoc,
             bendat: tinHieu.tinhieu,
-            soVonBanDau: setting.get("soVonBanDau") - sotienuoc,
+            soVonBanDau_DCA: Math.round((setting.get("soVonBanDau_DCA") - volDCA) * 100) / 100,
+            soVonBanDau_SW:  Math.round((setting.get("soVonBanDau_SW")  - volSW)  * 100) / 100,
         });
         capNhatStats();
-        showThongBao(page, `Đặt ${tenBen} ${sotienuoc}K - Thếp ${tinHieu.thep}`, 999999, tenBen === "Xanh" ? "#247afbff" : "#e42727ff");
+        showThongBao(
+            page,
+            `Đặt ${tenBen} | DCA ${volDCA}K + SW ${volSW}K - Thếp ${tinHieu.thep}`,
+            999999,
+            tenBen === "Xanh" ? "#247afbff" : "#e42727ff"
+        );
 
-        // ── 6. Chờ 15s rồi tìm kết quả bằng LED vàng (30s) ─────────────────
+        // ── 6. Chờ 15s rồi tìm kết quả bằng LED vàng (70s) ─────────────────
         await sleep(12000);
         const ketQua = await choKetQuaVang(70000);
 
@@ -273,18 +308,37 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         cancelThongBao(page);
         setting.set("isDatCuocXong", false);
 
-        // ── 7. Không ra kết quả → coi như thua, thoát phòng ────────────────
+        // ── 7. Không ra kết quả → coi như thua cả hai bot, thoát phòng ──────
         if (!ketQua) {
             showThongBao(page, "Lỗi khi check kết quả", 5000, "#fb2424ff");
-            setting.set("solenhthua", setting.get("solenhthua") + 1);
-            if (tab === 1) {
-                setting.set("solenhthua_Tab1", setting.get("solenhthua_Tab1") + 1);
-            } else if (tab === 2) {
-                setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
-            }
-            setting.set("profit", setting.get("profit") - sotienuoc);
-            syncKetQua("thua", -sotienuoc);
-            capNhatMoc(-sotienuoc);
+
+            // DCA thua
+            const profitDCA_Thua = -volDCA;
+            setting.set({
+                solenhthua_DCA: setting.get("solenhthua_DCA") + 1,
+                profit_DCA: Math.round((setting.get("profit_DCA") + profitDCA_Thua) * 100) / 100,
+                bcr: setting.get("bcr") - 1,
+                laiChuKy: Math.round((setting.get("laiChuKy") + profitDCA_Thua) * 100) / 100,
+            });
+            setting.set("bcrSauNhat", Math.min(setting.get("bcrSauNhat"), setting.get("bcr")));
+
+            // SW thua
+            const profitSW_Thua = -volSW;
+            setting.set({
+                solenhthua_SW: setting.get("solenhthua_SW") + 1,
+                profit_SW: Math.round((setting.get("profit_SW") + profitSW_Thua) * 100) / 100,
+                bcr_sw: setting.get("bcr_sw") - 1,
+            });
+
+            // Mốc tổng (giữ nguyên)
+            capNhatMoc(profitDCA_Thua + profitSW_Thua);
+
+            // Sync
+            if (!process.env.TOOL_NAME) console.warn("[Sync] TOOL_NAME chưa set trong .env");
+            if (!process.env.TOOL_NAME2) console.warn("[Sync] TOOL_NAME2 chưa set trong .env");
+            syncKetQua("thua", profitDCA_Thua, process.env.TOOL_NAME);
+            syncKetQua("thua", profitSW_Thua,  process.env.TOOL_NAME2);
+
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
             return;
@@ -297,12 +351,19 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         arraySuDungChinhList.push(ketQua);
         showLuoiBi(page, arraySuDungChinhList);
 
-
         if (ketQua === "T") {
-            // Hòa → hoàn lại tiền (không tính mốc)
-            setting.set("soVonBanDau", setting.get("soVonBanDau") + sotienuoc);
+            // ── Hòa → hoàn lại tiền cho cả 2 bot, giữ bcr/bcr_sw ────────────
+            setting.set({
+                soVonBanDau_DCA: Math.round((setting.get("soVonBanDau_DCA") + volDCA) * 100) / 100,
+                soVonBanDau_SW:  Math.round((setting.get("soVonBanDau_SW")  + volSW)  * 100) / 100,
+            });
             capNhatStats();
-            showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
+            showThongBao(
+                page,
+                `🤝 HÒA | DCA Vốn: ${setting.get("soVonBanDau_DCA")}K | SW Vốn: ${setting.get("soVonBanDau_SW")}K`,
+                8000,
+                "#36ca0dff"
+            );
 
             if (tinHieu.thep === 3) {
                 await outPhong(page, `🤝Lượn thôi  HÒA`, "#36ca0dff");
@@ -316,49 +377,105 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         }
 
         const ketQuaMau = ketQua === "B" ? "red" : "blue";
-        showThongBao(page, `${ketQua === "B" ? "Kết Quả -> ĐỎ" : "Kết Quả -> XANH "}`, 8000, ketQua === "B" ? "#fb2424ff" : "#018cffff");
+        showThongBao(
+            page,
+            `${ketQua === "B" ? "Kết Quả -> ĐỎ" : "Kết Quả -> XANH "}`,
+            8000,
+            ketQua === "B" ? "#fb2424ff" : "#018cffff"
+        );
 
         if (ketQuaMau === bendat) {
-            // ── Thắng ──────────────────────────────────────────────────────
-            // Đỏ thắng chịu phí 5%, xanh ăn đủ
-            const lai = bendat === "red"
-                ? Math.round(sotienuoc * 0.95 * 100) / 100
-                : sotienuoc;
+            // ── Thắng ─────────────────────────────────────────────────────
 
-            const vonSau = Math.round((setting.get("soVonBanDau") + sotienuoc + lai) * 100) / 100;
-            setting.set("soVonBanDau", vonSau);
-            setting.set("profit", Math.round((setting.get("profit") + lai) * 100) / 100);
-            setting.set("solenhwin", setting.get("solenhwin") + 1);
-            syncKetQua("win", lai);
-            if (tab === 1) {
-                setting.set("solenhwin_Tab1", setting.get("solenhwin_Tab1") + 1);
-            } else if (tab === 2) {
-                setting.set("solenhwin_Tab2", setting.get("solenhwin_Tab2") + 1);
+            // DCA thắng
+            const laiDCA = bendat === "red"
+                ? Math.round(volDCA * 0.95 * 100) / 100
+                : volDCA;
+            setting.set({
+                soVonBanDau_DCA: Math.round((setting.get("soVonBanDau_DCA") + volDCA + laiDCA) * 100) / 100,
+                profit_DCA: Math.round((setting.get("profit_DCA") + laiDCA) * 100) / 100,
+                solenhwin_DCA: setting.get("solenhwin_DCA") + 1,
+                bcr: setting.get("bcr") + 1,
+                laiChuKy: Math.round((setting.get("laiChuKy") + laiDCA) * 100) / 100,
+            });
+            setting.set("bcrSauNhat", Math.min(setting.get("bcrSauNhat"), setting.get("bcr")));
+
+            // Reset chu kỳ DCA nếu laiChuKy >= 20
+            if (setting.get("laiChuKy") >= 20) {
+                setting.set({ bcr: 0, bcrSauNhat: 0, laiChuKy: 0 });
+                showThongBao(page, "🔄 Reset chu kỳ DCA", 4000, "#36ca0dff");
             }
-            capNhatMoc(lai);
+
+            // Cập nhật $Max DCA
+            if (setting.get("soVonBanDau_DCA") > setting.get("SoTienLonNhatTungSoHuu_DCA")) {
+                setting.set("SoTienLonNhatTungSoHuu_DCA", setting.get("soVonBanDau_DCA"));
+            }
+
+            // SW thắng
+            const laiSW = bendat === "red"
+                ? Math.round(volSW * 0.95 * 100) / 100
+                : volSW;
+            setting.set({
+                soVonBanDau_SW: Math.round((setting.get("soVonBanDau_SW") + volSW + laiSW) * 100) / 100,
+                profit_SW: Math.round((setting.get("profit_SW") + laiSW) * 100) / 100,
+                solenhwin_SW: setting.get("solenhwin_SW") + 1,
+                bcr_sw: Math.min(0, setting.get("bcr_sw") + 1),
+            });
+
+            // Cập nhật $Max SW
+            if (setting.get("soVonBanDau_SW") > setting.get("SoTienLonNhatTungSoHuu_SW")) {
+                setting.set("SoTienLonNhatTungSoHuu_SW", setting.get("soVonBanDau_SW"));
+            }
+
+            // Mốc tổng (giữ nguyên)
+            capNhatMoc(laiDCA + laiSW);
+
+            // Sync DCA trước, SW sau
+            if (!process.env.TOOL_NAME) console.warn("[Sync] TOOL_NAME chưa set trong .env");
+            if (!process.env.TOOL_NAME2) console.warn("[Sync] TOOL_NAME2 chưa set trong .env");
+            syncKetQua("win", laiDCA, process.env.TOOL_NAME);
+            syncKetQua("win", laiSW,  process.env.TOOL_NAME2);
+
             capNhatStats();
-            await outPhong(page, `✅ Chuồn thôi- Ăn +${lai}K`, "#00fd59ff");
+            await outPhong(page, `✅ Chuồn thôi - DCA +${laiDCA}K | SW +${laiSW}K`, "#00fd59ff");
             return;
 
         } else {
-            // ── Thua ───────────────────────────────────────────────────────
-            setting.set("solenhthua", setting.get("solenhthua") + 1);
-            if (tab === 1) {
-                setting.set("solenhthua_Tab1", setting.get("solenhthua_Tab1") + 1);
-            } else if (tab === 2) {
-                setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
-            }
+            // ── Thua ──────────────────────────────────────────────────────
 
-            setting.set("profit", setting.get("profit") - sotienuoc);
-            syncKetQua("thua", -sotienuoc);
-            capNhatMoc(-sotienuoc);
+            // DCA thua
+            const profitDCA_Thua = -volDCA;
+            setting.set({
+                solenhthua_DCA: setting.get("solenhthua_DCA") + 1,
+                profit_DCA: Math.round((setting.get("profit_DCA") + profitDCA_Thua) * 100) / 100,
+                bcr: setting.get("bcr") - 1,
+                laiChuKy: Math.round((setting.get("laiChuKy") + profitDCA_Thua) * 100) / 100,
+            });
+            setting.set("bcrSauNhat", Math.min(setting.get("bcrSauNhat"), setting.get("bcr")));
+
+            // SW thua
+            const profitSW_Thua = -volSW;
+            setting.set({
+                solenhthua_SW: setting.get("solenhthua_SW") + 1,
+                profit_SW: Math.round((setting.get("profit_SW") + profitSW_Thua) * 100) / 100,
+                bcr_sw: setting.get("bcr_sw") - 1,
+            });
+
+            // Mốc tổng (giữ nguyên)
+            capNhatMoc(profitDCA_Thua + profitSW_Thua);
+
+            // Sync DCA trước, SW sau
+            if (!process.env.TOOL_NAME) console.warn("[Sync] TOOL_NAME chưa set trong .env");
+            if (!process.env.TOOL_NAME2) console.warn("[Sync] TOOL_NAME2 chưa set trong .env");
+            syncKetQua("thua", profitDCA_Thua, process.env.TOOL_NAME);
+            syncKetQua("thua", profitSW_Thua,  process.env.TOOL_NAME2);
+
             capNhatStats();
+            showThongBao(page, `DCA -${volDCA}K | SW -${volSW}K`, 8000, "#fb2424ff");
 
             if (tinHieu.thep === 3) {
-                await outPhong(page, `❌Biến thôi -> THUA -${sotienuoc}K - Thếp 3 - Nhà cái bóp Dí rồi `, "#fb2424ff");
+                await outPhong(page, `❌Biến thôi -> THUA DCA -${volDCA}K | SW -${volSW}K - Thếp 3`, "#fb2424ff");
                 return;
-            } else {
-                showThongBao(page, `❌ THUA -${sotienuoc}K `, 8000, "#fb2424ff");
             }
             // Thép 1 hoặc 2 → chờ ván mới rồi tiếp tục
             const found = await choVanMoi(80000);
