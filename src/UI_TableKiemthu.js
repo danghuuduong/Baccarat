@@ -1,10 +1,17 @@
+const fs = require("fs");
+const path = require("path");
+
+const CSS_PATH = path.join(__dirname, "CSS", "UI_TableKiemthu.css");
+
 async function UI_TableKiemthu(page) {
   // Load dữ liệu cũ từ Node.js
   const existingItems = await page.evaluate(async () => {
     try { return await window.getCaptureItems(); } catch (e) { return []; }
   });
 
-  await page.evaluate((initItems) => {
+  const cssText = fs.readFileSync(CSS_PATH, "utf8");
+
+  await page.evaluate(({ initItems, cssText }) => {
     if (document.getElementById("ui-Table-KiemThu")) return;
 
     // ── STATE ──
@@ -22,58 +29,13 @@ async function UI_TableKiemthu(page) {
     const runningCheckers = new Set();
 
     // ── STYLE ──
-    const style = document.createElement("style");
-    style.textContent = [
-      "#ui-Table-KiemThu * { box-sizing: border-box; }",
-
-      // Table
-      "#kt-table { width:100%; border-collapse:collapse; font-size:10px; }",
-      "#kt-table th { background:#1e3a5f; color:#fff; padding:4px 5px; text-align:center; font-weight:bold; border:1px solid #ccc; }",
-      "#kt-table td { padding:3px 5px; text-align:center; border:1px solid #ddd; vertical-align:middle; }",
-      "#kt-table tr:nth-child(even) td { background:#f5f8ff; }",
-      "#kt-table tr:hover td { background:#dbeafe; }",
-
-      // Inputs
-      ".kt-input { width:52px; padding:3px 4px; border:1px solid #999; border-radius:4px; font-size:11px; text-align:center; outline:none; }",
-      ".kt-input:focus { border-color:#2563eb; }",
-
-      // Nút bắt đầu
-      "#kt-btn-start { padding:4px 10px; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:not-allowed; background:#ccc; color:#888; transition:background .2s; }",
-      "#kt-btn-start.active { background:#2563eb; color:#fff; cursor:pointer; }",
-      "#kt-btn-start.active:hover { background:#1d4ed8; }",
-
-      // Nút huỷ chụp
-      "#kt-btn-cancel-capture { padding:4px 8px; border:none; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; background:#ef4444; color:#fff; transition:background .2s; }",
-      "#kt-btn-cancel-capture:hover { background:#dc2626; }",
-
-      // Nút trong table
-      ".btn-del { padding:2px 6px; border:none; border-radius:3px; font-size:10px; cursor:pointer; background:#ef4444; color:#fff; margin-right:3px; }",
-      ".btn-del:hover { background:#dc2626; }",
-      ".btn-edit { padding:2px 6px; border:none; border-radius:3px; font-size:10px; cursor:pointer; background:#f59e0b; color:#fff; margin-right:3px; }",
-      ".btn-edit:hover { background:#d97706; }",
-      ".btn-copy { padding:2px 6px; border:none; border-radius:3px; font-size:10px; cursor:pointer; background:#10b981; color:#fff; margin-right:3px; }",
-      ".btn-copy:hover { background:#059669; }",
-      ".btn-check { padding:2px 6px; border:none; border-radius:3px; font-size:10px; cursor:pointer; background:#2563eb; color:#fff; }",
-      ".btn-check:hover { background:#1d4ed8; }",
-
-      // Overlay
-      "#kt-overlay { position:fixed; pointer-events:none; border:2px dashed #e11d48; background:rgba(225,29,72,0.08); z-index:2147483646; display:none; box-shadow:0 0 0 1px rgba(0,0,0,0.3); }",
-
-      // Backdrop che phủ toàn màn hình khi chụp
-      "#kt-capture-backdrop { position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:2147483640; background:rgba(0,0,0,0.001); cursor:crosshair; display:none; }",
-
-      // Popup
-      "#kt-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border:2px solid #1e3a5f; border-radius:8px; padding:16px 20px; z-index:2147483647; min-width:260px; box-shadow:0 4px 20px rgba(0,0,0,0.3); font-family:monospace; font-size:12px; display:none; }",
-      "#kt-popup h4 { margin:0 0 10px; color:#1e3a5f; font-size:13px; }",
-      "#kt-popup-input { width:100%; padding:5px 8px; border:1px solid #999; border-radius:4px; font-size:12px; margin-bottom:10px; outline:none; }",
-      "#kt-popup-input:focus { border-color:#2563eb; }",
-      ".kt-popup-btns { display:flex; gap:8px; justify-content:flex-end; }",
-      "#kt-popup-ok { padding:4px 14px; background:#2563eb; color:#fff; border:none; border-radius:4px; cursor:pointer; font-size:12px; }",
-      "#kt-popup-ok:hover { background:#1d4ed8; }",
-      "#kt-popup-cancel { padding:4px 10px; background:#e5e7eb; color:#333; border:none; border-radius:4px; cursor:pointer; font-size:12px; }",
-      "#kt-popup-cancel:hover { background:#d1d5db; }"
-    ].join("\n");
-    document.head.appendChild(style);
+    let style = document.getElementById("css-ui-table-kiemthu");
+    if (!style) {
+      style = document.createElement("style");
+      style.id = "css-ui-table-kiemthu";
+      document.head.appendChild(style);
+    }
+    style.textContent = cssText;
 
     // ── CONTAINER CHÍNH ──
     const container = document.createElement("div");
@@ -429,9 +391,9 @@ async function UI_TableKiemthu(page) {
     const toggleBtn = document.createElement("div");
     toggleBtn.textContent = "▲";
     Object.assign(toggleBtn.style, {
-      position: "fixed", top: "10px", right: "5px",
-      padding: "3px 7px", background: "#fff", border: "1px solid #999",
-      borderRadius: "4px", cursor: "pointer", zIndex: 2147483647,
+      position: "fixed", top: "10px", right: "60px",
+      padding: "2px 4px", background: "#fff", border: "1px solid #999",
+      borderRadius: "2px", cursor: "pointer", zIndex: 2147483647,
     });
 
     function setPanelHidden(hidden) {
@@ -664,6 +626,33 @@ async function UI_TableKiemthu(page) {
       setTimeout(function () { popupInput.focus(); }, 50);
     }
 
+    var autoSeq = 0;
+
+
+    async function autoCapture(x, y) {
+      var name;
+      do {
+        autoSeq++;
+        name = "anh" + autoSeq;
+      } while (captureList.some(function (it) { return it.name === name; }));
+
+      // Ẩn khung đỏ + lớp phủ để không dính vào ảnh
+      overlay.style.visibility = "hidden";
+      backdrop.style.visibility = "hidden";
+      await new Promise(function (r) { requestAnimationFrame(function () { requestAnimationFrame(r); }); });
+
+      var res = await window.doCapture({ name: name, x: x, y: y, width: captureW, height: captureH });
+
+      overlay.style.visibility = "visible";
+      backdrop.style.visibility = "visible";
+
+      if (res && res.success) {
+        captureList.push(res.item);
+        renderTable();
+      }
+    }
+
+
     btnStart.addEventListener("click", async function (evt) {
       if (!btnStart.classList.contains("active")) return;
       stopCaptureMode(); // Huỷ sạch chế độ capture cũ nếu có
@@ -761,11 +750,12 @@ async function UI_TableKiemthu(page) {
           return;
         }
         if (e.key === "p" || e.key === "P") {
+          if (e.repeat) return;                                               // ← thêm dòng này
           if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
           if (currentCapturePos) {
             e.preventDefault();
             e.stopPropagation();
-            triggerCapture(currentCapturePos.x, currentCapturePos.y);
+            autoCapture(currentCapturePos.x, currentCapturePos.y);            // ← đổi triggerCapture thành autoCapture
           }
         }
       };
@@ -820,7 +810,7 @@ async function UI_TableKiemthu(page) {
       }
     });
 
-  }, existingItems);
+  }, { initItems: existingItems, cssText });
 }
 
 module.exports = {

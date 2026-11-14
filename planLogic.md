@@ -19,5 +19,5 @@ await window.KicHoat_LayKetQua_Fill_TabeList();  bên UI_KetQuaList.js sẽ đư
 sau đó state  KetQuaListTable có dạng  ["KetQua_Player", "KetQua_Banker", "KetQua_Tie"]
 
 4.  Lấy KetQuaListTable = []; check xem thoả mãn điều kiện cháy ngầm 2 hay chưa ?
-dùm hàm D:\ProjectDuong\Baccaat\src\util\CheckChay2Ngam.js để check 
+dùm hàm D:\ProjectDuong\Baccaat\src\Util\CheckChay2Ngam.js để check 
 
