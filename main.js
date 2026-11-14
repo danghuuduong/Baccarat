@@ -30,17 +30,25 @@ async function ganUI(page) {
     await UI_TableKiemthu(page);
     // await UI_KiemTraLED(page);
     showStats(page, {
-        soVonBanDau: setting.get("soVonBanDau"),
-        SoTienLonNhatTungSoHuu: setting.get("SoTienLonNhatTungSoHuu"),
-        profit: setting.get("profit"),
-        solenhwin: setting.get("solenhwin"),
-        solenhthua: setting.get("solenhthua"),
-        solenhwin_Tab1: setting.get("solenhwin_Tab1"),
-        solenhthua_Tab1: setting.get("solenhthua_Tab1"),
-        solenhwin_Tab2: setting.get("solenhwin_Tab2"),
-        solenhthua_Tab2: setting.get("solenhthua_Tab2"),
-        soChuoiDat: setting.get("soChuoiDat"),
+        soVonBanDau_DCA: setting.get("soVonBanDau_DCA") ?? setting.get("soVonBanDau"),
+        SoTienLonNhatTungSoHuu_DCA: setting.get("SoTienLonNhatTungSoHuu_DCA") ?? setting.get("SoTienLonNhatTungSoHuu"),
+        TonThat_Max_DCA: setting.get("TonThat_Max_DCA"),
+        profit_DCA: setting.get("profit_DCA") ?? setting.get("profit"),
+        solenhwin_DCA: setting.get("solenhwin_DCA") ?? setting.get("solenhwin"),
+        solenhthua_DCA: setting.get("solenhthua_DCA") ?? setting.get("solenhthua"),
+        bcr: setting.get("bcr"),
+        bcrSauNhat: setting.get("bcrSauNhat"),
+        laiChuKy: setting.get("laiChuKy"),
 
+        soVonBanDau_SW: setting.get("soVonBanDau_SW"),
+        SoTienLonNhatTungSoHuu_SW: setting.get("SoTienLonNhatTungSoHuu_SW"),
+        TonThat_Max_SW: setting.get("TonThat_Max_SW"),
+        profit_SW: setting.get("profit_SW"),
+        solenhwin_SW: setting.get("solenhwin_SW"),
+        solenhthua_SW: setting.get("solenhthua_SW"),
+        bcr_sw: setting.get("bcr_sw"),
+
+        soChuoiDat: setting.get("soChuoiDat"),
         TonThat_Max: setting.get("TonThat_Max"),
         tiSoDuong: setting.get("tiSoDuong"),
         tiSoAm: setting.get("tiSoAm"),
@@ -204,23 +212,36 @@ async function ganUI(page) {
             return result;
         }
 
-        const toolName = process.env.TOOL_NAME || "01";
+        const toolNameDCA = process.env.TOOL_NAME || "App-02-DCA";
+        const toolNameSW = process.env.TOOL_NAME2 || "App-03-SW";
 
-        // Lấy thông số của tool tương ứng từ BE / CSDL
-        const tool = (result.account.tools || []).find((t) => String(t.toolName) === String(toolName));
-        const profit = tool ? (Number(tool.profit) || 0) : 0;
-        const solenhwin = tool ? (Number(tool.win) || 0) : 0;
-        const solenhthua = tool ? (Number(tool.Thua) || 0) : 0;
+        // Lấy thông số của cả 2 tool (DCA & SW) từ CSDL MongoDB
+        const toolDCA = (result.account.tools || []).find((t) => String(t.toolName) === String(toolNameDCA));
+        const profitDCA = toolDCA ? (Number(toolDCA.profit) || 0) : 0;
+        const winDCA = toolDCA ? (Number(toolDCA.win) || 0) : 0;
+        const thuaDCA = toolDCA ? (Number(toolDCA.Thua) || 0) : 0;
+
+        const toolSW = (result.account.tools || []).find((t) => String(t.toolName) === String(toolNameSW));
+        const profitSW = toolSW ? (Number(toolSW.profit) || 0) : 0;
+        const winSW = toolSW ? (Number(toolSW.win) || 0) : 0;
+        const thuaSW = toolSW ? (Number(toolSW.Thua) || 0) : 0;
 
         // Lưu thông tin account & tool vào setting
         setting.set("currentAccount", result.account);
-        setting.set("currentToolName", toolName);
+        setting.set("currentToolName", toolNameDCA);
 
-        // Set lại 3 thông số từ BE vào setting và lưu đồng bộ vào state2.txt
+        // Set lại thông số từ BE vào setting và lưu đồng bộ vào state2.txt
         setting.set({
-            profit: profit,
-            solenhwin: solenhwin,
-            solenhthua: solenhthua,
+            profit: profitDCA,
+            profit_DCA: profitDCA,
+            solenhwin: winDCA,
+            solenhwin_DCA: winDCA,
+            solenhthua: thuaDCA,
+            solenhthua_DCA: thuaDCA,
+
+            profit_SW: profitSW,
+            solenhwin_SW: winSW,
+            solenhthua_SW: thuaSW,
         });
         saveSettingTXT();
 

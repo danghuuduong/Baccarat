@@ -17,6 +17,20 @@ const PERSIST_KEYS = [
     "solenhwin_Tab2",
     "solenhthua_Tab2",
     "soChuoiDat",
+
+    "soVonBanDau_DCA",
+    "SoTienLonNhatTungSoHuu_DCA",
+    "TonThat_Max_DCA",
+    "profit_DCA",
+    "solenhwin_DCA",
+    "solenhthua_DCA",
+
+    "soVonBanDau_SW",
+    "SoTienLonNhatTungSoHuu_SW",
+    "TonThat_Max_SW",
+    "profit_SW",
+    "solenhwin_SW",
+    "solenhthua_SW",
 ];
 
 let isInternalUpdating = false;

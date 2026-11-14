@@ -122,14 +122,18 @@ function syncStatsUI(page) {
                 const m = document.getElementById("ui-stats-mini-toggle");
                 if (!p || !m) return;
                 const gridVisible = !!g && g.style.display === "block";
+
+                // Mặc định là đóng
                 if (window.__uiStatsOpen === undefined) window.__uiStatsOpen = false;
                 if (window.__uiLastGrid === undefined) window.__uiLastGrid = false;
-                // Lưới đổi trạng thái (vào/ra phòng) -> ép panel theo lưới: vào = mở, ra = đóng
+
+                // Vào phòng (lưới hiện) → ép mở panel; Ra phòng (lưới ẩn) → ép đóng panel
                 if (gridVisible !== window.__uiLastGrid) {
                     window.__uiLastGrid = gridVisible;
-                    window.__uiStatsOpen = gridVisible;
+                    window.__uiStatsOpen = gridVisible; // true khi vào, false khi ra
                 }
-                const showPanel = window.__uiStatsOpen;
+
+                const showPanel = !!window.__uiStatsOpen;
                 p.style.display = showPanel ? "block" : "none";
                 m.style.display = "block";
 
@@ -146,11 +150,15 @@ function syncStatsUI(page) {
                         g.style.display = "none";
                         g.style.visibility = "";
                     }
-                    left = (r.right + 6) + "px";
+                    if (r && r.right > 0) {
+                        left = (r.right + 6) + "px";
+                    }
                 }
-                // Panel sát mép trên; nút toggle nằm ngay sát bên phải panel
+                // Panel sát mép trên ngay bên phải lưới
                 p.style.left = left; p.style.top = "0px";
-                m.style.left = `calc(${left} + 284px)`; m.style.top = "0px";
+                // Nút toggle: cố định luôn ở bên phải, không bị nhảy vị trí khi đóng/mở
+                m.style.left = `calc(${left} + 284px)`;
+                m.style.top = "0px";
             };
             window.addEventListener("resize", () => window.__uiSyncStats());
         }
@@ -185,7 +193,7 @@ function showStats(page, stats) {
                     border-radius: 0 0 4px 4px;
                     font: 700 11px sans-serif;
                     cursor: pointer;
-                    display: none;
+                    display: block;
                     box-shadow: 0 2px 8px rgba(15, 187, 244, 0.5);
                 }
                 /* Panel thống kê chính (mặc định ẩn) */
@@ -204,7 +212,7 @@ function showStats(page, stats) {
                     max-height: 70vh;
                     overflow-y: auto;
                     box-sizing: border-box;
-                    box-shadow: 0 0 10px 2px rgba(249, 76, 8, 0.45)
+                    box-shadow: 0 0 10px 2px rgba(249, 76, 8, 0.45);
                     display: none;
                 }
                 #ui-stats .stats-header {
@@ -318,9 +326,10 @@ function showStats(page, stats) {
             document.body.appendChild(panel);
         }
 
-        // Click nút -> bật/tắt panel
+        // Click nút toggle -> bật/tắt panel & lưu trạng thái
         miniToggle.onclick = () => {
             window.__uiStatsOpen = !window.__uiStatsOpen;
+            try { localStorage.setItem("ui_stats_open", window.__uiStatsOpen ? "true" : "false"); } catch (e) { }
             if (window.__uiSyncStats) window.__uiSyncStats();
         };
 
@@ -350,13 +359,23 @@ function showStats(page, stats) {
         if (!container) {
             panel.innerHTML = "";
 
-            // Header
+            // Header với nút ✕
             const header = document.createElement("div");
             header.className = "stats-header";
             header.innerHTML = `
                 <span class="stats-title">📊 THỐNG KÊ CHI TIẾT</span>
+                <button id="btn-close-stats" class="btn-close" title="Ẩn bảng thống kê" style="cursor:pointer;border:1px solid #cbd5e1;background:#f8fafc;border-radius:3px;font-size:10px;padding:1px 5px;line-height:1.2;">✕</button>
             `;
             panel.appendChild(header);
+
+            const closeBtn = header.querySelector("#btn-close-stats");
+            if (closeBtn) {
+                closeBtn.onclick = () => {
+                    window.__uiStatsOpen = false;
+                    try { localStorage.setItem("ui_stats_open", "false"); } catch (e) { }
+                    if (window.__uiSyncStats) window.__uiSyncStats();
+                };
+            }
 
             // Container chứa nội dung các bảng
             container = document.createElement("div");
@@ -506,7 +525,8 @@ function showStats(page, stats) {
         const tongLenhSW = winSW + thuaSW;
         const tiLeSW = tongLenhSW > 0 ? Math.round((winSW / tongLenhSW) * 100) : 0;
         const bcrSWVal = s.bcr_sw ?? 0;
-        const volSWDuKien = Math.min(50, 2 * (1 + Math.abs(Math.min(0, bcrSWVal))));
+        const absSW = Math.abs(Math.min(0, bcrSWVal));
+        const volSWDuKien = absSW < 5 ? 2 * (1 + absSW) : Math.min(50, 10 + 3 * (absSW - 4));
 
         const swDiv = document.getElementById("ui-stats-sw");
         if (swDiv) {

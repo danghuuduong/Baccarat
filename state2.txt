@@ -1,1 +1,1 @@
-settingData={"soVonBanDau":2000,"SoTienLonNhatTungSoHuu":2000,"profit":0,"solenhwin":0,"solenhthua":0,"solenhwin_Tab1":194,"solenhthua_Tab1":177,"solenhwin_Tab2":0,"solenhthua_Tab2":0,"soChuoiDat":0}
+settingData={"soVonBanDau":2000,"SoTienLonNhatTungSoHuu":2000,"profit":0,"solenhwin":0,"solenhthua":0,"soChuoiDat":0,"soVonBanDau_DCA":-77,"SoTienLonNhatTungSoHuu_DCA":47,"TonThat_Max_DCA":264,"profit_DCA":-75,"solenhwin_DCA":19,"solenhthua_DCA":22,"soVonBanDau_SW":16.2,"SoTienLonNhatTungSoHuu_SW":34.35,"TonThat_Max_SW":95.3,"profit_SW":12.6,"solenhwin_SW":19,"solenhthua_SW":22}

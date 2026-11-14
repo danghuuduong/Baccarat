@@ -13,7 +13,7 @@ const { syncKetQua } = require("./syncStats");
 // Chỉ giữ để tính MOC = 180
 const SO_TIEN_UOC_LIST = [20, 50, 110];
 const MOC = SO_TIEN_UOC_LIST.reduce((a, b) => a + b, 0); // 180
-
+const soTienLaiChuKiDCA_Reset = 15
 function capNhatMoc(delta) {
     if (typeof delta !== "number" || isNaN(delta)) return;
 
@@ -39,14 +39,21 @@ function capNhatMoc(delta) {
 function tinhVolDCA() {
     const sauNhat = setting.get("bcrSauNhat") || 0;
     const abs = Math.abs(Math.min(0, sauNhat));
-    return Math.min(50, 20 + 5 * Math.floor(abs / 5));
+    if (abs >= 30) return 150;
+    if (abs >= 25) return 130;
+    if (abs >= 20) return 100;
+    if (abs >= 15) return 80;
+    if (abs >= 10) return 60;
+    if (abs >= 5) return 40;
+    return 20;
 }
 
 // ── Tính volSW dựa theo bcr_sw (giá trị âm hoặc 0) ──────────────────────────
 function tinhVolSW() {
     const bcrSW = setting.get("bcr_sw") || 0;
     const abs = Math.abs(Math.min(0, bcrSW));
-    return Math.min(50, 2 * (1 + abs));
+    if (abs < 5) return 2 * (1 + abs);
+    return Math.min(50, 10 + 3 * (abs - 4));
 }
 
 function buildStats() {
@@ -116,25 +123,25 @@ async function xulyVoPhong_Util(page, danhSach) {
 
     // Chọn phòng có ngam lớn nhất; bằng nhau thì chọn phòng có thép lớn nhất
 
-    // const phongTotNhat = danhSach.reduce((max, phong) => {
-    //     if (phong.ngam !== max.ngam) return phong.ngam > max.ngam ? phong : max;
-    //     return phong.infoTinHieu.thep > max.infoTinHieu.thep ? phong : max;
-    // });
+    const phongTotNhat = danhSach.reduce((max, phong) => {
+        if (phong.ngam !== max.ngam) return phong.ngam > max.ngam ? phong : max;
+        return phong.infoTinHieu.thep > max.infoTinHieu.thep ? phong : max;
+    });
 
-
-    let ungVien = [];
-    for (const phong of danhSach) {
-        if (ungVien.length === 0) { ungVien = [phong]; continue; }
-        const best = ungVien[0];
-        if (phong.ngam > best.ngam ||
-            (phong.ngam === best.ngam && phong.infoTinHieu.thep > best.infoTinHieu.thep)) {
-            ungVien = [phong];          // có thằng mạnh hơn, reset
-        } else if (phong.ngam === best.ngam &&
-            phong.infoTinHieu.thep === best.infoTinHieu.thep) {
-            ungVien.push(phong);        // hòa hoàn toàn, thêm vào
-        }
-    }
-    const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
+    // Lựa chọn ngẫu nhiên
+    // let ungVien = [];
+    // for (const phong of danhSach) {
+    //     if (ungVien.length === 0) { ungVien = [phong]; continue; }
+    //     const best = ungVien[0];
+    //     if (phong.ngam > best.ngam ||
+    //         (phong.ngam === best.ngam && phong.infoTinHieu.thep > best.infoTinHieu.thep)) {
+    //         ungVien = [phong];          // có thằng mạnh hơn, reset
+    //     } else if (phong.ngam === best.ngam &&
+    //         phong.infoTinHieu.thep === best.infoTinHieu.thep) {
+    //         ungVien.push(phong);        // hòa hoàn toàn, thêm vào
+    //     }
+    // }
+    // const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
 
     // ── Lần 1: Click vào phòng được chọn ──────────────────────────────────
     await page.mouse.click(
@@ -204,9 +211,9 @@ async function vongLapDatCuoc(page, roomType) {
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
                 // await click(coords[ten]);
-                await randomSleep(222, 333);
+                // await randomSleep(222, 333);
                 // await click(coordBen);
-                await randomSleep(222, 333);
+                // await randomSleep(222, 333);
                 con -= gia;
             }
         }
@@ -284,7 +291,7 @@ async function vongLapDatCuoc(page, roomType) {
             sotienuocHienTai: tongCuoc,
             bendat: tinHieu.tinhieu,
             soVonBanDau_DCA: Math.round((setting.get("soVonBanDau_DCA") - volDCA) * 100) / 100,
-            soVonBanDau_SW:  Math.round((setting.get("soVonBanDau_SW")  - volSW)  * 100) / 100,
+            soVonBanDau_SW: Math.round((setting.get("soVonBanDau_SW") - volSW) * 100) / 100,
         });
         capNhatStats();
         showThongBao(
@@ -337,7 +344,7 @@ async function vongLapDatCuoc(page, roomType) {
             if (!process.env.TOOL_NAME) console.warn("[Sync] TOOL_NAME chưa set trong .env");
             if (!process.env.TOOL_NAME2) console.warn("[Sync] TOOL_NAME2 chưa set trong .env");
             syncKetQua("thua", profitDCA_Thua, process.env.TOOL_NAME);
-            syncKetQua("thua", profitSW_Thua,  process.env.TOOL_NAME2);
+            syncKetQua("thua", profitSW_Thua, process.env.TOOL_NAME2);
 
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
@@ -355,7 +362,7 @@ async function vongLapDatCuoc(page, roomType) {
             // ── Hòa → hoàn lại tiền cho cả 2 bot, giữ bcr/bcr_sw ────────────
             setting.set({
                 soVonBanDau_DCA: Math.round((setting.get("soVonBanDau_DCA") + volDCA) * 100) / 100,
-                soVonBanDau_SW:  Math.round((setting.get("soVonBanDau_SW")  + volSW)  * 100) / 100,
+                soVonBanDau_SW: Math.round((setting.get("soVonBanDau_SW") + volSW) * 100) / 100,
             });
             capNhatStats();
             showThongBao(
@@ -400,8 +407,8 @@ async function vongLapDatCuoc(page, roomType) {
             });
             setting.set("bcrSauNhat", Math.min(setting.get("bcrSauNhat"), setting.get("bcr")));
 
-            // Reset chu kỳ DCA nếu laiChuKy >= 20
-            if (setting.get("laiChuKy") >= 20) {
+            // Reset chu kỳ DCA nếu laiChuKy >= 15
+            if (setting.get("laiChuKy") >= soTienLaiChuKiDCA_Reset) {
                 setting.set({ bcr: 0, bcrSauNhat: 0, laiChuKy: 0 });
                 showThongBao(page, "🔄 Reset chu kỳ DCA", 4000, "#36ca0dff");
             }
@@ -434,7 +441,7 @@ async function vongLapDatCuoc(page, roomType) {
             if (!process.env.TOOL_NAME) console.warn("[Sync] TOOL_NAME chưa set trong .env");
             if (!process.env.TOOL_NAME2) console.warn("[Sync] TOOL_NAME2 chưa set trong .env");
             syncKetQua("win", laiDCA, process.env.TOOL_NAME);
-            syncKetQua("win", laiSW,  process.env.TOOL_NAME2);
+            syncKetQua("win", laiSW, process.env.TOOL_NAME2);
 
             capNhatStats();
             await outPhong(page, `✅ Chuồn thôi - DCA +${laiDCA}K | SW +${laiSW}K`, "#00fd59ff");
@@ -468,7 +475,7 @@ async function vongLapDatCuoc(page, roomType) {
             if (!process.env.TOOL_NAME) console.warn("[Sync] TOOL_NAME chưa set trong .env");
             if (!process.env.TOOL_NAME2) console.warn("[Sync] TOOL_NAME2 chưa set trong .env");
             syncKetQua("thua", profitDCA_Thua, process.env.TOOL_NAME);
-            syncKetQua("thua", profitSW_Thua,  process.env.TOOL_NAME2);
+            syncKetQua("thua", profitSW_Thua, process.env.TOOL_NAME2);
 
             capNhatStats();
             showThongBao(page, `DCA -${volDCA}K | SW -${volSW}K`, 8000, "#fb2424ff");
