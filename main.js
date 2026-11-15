@@ -35,10 +35,19 @@ async function ganUI(page) {
         profit: setting.get("profit"),
         solenhwin: setting.get("solenhwin"),
         solenhthua: setting.get("solenhthua"),
-        solenhwin_Tab1: setting.get("solenhwin_Tab1"),
-        solenhthua_Tab1: setting.get("solenhthua_Tab1"),
-        solenhwin_Tab2: setting.get("solenhwin_Tab2"),
-        solenhthua_Tab2: setting.get("solenhthua_Tab2"),
+        solenhwin_Red: setting.get("solenhwin_Red"),
+        solenhthua_Red: setting.get("solenhthua_Red"),
+        solenhWin_Xanh: setting.get("solenhWin_Xanh"),
+        solenhthua_Xanh: setting.get("solenhthua_Xanh"),
+
+        thep1_win: setting.get("thep1_win"),
+        thep1_thua: setting.get("thep1_thua"),
+        thep2_win: setting.get("thep2_win"),
+        thep2_thua: setting.get("thep2_thua"),
+        thep3_win: setting.get("thep3_win"),
+        thep3_thua: setting.get("thep3_thua"),
+
+
         soChuoiDat: setting.get("soChuoiDat"),
 
         TonThat_Max: setting.get("TonThat_Max"),
@@ -259,10 +268,19 @@ async function ganUI(page) {
             patch.profit !== undefined ||
             patch.solenhwin !== undefined ||
             patch.solenhthua !== undefined ||
-            patch.solenhwin_Tab1 !== undefined ||
-            patch.solenhthua_Tab1 !== undefined ||
-            patch.solenhwin_Tab2 !== undefined ||
-            patch.solenhthua_Tab2 !== undefined ||
+            patch.solenhwin_Red !== undefined ||
+            patch.solenhthua_Red !== undefined ||
+            patch.solenhWin_Xanh !== undefined ||
+            patch.solenhthua_Xanh !== undefined ||
+
+
+            patch.thep1_win !== undefined ||
+            patch.thep1_thua !== undefined ||
+            patch.thep2_win !== undefined ||
+            patch.thep2_thua !== undefined ||
+            patch.thep3_win !== undefined ||
+            patch.thep3_thua !== undefined ||
+
             patch.soChuoiDat !== undefined ||
 
             patch.TonThat_Max !== undefined ||
@@ -278,10 +296,18 @@ async function ganUI(page) {
                 profit: state.profit,
                 solenhwin: state.solenhwin,
                 solenhthua: state.solenhthua,
-                solenhwin_Tab1: state.solenhwin_Tab1,
-                solenhthua_Tab1: state.solenhthua_Tab1,
-                solenhwin_Tab2: state.solenhwin_Tab2,
-                solenhthua_Tab2: state.solenhthua_Tab2,
+                solenhwin_Red: state.solenhwin_Red,
+                solenhthua_Red: state.solenhthua_Red,
+                solenhWin_Xanh: state.solenhWin_Xanh,
+                solenhthua_Xanh: state.solenhthua_Xanh,
+
+                thep1_win: state.thep1_win,
+                thep1_thua: state.thep1_thua,
+                thep2_win: state.thep2_win,
+                thep2_thua: state.thep2_thua,
+                thep3_win: state.thep3_win,
+                thep3_thua: state.thep3_thua,
+
                 soChuoiDat: state.soChuoiDat,
 
                 TonThat_Max: state.TonThat_Max,

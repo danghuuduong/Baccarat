@@ -18,12 +18,20 @@ module.exports = createStore({
     solenhwin: 0,                // số lệnh thắng
     solenhthua: 0,               // số lệnh thua
 
-    solenhwin_Tab1: 0,           // số lệnh thắng Tab 1
-    solenhthua_Tab1: 0,          // số lệnh thua Tab 1
+    solenhwin_Red: 0,           // số lệnh thắng Tab 1
+    solenhthua_Red: 0,          // số lệnh thua Tab 1
 
-    solenhwin_Tab2: 0,           // số lệnh thắng Tab 2
-    solenhthua_Tab2: 0,          // số lệnh thua Tab 2
+    solenhWin_Xanh: 0,           // số lệnh thắng Tab 2
+    solenhthua_Xanh: 0,          // số lệnh thua Tab 2
 
+    thep1_win: 0,
+    thep1_thua: 0,
+
+    thep2_win: 0,
+    thep2_thua: 0,
+
+    thep3_win: 0,
+    thep3_thua: 0,
 
     bendat: null,                // "red" | "blue" | null – bên vừa đặt cược
 

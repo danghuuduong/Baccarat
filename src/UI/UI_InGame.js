@@ -329,6 +329,12 @@ function showStats(page, stats) {
                 <div><span class="s-label">VS: </span><span class="${vs >= 0 ? "s-win" : "s-lose"}">${vs > 0 ? "+" : ""}${vs}</span></div>
                 <div><span class="s-label">VS Âm Max: </span><span class="s-lose">${s.VSTISO_Am_Max || 0}</span></div>
                 <div><span class="s-label">VS Dương Max: </span><span class="s-win">${s.VSTISO_Duong_Max || 0}</span></div>
+
+                <div><span class="s-label">Đỏ</span><span class="s-win">${s.solenhwin_Red || 0} / ${s.solenhthua_Red}</span></div>
+                <div><span class="s-label">Xanh</span><span class="s-win">${s.solenhWin_Xanh || 0} / ${s.solenhthua_Xanh}</span></div>
+                <div><span class="s-label">thếp 1</span><span class="s-win">${s.thep1_win || 0} / ${s.thep1_thua}</span></div>
+                <div><span class="s-label">thếp 2</span><span class="s-win">${s.thep2_win || 0} / ${s.thep2_thua}</span></div>
+                <div><span class="s-label">thếp 3</span><span class="s-win">${s.thep3_win || 0} / ${s.thep3_thua}</span></div>
             </div>
         `;
     }, stats).catch(() => { });

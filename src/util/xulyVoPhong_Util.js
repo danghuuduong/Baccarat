@@ -41,10 +41,20 @@ function buildStats() {
         profit: setting.get("profit"),
         solenhwin: setting.get("solenhwin"),
         solenhthua: setting.get("solenhthua"),
-        solenhwin_Tab1: setting.get("solenhwin_Tab1"),
-        solenhthua_Tab1: setting.get("solenhthua_Tab1"),
-        solenhwin_Tab2: setting.get("solenhwin_Tab2"),
-        solenhthua_Tab2: setting.get("solenhthua_Tab2"),
+        solenhwin_Red: setting.get("solenhwin_Red"),
+        solenhthua_Red: setting.get("solenhthua_Red"),
+        solenhWin_Xanh: setting.get("solenhWin_Xanh"),
+        solenhthua_Xanh: setting.get("solenhthua_Xanh"),
+
+        thep1_win: setting.get("thep1_win"),
+        thep1_thua: setting.get("thep1_thua"),
+        thep2_win: setting.get("thep2_win"),
+        thep2_thua: setting.get("thep2_thua"),
+        thep3_win: setting.get("thep3_win"),
+        thep3_thua: setting.get("thep3_thua"),
+
+
+
         soChuoiDat: setting.get("soChuoiDat"),
         TonThat_Max: setting.get("TonThat_Max"),
         tiSoDuong: setting.get("tiSoDuong"),
@@ -111,6 +121,29 @@ async function xulyVoPhong_Util(page, danhSach) {
             ungVien.push(phong);        // hòa hoàn toàn, thêm vào
         }
     }
+
+    // let ungVien = [];
+    // for (const phong of danhSach) {
+    //     phong.tongChay = DemTongChay(phong.arr); // arr: sửa đúng tên field mảng của phòng
+    //     if (ungVien.length === 0) { ungVien = [phong]; continue; }
+    //     const best = ungVien[0];
+
+    //     const hon =
+    //         phong.ngam !== best.ngam
+    //             ? phong.ngam > best.ngam
+    //             : phong.infoTinHieu.thep !== best.infoTinHieu.thep
+    //                 ? phong.infoTinHieu.thep > best.infoTinHieu.thep
+    //                 : phong.tongChay > best.tongChay;
+
+    //     const hoa =
+    //         phong.ngam === best.ngam &&
+    //         phong.infoTinHieu.thep === best.infoTinHieu.thep &&
+    //         phong.tongChay === best.tongChay;
+
+    //     if (hon) ungVien = [phong];     // mạnh hơn, reset
+    //     else if (hoa) ungVien.push(phong); // hòa hoàn toàn, thêm vào
+    // }
+
     const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
 
     // ── Lần 1: Click vào phòng được chọn ──────────────────────────────────
@@ -182,9 +215,9 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         let con = tien;
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
-                // await click(coords[ten]);
+                await click(coords[ten]);
                 await randomSleep(222, 333);
-                // await click(coordBen);
+                await click(coordBen);
                 await randomSleep(222, 333);
                 con -= gia;
             }
@@ -278,9 +311,9 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             showThongBao(page, "Lỗi khi check kết quả", 5000, "#fb2424ff");
             setting.set("solenhthua", setting.get("solenhthua") + 1);
             if (tab === 1) {
-                setting.set("solenhthua_Tab1", setting.get("solenhthua_Tab1") + 1);
+                setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
             } else if (tab === 2) {
-                setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
+                setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
             }
             setting.set("profit", setting.get("profit") - sotienuoc);
             syncKetQua("thua", -sotienuoc);
@@ -319,6 +352,17 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         showThongBao(page, `${ketQua === "B" ? "Kết Quả -> ĐỎ" : "Kết Quả -> XANH "}`, 8000, ketQua === "B" ? "#fb2424ff" : "#018cffff");
 
         if (ketQuaMau === bendat) {
+
+            if (bendat === "red") {
+                setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
+            } else {
+                setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
+            }
+
+            if ([1, 2, 3].includes(tinHieu.thep)) {
+                const keyThep = `thep${tinHieu.thep}_win`;
+                setting.set(keyThep, setting.get(keyThep) + 1);
+            }
             // ── Thắng ──────────────────────────────────────────────────────
             // Đỏ thắng chịu phí 5%, xanh ăn đủ
             const lai = bendat === "red"
@@ -330,11 +374,7 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             setting.set("profit", Math.round((setting.get("profit") + lai) * 100) / 100);
             setting.set("solenhwin", setting.get("solenhwin") + 1);
             syncKetQua("win", lai);
-            if (tab === 1) {
-                setting.set("solenhwin_Tab1", setting.get("solenhwin_Tab1") + 1);
-            } else if (tab === 2) {
-                setting.set("solenhwin_Tab2", setting.get("solenhwin_Tab2") + 1);
-            }
+
             capNhatMoc(lai);
             capNhatStats();
             await outPhong(page, `✅ Chuồn thôi- Ăn +${lai}K`, "#00fd59ff");
@@ -343,10 +383,15 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         } else {
             // ── Thua ───────────────────────────────────────────────────────
             setting.set("solenhthua", setting.get("solenhthua") + 1);
-            if (tab === 1) {
-                setting.set("solenhthua_Tab1", setting.get("solenhthua_Tab1") + 1);
-            } else if (tab === 2) {
-                setting.set("solenhthua_Tab2", setting.get("solenhthua_Tab2") + 1);
+
+            if (bendat === "red") {
+                setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
+            } else {
+                setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
+            }
+            if ([1, 2, 3].includes(tinHieu.thep)) {
+                const keyThep = `thep${tinHieu.thep}_thua`;
+                setting.set(keyThep, setting.get(keyThep) + 1);
             }
 
             setting.set("profit", setting.get("profit") - sotienuoc);

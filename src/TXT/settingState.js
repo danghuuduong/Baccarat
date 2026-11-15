@@ -12,10 +12,10 @@ const PERSIST_KEYS = [
     "profit",
     "solenhwin",
     "solenhthua",
-    "solenhwin_Tab1",
-    "solenhthua_Tab1",
-    "solenhwin_Tab2",
-    "solenhthua_Tab2",
+    "solenhwin_Red",
+    "solenhthua_Red",
+    "solenhWin_Xanh",
+    "solenhthua_Xanh",
     "soChuoiDat",
 ];
 

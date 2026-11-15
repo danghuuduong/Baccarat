@@ -45,6 +45,7 @@ function LayTinHieu(arr, boQuaCheckHoa = false) {
         if (thep === 3 && arr.slice(-2).includes(TIE)) return null;
     }
 
+    // if (tinhieu === "red") return null;  // chỉ cho qua blue
     return { tinhieu, thep };
 }
 
