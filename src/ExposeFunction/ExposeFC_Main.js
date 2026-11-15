@@ -2,9 +2,9 @@
 
 const setting = require("../State/setting");
 const { updateBatDau } = require("../UI/UI_Btn_BatDau");
-const { vongLapChupManHinh } = require("../util/VongLapChupManHinh");
+const { vongLapChupManHinh } = require("../Util/VongLapChupManHinh");
 const { saveSettingTXT } = require("../TXT/settingState");
-const { getToolStats } = require("../util/mongoDB");
+const { getToolStats } = require("../Util/mongoDB");
 
 /**
  * Đăng ký tất cả exposeFunction vào page.
@@ -68,11 +68,13 @@ async function ExposeFC_Main(page) {
 
             const patch = {
                 TonThat_Max: 0,
-                tiSoDuong: 0,
-                tiSoAm: 0,
-                VSTISO: 0,
-                VSTISO_Duong_Max: 0,
-                VSTISO_Am_Max: 0,
+                // thongkesolieuthep: {
+                //     1: { win: 0, thua: 0 },
+                //     2: { win: 0, thua: 0 },
+                //     3: { win: 0, thua: 0 },
+                //     4: { win: 0, thua: 0 },
+                //     5: { win: 0, thua: 0 },
+                // },
             };
 
             // Gọi CSDL để lấy và fill thông số Lãi, Win, Thua mới nhất của Tool vào UI

@@ -1,6 +1,7 @@
 // src/UI/UI_InGame.js – Hiển thị lưới bài + thống kê trong phòng
 "use strict";
 
+
 /**
  * Hiển thị bảng lưới bi (15 cột × 6 hàng) ở giữa màn hình (top 30%).
  * @param {import('playwright').Page} page
@@ -320,23 +321,39 @@ function showStats(page, stats) {
         const tonEl = document.getElementById("ui-ton-that");
         if (tonEl) tonEl.textContent = s.TonThat_Max || 0;
 
-        // 5 dòng tỉ số
-        const vs = s.VSTISO || 0;
+        // Tỉ số Đỏ/Xanh + thống kê thếp (nút đóng/mở ở góc phải dưới, mặc định đóng)
+        if (window.__uiStatsExtraOpen === undefined) window.__uiStatsExtraOpen = false;
+        const mo = window.__uiStatsExtraOpen;
+
+        const dongThep = [1, 2, 3, 4, 5].map((n) => {
+            const t = (s.thongkesolieuthep || {})[n] || {};
+            return `<div><span class="s-label">thếp ${n} </span><span class="s-win">${t.win || 0}</span> / <span class="s-lose">${t.thua || 0}</span></div>`;
+        }).join("");
+
         extraInfo.innerHTML = `
             <div style="margin-top:4px;border-top:1px solid rgba(0,0,0,0.08);padding-top:3px">
-                <div><span class="s-label">Dương: </span><span class="s-win">${s.tiSoDuong || 0}</span></div>
-                <div><span class="s-label">Âm: </span><span class="s-lose">${s.tiSoAm || 0}</span></div>
-                <div><span class="s-label">VS: </span><span class="${vs >= 0 ? "s-win" : "s-lose"}">${vs > 0 ? "+" : ""}${vs}</span></div>
-                <div><span class="s-label">VS Âm Max: </span><span class="s-lose">${s.VSTISO_Am_Max || 0}</span></div>
-                <div><span class="s-label">VS Dương Max: </span><span class="s-win">${s.VSTISO_Duong_Max || 0}</span></div>
-
-                <div><span class="s-label">Đỏ</span><span class="s-win">${s.solenhwin_Red || 0} / ${s.solenhthua_Red}</span></div>
-                <div><span class="s-label">Xanh</span><span class="s-win">${s.solenhWin_Xanh || 0} / ${s.solenhthua_Xanh}</span></div>
-                <div><span class="s-label">thếp 1</span><span class="s-win">${s.thep1_win || 0} / ${s.thep1_thua}</span></div>
-                <div><span class="s-label">thếp 2</span><span class="s-win">${s.thep2_win || 0} / ${s.thep2_thua}</span></div>
-                <div><span class="s-label">thếp 3</span><span class="s-win">${s.thep3_win || 0} / ${s.thep3_thua}</span></div>
+                <div id="ui-stats-extra-body" style="display:${mo ? "block" : "none"}">
+                    <div><span class="s-label">Đỏ </span><span class="s-win">${s.solenhwin_Red || 0}</span> / <span class="s-lose">${s.solenhthua_Red || 0}</span></div>
+                    <div><span class="s-label">Xanh </span><span class="s-win">${s.solenhWin_Xanh || 0}</span> / <span class="s-lose">${s.solenhthua_Xanh || 0}</span></div>
+                    ${dongThep}
+                </div>
+                <div style="text-align:right">
+                    <button id="btn-toggle-extra" style="pointer-events:auto;width:auto;margin-top:2px;padding:0 6px;cursor:pointer">${mo ? "Đóng ▲" : "Mở ▼"}</button>
+                </div>
             </div>
         `;
+
+        const btnToggle = extraInfo.querySelector("#btn-toggle-extra");
+        if (btnToggle) {
+            btnToggle.addEventListener("click", () => {
+                window.__uiStatsExtraOpen = !window.__uiStatsExtraOpen;
+                const body = document.getElementById("ui-stats-extra-body");
+                if (body) body.style.display = window.__uiStatsExtraOpen ? "block" : "none";
+                btnToggle.textContent = window.__uiStatsExtraOpen ? "Đóng ▲" : "Mở ▼";
+            });
+        }
+
+
     }, stats).catch(() => { });
 }
 

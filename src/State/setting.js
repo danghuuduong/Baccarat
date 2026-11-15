@@ -24,25 +24,16 @@ module.exports = createStore({
     solenhWin_Xanh: 0,           // số lệnh thắng Tab 2
     solenhthua_Xanh: 0,          // số lệnh thua Tab 2
 
-    thep1_win: 0,
-    thep1_thua: 0,
-
-    thep2_win: 0,
-    thep2_thua: 0,
-
-    thep3_win: 0,
-    thep3_thua: 0,
+    // Thống kê theo thép: key là số thép 1..5
+    thongkesolieuthep: {
+        1: { win: 0, thua: 0 },
+        2: { win: 0, thua: 0 },
+        3: { win: 0, thua: 0 },
+        4: { win: 0, thua: 0 },
+        5: { win: 0, thua: 0 },
+    },
 
     bendat: null,                // "red" | "blue" | null – bên vừa đặt cược
 
-
-    soDuMoc: 0,
-    tiSoDuong: 0,
-    tiSoAm: 0,
-    VSTISO: 0,
-    VSTISO_Duong_Max: 0,
-    VSTISO_Am_Max: 0,
     TonThat_Max: 0,
-
-
 });

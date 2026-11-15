@@ -16,20 +16,16 @@ function TimPhongDat_Util(phongRoomS = []) {
     phongRoomS.forEach((arr, i) => {
         if (!arr || arr.length === 0) return;               // phòng rỗng thì bỏ qua
 
-        const { chuoi, isDat } = CheckChay2Ngam(arr);
-        const tinHieu = LayTinHieu(arr);                     // { tinhieu, thep } | null
-        if (!isDat || !tinHieu) return;                               // chỉ lọc theo cháy ngầm
+        const checkChay2Ngam = CheckChay2Ngam(arr);
+        // const tinHieu = LayTinHieu(arr);                     // { tinhieu, thep } | null
+        if (!checkChay2Ngam?.isDat) return;                               // chỉ lọc theo cháy ngầm
 
 
         DanhSachTimPhong.push({
             phong: i + 1,                                // số phòng 1..8
-            ngam: chuoi,
+            ngam: checkChay2Ngam.chuoiLienTiep,
+            ...checkChay2Ngam,
             ...DS_PHONG[i],                                  // ten, x, y
-            infoTinHieu: {
-                isTinHieu: !!tinHieu,                            // có tín hiệu hay không
-                tinhieu: tinHieu ? tinHieu.tinhieu : null,   // "blue" | "red" | "green" | null
-                thep: tinHieu ? tinHieu.thep : null,         // 1 | 2 | 3 | null
-            },
             arr
         });
     });

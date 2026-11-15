@@ -3,7 +3,7 @@
 const { chromium } = require("playwright");
 const { UI_Btn_BatDau, updateBatDau } = require("./src/UI/UI_Btn_BatDau");
 const { UI_Login, removeLoginUI } = require("./src/UI/UI_Login");
-const { verifyLogin } = require("./src/util/mongoDB");
+const { verifyLogin } = require("./src/Util/mongoDB");
 require("dotenv").config();
 const setting = require("./src/State/setting");   // đường dẫn tuỳ file bạn đứng
 
@@ -16,11 +16,33 @@ const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
 const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
 const { setupKiemTraLED, UI_KiemTraLED } = require("./src/UI/UI_KiemTraLED");
-const { hienKhung } = require("./src/util/DocBi");
+const { hienKhung } = require("./src/Util/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
 const BAT_TAM_XANH = false;
+
+// Các key stats: thêm/bớt key chỉ cần sửa đúng 1 chỗ này
+const KEY_STATS = [
+    "soVonBanDau",
+    "SoTienLonNhatTungSoHuu",
+    "profit",
+    "solenhwin",
+    "solenhthua",
+    "solenhwin_Red",
+    "solenhthua_Red",
+    "solenhWin_Xanh",
+    "solenhthua_Xanh",
+    "thongkesolieuthep",
+    "soChuoiDat",
+    "TonThat_Max",
+];
+
+// Lấy stats từ 1 object (state của subscribe)
+const layStats = (s) => Object.fromEntries(KEY_STATS.map((k) => [k, s[k]]));
+
+// Lấy stats trực tiếp từ setting
+const layStatsTuSetting = () => Object.fromEntries(KEY_STATS.map((k) => [k, setting.get(k)]));
 
 // Gắn UI vào trang (gọi lần đầu và mỗi khi trang load lại / chuyển trang)
 // → Sau này bỏ UI vào đây
@@ -29,34 +51,7 @@ async function ganUI(page) {
     await UI_KetQua8Phong(page, setting.get("phongRoomS"));
     await UI_TableKiemthu(page);
     // await UI_KiemTraLED(page);
-    showStats(page, {
-        soVonBanDau: setting.get("soVonBanDau"),
-        SoTienLonNhatTungSoHuu: setting.get("SoTienLonNhatTungSoHuu"),
-        profit: setting.get("profit"),
-        solenhwin: setting.get("solenhwin"),
-        solenhthua: setting.get("solenhthua"),
-        solenhwin_Red: setting.get("solenhwin_Red"),
-        solenhthua_Red: setting.get("solenhthua_Red"),
-        solenhWin_Xanh: setting.get("solenhWin_Xanh"),
-        solenhthua_Xanh: setting.get("solenhthua_Xanh"),
-
-        thep1_win: setting.get("thep1_win"),
-        thep1_thua: setting.get("thep1_thua"),
-        thep2_win: setting.get("thep2_win"),
-        thep2_thua: setting.get("thep2_thua"),
-        thep3_win: setting.get("thep3_win"),
-        thep3_thua: setting.get("thep3_thua"),
-
-
-        soChuoiDat: setting.get("soChuoiDat"),
-
-        TonThat_Max: setting.get("TonThat_Max"),
-        tiSoDuong: setting.get("tiSoDuong"),
-        tiSoAm: setting.get("tiSoAm"),
-        VSTISO: setting.get("VSTISO"),
-        VSTISO_Duong_Max: setting.get("VSTISO_Duong_Max"),
-        VSTISO_Am_Max: setting.get("VSTISO_Am_Max"),
-    });
+    showStats(page, layStatsTuSetting());
 }
 
 // =========== MAIN ==================
@@ -69,7 +64,10 @@ async function ganUI(page) {
         args: ["--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"],
     });
 
-    const page = await browser.newPage();   // cửa sổ cố định 1280×720, DPR = 1
+    const page = await browser.newPage({
+        viewport: { width: 1280, height: 720 },
+        deviceScaleFactor: 1,
+    });
 
 
     // Ép popup / link target=_blank mở ngay trong tab hiện tại (để UI không bị mất ở tab mới)
@@ -262,61 +260,8 @@ async function ganUI(page) {
     // ____________________________________________________________subscribe
     setting.subscribe((state, patch) => {
         if (!setting.get("currentAccount")) return; // Chưa đăng nhập thì không update stats
-        if (
-            patch.soVonBanDau !== undefined ||
-            patch.SoTienLonNhatTungSoHuu !== undefined ||
-            patch.profit !== undefined ||
-            patch.solenhwin !== undefined ||
-            patch.solenhthua !== undefined ||
-            patch.solenhwin_Red !== undefined ||
-            patch.solenhthua_Red !== undefined ||
-            patch.solenhWin_Xanh !== undefined ||
-            patch.solenhthua_Xanh !== undefined ||
-
-
-            patch.thep1_win !== undefined ||
-            patch.thep1_thua !== undefined ||
-            patch.thep2_win !== undefined ||
-            patch.thep2_thua !== undefined ||
-            patch.thep3_win !== undefined ||
-            patch.thep3_thua !== undefined ||
-
-            patch.soChuoiDat !== undefined ||
-
-            patch.TonThat_Max !== undefined ||
-            patch.tiSoDuong !== undefined ||
-            patch.tiSoAm !== undefined ||
-            patch.VSTISO !== undefined ||
-            patch.VSTISO_Duong_Max !== undefined ||
-            patch.VSTISO_Am_Max !== undefined
-        ) {
-            showStats(page, {
-                soVonBanDau: state.soVonBanDau,
-                SoTienLonNhatTungSoHuu: state.SoTienLonNhatTungSoHuu,
-                profit: state.profit,
-                solenhwin: state.solenhwin,
-                solenhthua: state.solenhthua,
-                solenhwin_Red: state.solenhwin_Red,
-                solenhthua_Red: state.solenhthua_Red,
-                solenhWin_Xanh: state.solenhWin_Xanh,
-                solenhthua_Xanh: state.solenhthua_Xanh,
-
-                thep1_win: state.thep1_win,
-                thep1_thua: state.thep1_thua,
-                thep2_win: state.thep2_win,
-                thep2_thua: state.thep2_thua,
-                thep3_win: state.thep3_win,
-                thep3_thua: state.thep3_thua,
-
-                soChuoiDat: state.soChuoiDat,
-
-                TonThat_Max: state.TonThat_Max,
-                tiSoDuong: state.tiSoDuong,
-                tiSoAm: state.tiSoAm,
-                VSTISO: state.VSTISO,
-                VSTISO_Duong_Max: state.VSTISO_Duong_Max,
-                VSTISO_Am_Max: state.VSTISO_Am_Max,
-            });
+        if (KEY_STATS.some((k) => patch[k] !== undefined)) {
+            showStats(page, layStats(state));
         }
     });
 
