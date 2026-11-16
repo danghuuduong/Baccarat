@@ -14,6 +14,8 @@ const THEP_MAX = SoTienThep.length;
 
 // Thép hiện tại: thắng/out phòng thì về 1, thua thì +1, quá THEP_MAX thì về 1
 let thepLocal = 1;
+// Số ván ảo thua liên tiếp. Thua ảo +1, thắng thật thì về 0
+let countAO = 0;
 
 // Cộng thống kê thép: loai = "win" | "thua"
 function tangThongKeThep(thep, loai) {
@@ -63,7 +65,6 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
     cancelThongBao(page);
     hideLuoiBi(page);
     arraySuDungChinhList = [];
-    thepLocal = 1;
     setting.set({
         isDatCuocXong: false,
         sotienuocHienTai: 0,
@@ -158,12 +159,10 @@ async function xulyVoPhong_Util(page, danhSach) {
 
     // Lấy thẳng arr của phòng đã chọn
     arraySuDungChinhList = [...(phongTotNhat.arr || [])];
-    thepLocal = 1;
 
     // ── Phần đặt cược ─────────────────────────────────────────────────────
     const thongBao = `Phòng: ${phongTotNhat.phong} => 
-     ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"} 
-| Ngầm: ${phongTotNhat.ngam}`;
+     ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"} | Ngầm: ${phongTotNhat.ngam}`;
 
     showThongBao(page, thongBao, 5000);
 
@@ -226,28 +225,14 @@ async function vongLapDatCuoc(page, roomType, phe) {
         return null;
     }
 
-    // Chờ ván mới: thấy ảnh Status_BatDauVandau HOẶC điểm xanh lá là qua
-    // async function choVanMoi(timeoutMs) {
-    //     const start = Date.now();
-    //     while (Date.now() - start < timeoutMs) {
-    //         if (isDung()) return false;
-    //         if (await DocKetQuaXanh(page, roomType)) return true;
-    //         const anh = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 200);
-    //         if (anh) return true;
-    //         await sleep(100);
-    //     }
-    //     return false;
-    // }
-
     async function choVanMoi(timeoutMs) {
         const start = Date.now();
         while (Date.now() - start < timeoutMs) {
             if (isDung()) return false;
 
-            // MỚI: thấy Trao Bài đúng type phòng thì return false
+            // Thấy Trao Bài đúng type phòng thì return false
             if (await TimAnhDuaTrenListPop_Util(page, [TRAO_BAI_IMG[roomType]], 200)) return false;
 
-            // Logic cũ giữ nguyên
             if (await DocKetQuaXanh(page, roomType)) return true;
             const anh = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 200);
             if (anh) return true;
@@ -255,7 +240,6 @@ async function vongLapDatCuoc(page, roomType, phe) {
         }
         return false;
     }
-
 
     const capNhatStats = () => {
         const tt = setting.get("SoTienLonNhatTungSoHuu") - setting.get("soVonBanDau");
@@ -287,48 +271,57 @@ async function vongLapDatCuoc(page, roomType, phe) {
             continue;
         }
 
-        // Kiểm tra dừng trước khi vào tiền
         if (isDung()) {
             await outPhong(page, "Đã bấm Dừng - Hủy cược");
             return;
         }
 
-
-        // ── 2. Tính mức cược và tên bên ────────────────────────────────────
+        // ── 2. Tính mức cược, tên bên, ảo hay thật ─────────────────────────
         const thepDanhh = thepLocal;
         const sotienuoc = SoTienThep[thepDanhh - 1];
+
+        const soChuoiDat = setting.get("soChuoiDat");
+        const isThat = !(soChuoiDat > 0) || countAO >= soChuoiDat;
 
         // Phe Đẹp: đánh cùng chiều tín hiệu | Phe Xấu: đánh ngược tín hiệu
         const benTheoCau = tinHieu.tinhieu === "d" ? "red" : "blue";
         const benDanh = phe === "Xấu" ? (benTheoCau === "red" ? "blue" : "red") : benTheoCau;
         const tenBen = benDanh === "red" ? "Đỏ" : "Xanh";
         const coordBen = benDanh === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
+        const mauTB = tenBen === "Xanh" ? "#247afbff" : "#e42727ff";
 
-        // ── 3. Chờ bảng chip ổn định rồi chọn chip + đặt bên ───────────────
-        await randomSleep(50, 100);
-        if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy cược"); return; }
-        await datTien(sotienuoc, coordBen);
+        if (isThat) {
+            // ── 3. Ván THẬT: chọn chip + đặt bên ───────────────────────────
+            await randomSleep(50, 100);
+            if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy cược"); return; }
+            await datTien(sotienuoc, coordBen);
 
-        // ── 4. Xác nhận ─────────────────────────────────────────────────────
-        if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy xác nhận cược"); return; }
-        await randomSleep(200, 300);
-        await click(coords.buttonXacNhan);
+            // ── 4. Xác nhận ─────────────────────────────────────────────────
+            if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy xác nhận cược"); return; }
+            await randomSleep(200, 300);
+            await click(coords.buttonXacNhan);
 
-        // ── 5. Lưu trạng thái + showThongBao (giữ tới khi có kết quả) ──────
-        setting.set({
-            isDatCuocXong: true,
-            sotienuocHienTai: sotienuoc,
-            bendat: benDanh,
-            soVonBanDau: setting.get("soVonBanDau") - sotienuoc,
-        });
-        capNhatStats();
+            // ── 5. Lưu trạng thái ──────────────────────────────────────────
+            setting.set({
+                isDatCuocXong: true,
+                sotienuocHienTai: sotienuoc,
+                bendat: benDanh,
+                soVonBanDau: setting.get("soVonBanDau") - sotienuoc,
+            });
+            capNhatStats();
 
-        showThongBao(page, `Đặt ${tenBen} ${sotienuoc}K
+            showThongBao(page, `Đặt ${tenBen} ${sotienuoc}K
         - Thếp ${thepDanhh} | 
         Cầu: ${tinHieu.cauphatHien} | 
         ${phe === "Xấu" ? "Bẻ cầu" : "Theo cầu"}`,
-            999999, tenBen === "Xanh" ? "#247afbff" : "#e42727ff");
-
+                999999, mauTB);
+        } else {
+            // ── Ván ẢO: không đặt tiền, không xác nhận, không trừ vốn ──────
+            showThongBao(page, `[ẢO ${countAO}/${soChuoiDat}] Giả đặt ${tenBen}
+        Cầu: ${tinHieu.cauphatHien} | 
+        ${phe === "Xấu" ? "Bẻ cầu" : "Theo cầu"}`,
+                999999, mauTB);
+        }
 
         // ── 6. Chờ rồi tìm kết quả bằng LED vàng ───────────────────────────
         await sleepKiemTra(10000);
@@ -337,11 +330,16 @@ async function vongLapDatCuoc(page, roomType, phe) {
         cancelThongBao(page);
         setting.set("isDatCuocXong", false);
 
-        // ── 7. Không ra kết quả → coi như thua, thoát phòng ────────────────
+        // ── 7. Không ra kết quả ────────────────────────────────────────────
         if (!ketQua) {
-            // Nếu không ra kết quả vì người dùng bấm dừng
             if (isDung()) {
                 await outPhong(page, "Đã bấm Dừng - Thoát phòng");
+                return;
+            }
+
+            // Ván ảo: không tính gì, chỉ out
+            if (!isThat) {
+                await outPhong(page, "OutPhong -> Không đọc được kết quả (ván ảo)");
                 return;
             }
 
@@ -356,16 +354,18 @@ async function vongLapDatCuoc(page, roomType, phe) {
         }
 
         // ── 8. Xử lý kết quả: B / P / T ────────────────────────────────────
-        const bendat = setting.get("bendat");
-        setting.set({ bendat: null, sotienuocHienTai: 0 });
+        const bendat = benDanh;
+        if (isThat) setting.set({ bendat: null, sotienuocHienTai: 0 });
 
         arraySuDungChinhList.push(ketQua);
         showLuoiBi(page, arraySuDungChinhList);
 
-        // Hòa: hoàn tiền, ở lại, đánh lại thép cũ
+        // Hòa: không tính, ở lại đánh tiếp (thật thì hoàn tiền)
         if (ketQua === "T") {
-            setting.set("soVonBanDau", setting.get("soVonBanDau") + sotienuoc);
-            capNhatStats();
+            if (isThat) {
+                setting.set("soVonBanDau", setting.get("soVonBanDau") + sotienuoc);
+                capNhatStats();
+            }
             showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 
             if (isDung()) {
@@ -382,8 +382,24 @@ async function vongLapDatCuoc(page, roomType, phe) {
         const ketQuaMau = ketQua === "B" ? "red" : "blue";
         showThongBao(page, `${ketQua === "B" ? "Kết Quả -> ĐỎ" : "Kết Quả -> XANH "}`, 8000, ketQua === "B" ? "#fb2424ff" : "#018cffff");
 
+        // ── Ván ẢO: thắng thì countAO = 0, thua thì +1, rồi out ────────────
+        if (!isThat) {
+            const thangAo = ketQuaMau === bendat;
+            if (thangAo) countAO = 0;
+            else countAO++;
+            await outPhong(
+                page,
+                thangAo
+                    ? `Ảo THẮNG - Ảo thua: ${countAO}/${soChuoiDat}`
+                    : `Ảo THUA - Ảo thua: ${countAO}/${soChuoiDat}`,
+                thangAo ? "#00fd59ff" : "#fb2424ff"
+            );
+            return;
+        }
+
+        // ── Ván THẬT ───────────────────────────────────────────────────────
         if (ketQuaMau === bendat) {
-            // ── Thắng: out phòng, thép về 1 (outPhong tự reset) ────────────
+            // Thắng: countAO về 0, thép về 1, out phòng
             if (bendat === "red") {
                 setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
             } else {
@@ -401,13 +417,14 @@ async function vongLapDatCuoc(page, roomType, phe) {
             setting.set("profit", Math.round((setting.get("profit") + lai) * 100) / 100);
             setting.set("solenhwin", setting.get("solenhwin") + 1);
             syncKetQua("win", lai);
-
+            thepLocal = 1;
+            countAO = 0;
             capNhatStats();
             await outPhong(page, `✅ Chuồn thôi- Ăn +${lai}K - Thếp ${thepDanhh}`, "#00fd59ff");
             return;
 
         } else {
-            // ── Thua: ở lại, nâng thép, quá THEP_MAX thì về 1 ──────────────
+            // Thua: countAO giữ nguyên (ván sau đánh thật tiếp), thép +1, out phòng
             setting.set("solenhthua", setting.get("solenhthua") + 1);
 
             if (bendat === "red") {
@@ -419,25 +436,12 @@ async function vongLapDatCuoc(page, roomType, phe) {
 
             setting.set("profit", setting.get("profit") - sotienuoc);
             syncKetQua("thua", -sotienuoc);
-
             capNhatStats();
 
-            if (thepDanhh >= 2) {
-                await outPhong(page, `Dí rồi chạy thôi ❌ THUA -${sotienuoc}K - Thếp tiếp: ${thepLocal}`, 5000, "#fb2424ff");
-                return;
-            }
             thepLocal = thepDanhh >= THEP_MAX ? 1 : thepDanhh + 1;
-            showThongBao(page, `❌ THUA -${sotienuoc}K - Thếp tiếp: ${thepLocal}`, 8000, "#fb2424ff");
 
-            if (isDung()) {
-                await outPhong(page, "Đã bấm Dừng - Thoát phòng sau ván Thua");
-                return;
-            }
-
-            const found = await choVanMoi(5 * 60000);
-            if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ ván mới"); return; }
-            if (!found) { await outPhong(page, "OutPhong -> Không tìm được Status Start"); return; }
-            continue;
+            await outPhong(page, `Dí rồi chạy thôi ❌ THUA -${sotienuoc}K - Thếp tiếp: ${thepLocal}`, "#fb2424ff");
+            return;
         }
     }
 

@@ -31,9 +31,11 @@ const CAU = [
     ["2-2 plus", "abbaab", 2, "b"],
     ["3-3", "abbbaaa", 3, "b", 1, true], ["3-3 plus", "aaabbba", 3, "a", 0, true],
     ["4-4", "abbbbaaaa", 4, "b", 1, true], ["4-4 plus", "aaaabbbba", 4, "a", 0, true],
+    ["5-5", "abbbbbaaaaa", 5, "b", 1, true], ["5-5 plus", "aaaaabbbbba", 5, "a", 0, true],
     ["2-1", "abbabb", 3, "a"], ["2-1 plus", "abbabba", 3, "b"],
     ["3-1", "abbbabbb", 4, "a"], ["3-1 plus", "abbbabbba", 4, "b"],
     ["4-1", "abbbbabbbb", 5, "a"], ["4-1 plus", "abbbbabbbba", 5, "b"],
+    ["5-1", "abbbbbabbbbb", 6, "a"], ["5-1 plus", "abbbbbabbbbba", 6, "b"],
     ["123", "abaabbb", 6, "a"], ["123 plus", "abaabbba", 6, "a"],
 ];
 
@@ -131,31 +133,14 @@ function layArrayXauDep(s) {
     return out;
 }
 
-// Từ arrayXauDep quyết định isDat và phe
-//  1. setting.get("soChuoiDat") kết quả cuối giống nhau: toàn xấu → phe Đẹp, toàn đẹp → phe Xấu
-//  2. kết quả cuối là xấu và (tổng xấu − tổng đẹp) >= CHENH_LECH → phe Đẹp
-//  3. kết quả cuối là đẹp và (tổng đẹp − tổng xấu) >= CHENH_LECH → phe Xấu
 function xuLyXauDep(arrayXauDep) {
     const n = arrayXauDep.length;
-    if (n === 0) return { isDat: false, phe: null };
+    if (n < 3) return { isDat: false, phe: null };
 
-    const cuoi = arrayXauDep[n - 1];
-
-    const soLT = setting.get("soChuoiDat") > 0 ? setting.get("soChuoiDat") : SO_LIEN_TIEP;
-
-    if (n >= soLT && arrayXauDep.slice(-soLT).every((x) => x === cuoi)) {
-        return { isDat: true, phe: cuoi === XAU ? DEP : XAU };
+    const [a, b, c] = arrayXauDep.slice(-3);
+    if (b === c && a !== b) {
+        return { isDat: true, phe: a };
     }
-
-    // const soXau = arrayXauDep.filter((x) => x === XAU).length;
-    // const soDep = n - soXau;
-
-    // if (n >= SO_LIEN_TIEP_KemChenhLech && arrayXauDep.slice(SO_LIEN_TIEP_KemChenhLech).every((x) => x === cuoi)) {
-    //     if (cuoi === XAU && soXau - soDep >= CHENH_LECH) return { isDat: true, phe: DEP };
-    //     if (cuoi === DEP && soDep - soXau >= CHENH_LECH) return { isDat: true, phe: XAU };
-    // }
-
-
     return { isDat: false, phe: null };
 }
 
@@ -176,15 +161,6 @@ function CheckChay2Ngam(arr) {
 
     const benUuThe = soDep === soXau ? null : soDep > soXau ? DEP : XAU;
     const chenhLech = Math.abs(soDep - soXau);
-
-    // console.clear();
-    // console.log(
-    //     `⚠️ [CheckChay2Ngam]\n` +
-    //     `   Đạt: ${kq.isDat ? "Có" : "Không"}\n` +
-    //     `   Chuỗi liên tiếp: ${n ? `${chuoiCuoi} ${cuoi}` : "chưa có"}\n` +
-    //     `   Phe ưu thế: ${soDep} ${DEP}, ${soXau} ${XAU}`
-    // );
-
     return {
         isDat: kq.isDat,
         phe: kq.phe,
