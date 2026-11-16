@@ -231,7 +231,7 @@ async function vongLapDatCuoc(page, roomType, phe) {
             if (isDung()) return false;
 
             // Thấy Trao Bài đúng type phòng thì return false
-            if (await TimAnhDuaTrenListPop_Util(page, [TRAO_BAI_IMG[roomType]], 200)) return false;
+            // if (await TimAnhDuaTrenListPop_Util(page, [TRAO_BAI_IMG[roomType]], 200)) return false;
 
             if (await DocKetQuaXanh(page, roomType)) return true;
             const anh = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 200);

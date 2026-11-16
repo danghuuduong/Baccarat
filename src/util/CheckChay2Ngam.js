@@ -135,12 +135,19 @@ function layArrayXauDep(s) {
 
 function xuLyXauDep(arrayXauDep) {
     const n = arrayXauDep.length;
-    if (n < 3) return { isDat: false, phe: null };
 
-    const [a, b, c] = arrayXauDep.slice(-3);
-    if (b === c && a !== b) {
-        return { isDat: true, phe: a };
+    if (n === 1) {
+        return { isDat: true, phe: arrayXauDep[0] };
     }
+
+    // Từ 4 phần tử trở lên: 3 con cuối giống nhau, con trước đó khác -> trả về con trước đó
+    if (n >= 2) {
+        const [a, b] = arrayXauDep.slice(-2);
+        if (a !== b) {
+            return { isDat: true, phe: b };
+        }
+    }
+
     return { isDat: false, phe: null };
 }
 
