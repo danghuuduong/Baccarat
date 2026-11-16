@@ -10,8 +10,8 @@ const DEBUG = false;               // true để in chi tiết
 
 // Ngưỡng % pixel xanh lá tối thiểu để tính là có xanh, riêng cho từng type
 const PHAN_TRAM_TOI_THIEU = {
-    type_room_a: 42,
-    type_room_b: 42,
+    type_room_a: 45,
+    type_room_b: 45,
 };
 const NGUONG_MAC_DINH = 15;       // type nào chưa khai báo ở trên thì dùng số này
 

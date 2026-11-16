@@ -1,1 +1,0 @@
-settingData={"soVonBanDau":1000,"SoTienLonNhatTungSoHuu":1000,"profit":0,"solenhwin":0,"solenhthua":0,"solenhwin_Red":0,"solenhthua_Red":0,"solenhWin_Xanh":0,"solenhthua_Xanh":0,"soChuoiDat":2}

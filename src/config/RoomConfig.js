@@ -28,6 +28,10 @@ const typeRoom = {
     room_a: "type_room_a",
     room_b: "type_room_b"
 }
+const TRAO_BAI_IMG = {
+    [typeRoom.room_a]: "TraoBaiTypeA",
+    [typeRoom.room_b]: "TraoBaiTypeB",
+};
 
 const typeKetQua = {
     [typeRoom.room_a]: {
@@ -95,7 +99,7 @@ const TaoDoChip_Room = {
 // ── Toạ độ click nút thoát phòng ─────────────────────────────────────────────
 const TOA_DO_THOAT_PHONG = { x: 1250, y: 32 };
 // ------------------------------------------ xử lý thếp -------------------------------------
-const SoTienThep = [20, 50, 100, 200, 400];
+const SoTienThep = [20, 50];
 
 
 module.exports = {
@@ -108,5 +112,6 @@ module.exports = {
     typeKetQuaToaDo,
     typeStatusBatDauToaDo,
     SoTienThep,
+    TRAO_BAI_IMG
 };
 

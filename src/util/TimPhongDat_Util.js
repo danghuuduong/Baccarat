@@ -15,11 +15,9 @@ function TimPhongDat_Util(phongRoomS = []) {
 
     phongRoomS.forEach((arr, i) => {
         if (!arr || arr.length === 0) return;               // phòng rỗng thì bỏ qua
-
         const checkChay2Ngam = CheckChay2Ngam(arr);
-        // const tinHieu = LayTinHieu(arr);                     // { tinhieu, thep } | null
-        if (!checkChay2Ngam?.isDat) return;                               // chỉ lọc theo cháy ngầm
-
+        const tinHieu = LayTinHieu([...arr]);
+        if (!checkChay2Ngam?.isDat || !tinHieu) return;                               // chỉ lọc theo cháy ngầm
 
         DanhSachTimPhong.push({
             phong: i + 1,                                // số phòng 1..8

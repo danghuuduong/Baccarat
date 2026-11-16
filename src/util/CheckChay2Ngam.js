@@ -13,8 +13,7 @@ const XAU = "Xấu";
 const SO_LIEN_TIEP = 3;
 
 // Tìm 2 3 ngầm ở cuối  . nhưng mà phải đếm đống  đó xem có hơn không nữa. ví dụ tìm được 2 xấu . => đẹp  nhưng xấu phải hơn 2
-const SO_LIEN_TIEP_KemChenhLech = 2;
-const CHENH_LECH = 2;
+
 
 // ============================================================================
 // DANH SÁCH CẦU (đếm xấu/đẹp theo từng ván), xử lý ở 3 chỗ trong layArrayXauDep:
@@ -148,13 +147,13 @@ function xuLyXauDep(arrayXauDep) {
         return { isDat: true, phe: cuoi === XAU ? DEP : XAU };
     }
 
-    const soXau = arrayXauDep.filter((x) => x === XAU).length;
-    const soDep = n - soXau;
+    // const soXau = arrayXauDep.filter((x) => x === XAU).length;
+    // const soDep = n - soXau;
 
-    if (n >= SO_LIEN_TIEP_KemChenhLech && arrayXauDep.slice(SO_LIEN_TIEP_KemChenhLech).every((x) => x === cuoi)) {
-        if (cuoi === XAU && soXau - soDep >= CHENH_LECH) return { isDat: true, phe: DEP };
-        if (cuoi === DEP && soDep - soXau >= CHENH_LECH) return { isDat: true, phe: XAU };
-    }
+    // if (n >= SO_LIEN_TIEP_KemChenhLech && arrayXauDep.slice(SO_LIEN_TIEP_KemChenhLech).every((x) => x === cuoi)) {
+    //     if (cuoi === XAU && soXau - soDep >= CHENH_LECH) return { isDat: true, phe: DEP };
+    //     if (cuoi === DEP && soDep - soXau >= CHENH_LECH) return { isDat: true, phe: XAU };
+    // }
 
 
     return { isDat: false, phe: null };

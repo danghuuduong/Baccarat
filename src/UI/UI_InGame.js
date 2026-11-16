@@ -313,8 +313,8 @@ function showStats(page, stats) {
         }
 
         statsInfo.innerHTML = `
-            <div><span class="s-label">Lãi </span><span class="${profitClass}">${profitSign}${s.profit}K</span></div>
-            <div><span class="s-label">Win </span><span class="s-win">${s.solenhwin}</span> <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
+            <div><span class="s-label">Lãi: </span><span class="${profitClass}">${profitSign}${s.profit}K</span></div>
+            <div><span class="s-label">Win: </span><span class="s-win">${s.solenhwin}</span> <span class="s-label">Thua </span><span class="s-lose">${s.solenhthua}</span></div>
         `;
 
         // Tổn (TonThat_Max)
@@ -325,9 +325,9 @@ function showStats(page, stats) {
         if (window.__uiStatsExtraOpen === undefined) window.__uiStatsExtraOpen = false;
         const mo = window.__uiStatsExtraOpen;
 
-        const dongThep = [1, 2, 3, 4, 5].map((n) => {
+        const dongThep = [1, 2].map((n) => {
             const t = (s.thongkesolieuthep || {})[n] || {};
-            return `<div><span class="s-label">thếp ${n} </span><span class="s-win">${t.win || 0}</span> / <span class="s-lose">${t.thua || 0}</span></div>`;
+            return `<div><span class="s-label">thếp: ${n} </span><span class="s-win">${t.win || 0}</span> / <span class="s-lose">${t.thua || 0}</span></div>`;
         }).join("");
 
         extraInfo.innerHTML = `

@@ -3,7 +3,7 @@ const { showThongBao, cancelThongBao } = require("../UI/UI_ThongBao");
 const setting = require("../State/setting");
 const { TimAnhDuaTrenListPop_Util } = require("./TimAnhDuaTrenListPop_Util");
 const { DocKetQuaVang } = require("./DocKetQuaVang");
-const { typeRoom, TaoDoChip_Room, ToaDoTab, TOA_DO_THOAT_PHONG, SoTienThep } = require("../config/RoomConfig");
+const { typeRoom, TaoDoChip_Room, ToaDoTab, TOA_DO_THOAT_PHONG, SoTienThep, TRAO_BAI_IMG } = require("../config/RoomConfig");
 const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 const { randomSleep, sleep } = require("./Sleep_Util");
@@ -20,7 +20,7 @@ function tangThongKeThep(thep, loai) {
     const tk = setting.get("thongkesolieuthep") || {};
     if (!tk[thep]) tk[thep] = { win: 0, thua: 0 };
     tk[thep][loai]++;
-    setting.set("thongkesolieuthep", tk);
+    setting.set("thongkesolieuthep", { ...tk });
 }
 
 function buildStats() {
@@ -45,6 +45,20 @@ function buildStats() {
 // Mảng bi đang dùng để lấy tín hiệu
 let arraySuDungChinhList = [];
 
+// Kiểm tra xem người dùng đã bấm Dừng Lại chưa
+const isDung = () => !setting.get("isRunButon");
+
+// Sleep có thể ngắt ngay lập tức khi người dùng bấm Dừng Lại
+async function sleepKiemTra(ms, step = 100) {
+    const start = Date.now();
+    while (Date.now() - start < ms) {
+        if (isDung()) return false;
+        const sleepTime = Math.min(step, ms - (Date.now() - start));
+        await sleep(sleepTime);
+    }
+    return true;
+}
+
 async function outPhong(page, lyDo, cl = "#d7f706ff") {
     cancelThongBao(page);
     hideLuoiBi(page);
@@ -57,7 +71,6 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
         danhSachTimKiemRa: [],
         phongRoomS: [],
         tabHienTai: 1,
-        isStart: true,
     });
     showThongBao(page, `${lyDo}`, 8000, cl);
     await randomSleep(2500, 3500);
@@ -68,17 +81,25 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
     setting.set("tabHienTai", 1);
     await randomSleep(200, 333);
 
-    setTimeout(() => {
-        const { vongLapChupManHinh } = require("./VongLapChupManHinh");
-        vongLapChupManHinh(page);
-    }, 444);
+    // Chỉ tiếp tục chạy vòng lặp chụp màn hình nếu nút Bắt Đầu vẫn đang bật
+    if (setting.get("isRunButon")) {
+        setting.set("isStart", true);
+        setTimeout(() => {
+            const { vongLapChupManHinh } = require("./VongLapChupManHinh");
+            vongLapChupManHinh(page);
+        }, 444);
+    } else {
+        setting.set("isStart", false);
+        setting.set("dangChay", false);
+        showThongBao(page, "Đã dừng và out phòng an toàn", 5000, "#ff9900ff");
+    }
 }
 
 // chenhLech chỉ có giá trị khi benUuThe khác phe (bên mình đánh đang bị thiếu)
 const chenhLechHieuLuc = (p) => (p.benUuThe !== p.phe ? p.chenhLech : 0);
 
 async function xulyVoPhong_Util(page, danhSach) {
-
+    if (isDung()) return;
     if (!danhSach || danhSach.length === 0) return;
 
     // Chọn phòng: ngam lớn nhất, bằng nhau thì chenhLech hiệu lực lớn nhất, hòa hoàn toàn thì random
@@ -98,6 +119,8 @@ async function xulyVoPhong_Util(page, danhSach) {
         else if (hoa) ungVien.push(phong);
     }
 
+    if (isDung()) return;
+
     const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
 
     // ── Lần 1: Click vào phòng được chọn ──────────────────────────────────
@@ -109,6 +132,11 @@ async function xulyVoPhong_Util(page, danhSach) {
     // Check loại phòng
     let roomType = await TimAnhDuaTrenListPop_Util(page, [typeRoom.room_a, typeRoom.room_b], 3000);
 
+    if (isDung()) {
+        await outPhong(page, "Đã bấm Dừng - Hủy vào phòng");
+        return;
+    }
+
     if (!roomType) {
         // ── Lần 2: Click lại + tìm thêm 2 giây ──────────────────────────────
         await page.mouse.click(
@@ -116,6 +144,11 @@ async function xulyVoPhong_Util(page, danhSach) {
             Math.round(phongTotNhat.y)
         );
         roomType = await TimAnhDuaTrenListPop_Util(page, [typeRoom.room_a, typeRoom.room_b], 2000);
+    }
+
+    if (isDung()) {
+        await outPhong(page, "Đã bấm Dừng - Hủy vào phòng");
+        return;
     }
 
     if (!roomType) {
@@ -128,20 +161,23 @@ async function xulyVoPhong_Util(page, danhSach) {
     thepLocal = 1;
 
     // ── Phần đặt cược ─────────────────────────────────────────────────────
-    const thongBao = `Phòng: ${phongTotNhat.phong} =>  ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"}`;
+    const thongBao = `Phòng: ${phongTotNhat.phong} => 
+     ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"} 
+| Ngầm: ${phongTotNhat.ngam}`;
+
     showThongBao(page, thongBao, 5000);
 
     // Hiển thị lưới bi + thống kê ban đầu
     showLuoiBi(page, arraySuDungChinhList);
     showStats(page, buildStats());
 
-    await vongLapDatCuoc(page, roomType);
+    await vongLapDatCuoc(page, roomType, phongTotNhat.phe);
 
     return roomType;
 }
 
 // ─── Vòng lặp đặt cược chính ─────────────────────────────────────────────────
-async function vongLapDatCuoc(page, roomType) {
+async function vongLapDatCuoc(page, roomType, phe) {
     const coords = TaoDoChip_Room[roomType];
 
     // Di chuột tới điểm rồi mới click (để game nhận hover)
@@ -167,9 +203,11 @@ async function vongLapDatCuoc(page, roomType) {
         let con = tien;
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
-                await click(coords[ten]);
+                if (isDung()) return;
+                // await click(coords[ten]);
                 await randomSleep(222, 333);
-                await click(coordBen);
+                if (isDung()) return;
+                // await click(coordBen);
                 await randomSleep(222, 333);
                 con -= gia;
             }
@@ -180,6 +218,7 @@ async function vongLapDatCuoc(page, roomType) {
     async function choKetQuaVang(timeoutMs) {
         const start = Date.now();
         while (Date.now() - start < timeoutMs) {
+            if (isDung()) return null;
             const r = await DocKetQuaVang(page, roomType);
             if (r) return r;
             await sleep(133);
@@ -188,9 +227,27 @@ async function vongLapDatCuoc(page, roomType) {
     }
 
     // Chờ ván mới: thấy ảnh Status_BatDauVandau HOẶC điểm xanh lá là qua
+    // async function choVanMoi(timeoutMs) {
+    //     const start = Date.now();
+    //     while (Date.now() - start < timeoutMs) {
+    //         if (isDung()) return false;
+    //         if (await DocKetQuaXanh(page, roomType)) return true;
+    //         const anh = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 200);
+    //         if (anh) return true;
+    //         await sleep(100);
+    //     }
+    //     return false;
+    // }
+
     async function choVanMoi(timeoutMs) {
         const start = Date.now();
         while (Date.now() - start < timeoutMs) {
+            if (isDung()) return false;
+
+            // MỚI: thấy Trao Bài đúng type phòng thì return false
+            if (await TimAnhDuaTrenListPop_Util(page, [TRAO_BAI_IMG[roomType]], 200)) return false;
+
+            // Logic cũ giữ nguyên
             if (await DocKetQuaXanh(page, roomType)) return true;
             const anh = await TimAnhDuaTrenListPop_Util(page, ["Status_BatDauVandau"], 200);
             if (anh) return true;
@@ -199,41 +256,61 @@ async function vongLapDatCuoc(page, roomType) {
         return false;
     }
 
+
     const capNhatStats = () => {
         const tt = setting.get("SoTienLonNhatTungSoHuu") - setting.get("soVonBanDau");
         if (tt > setting.get("TonThat_Max")) setting.set("TonThat_Max", tt);
         showStats(page, buildStats());
     };
 
-    while (true) {
+    while (setting.get("isRunButon")) {
+        if (isDung()) {
+            await outPhong(page, "Đã bấm Dừng - Thoát phòng");
+            return;
+        }
+
         // ── 1. Lấy tín hiệu ────────────────────────────────────────────────
+        const vanMoi = await choVanMoi(5 * 60000);
+        if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ ván mới"); return; }
+        if (!vanMoi) { await outPhong(page, "OutPhong -> Không tìm Bắt đầu ván mới - Hoặc Tráo Bài"); return; }
+
         const tinHieu = LayTinHieu([...arraySuDungChinhList]);
 
         // Không có tín hiệu: ngồi chờ, đọc kết quả ván kế rồi lấy tín hiệu lại
         if (!tinHieu) {
             showThongBao(page, "Chờ tín hiệu...", 5000, "#d7f706ff");
-            const vanMoi = await choVanMoi(50000);
-            if (!vanMoi) { await outPhong(page, "OutPhong -> Không tìm được Status Start"); return; }
-
-            const kqCho = await choKetQuaVang(70000);
+            const kqCho = await choKetQuaVang(2 * 60000);
+            if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ kết quả"); return; }
             if (!kqCho) { await outPhong(page, "OutPhong -> Không đọc được kết quả khi chờ tín hiệu"); return; }
-
             arraySuDungChinhList.push(kqCho);
             showLuoiBi(page, arraySuDungChinhList);
             continue;
         }
 
+        // Kiểm tra dừng trước khi vào tiền
+        if (isDung()) {
+            await outPhong(page, "Đã bấm Dừng - Hủy cược");
+            return;
+        }
+
+
         // ── 2. Tính mức cược và tên bên ────────────────────────────────────
         const thepDanhh = thepLocal;
         const sotienuoc = SoTienThep[thepDanhh - 1];
-        const tenBen = tinHieu.tinhieu === "red" ? "Đỏ" : "Xanh";
-        const coordBen = tinHieu.tinhieu === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
+
+        // Phe Đẹp: đánh cùng chiều tín hiệu | Phe Xấu: đánh ngược tín hiệu
+        const benTheoCau = tinHieu.tinhieu === "d" ? "red" : "blue";
+        const benDanh = phe === "Xấu" ? (benTheoCau === "red" ? "blue" : "red") : benTheoCau;
+        const tenBen = benDanh === "red" ? "Đỏ" : "Xanh";
+        const coordBen = benDanh === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
 
         // ── 3. Chờ bảng chip ổn định rồi chọn chip + đặt bên ───────────────
         await randomSleep(50, 100);
+        if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy cược"); return; }
         await datTien(sotienuoc, coordBen);
 
         // ── 4. Xác nhận ─────────────────────────────────────────────────────
+        if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy xác nhận cược"); return; }
         await randomSleep(200, 300);
         await click(coords.buttonXacNhan);
 
@@ -241,21 +318,33 @@ async function vongLapDatCuoc(page, roomType) {
         setting.set({
             isDatCuocXong: true,
             sotienuocHienTai: sotienuoc,
-            bendat: tinHieu.tinhieu,
+            bendat: benDanh,
             soVonBanDau: setting.get("soVonBanDau") - sotienuoc,
         });
         capNhatStats();
-        showThongBao(page, `Đặt ${tenBen} ${sotienuoc}K - Thếp ${thepDanhh}`, 999999, tenBen === "Xanh" ? "#247afbff" : "#e42727ff");
+
+        showThongBao(page, `Đặt ${tenBen} ${sotienuoc}K
+        - Thếp ${thepDanhh} | 
+        Cầu: ${tinHieu.cauphatHien} | 
+        ${phe === "Xấu" ? "Bẻ cầu" : "Theo cầu"}`,
+            999999, tenBen === "Xanh" ? "#247afbff" : "#e42727ff");
+
 
         // ── 6. Chờ rồi tìm kết quả bằng LED vàng ───────────────────────────
-        await sleep(10000);
-        const ketQua = await choKetQuaVang(150000);
+        await sleepKiemTra(10000);
+        const ketQua = await choKetQuaVang(4 * 60000);
 
         cancelThongBao(page);
         setting.set("isDatCuocXong", false);
 
         // ── 7. Không ra kết quả → coi như thua, thoát phòng ────────────────
         if (!ketQua) {
+            // Nếu không ra kết quả vì người dùng bấm dừng
+            if (isDung()) {
+                await outPhong(page, "Đã bấm Dừng - Thoát phòng");
+                return;
+            }
+
             showThongBao(page, "Lỗi khi check kết quả", 5000, "#fb2424ff");
             setting.set("solenhthua", setting.get("solenhthua") + 1);
             tangThongKeThep(thepDanhh, "thua");
@@ -279,7 +368,13 @@ async function vongLapDatCuoc(page, roomType) {
             capNhatStats();
             showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 
-            const found = await choVanMoi(80000);
+            if (isDung()) {
+                await outPhong(page, "Đã bấm Dừng - Thoát phòng sau ván Hòa");
+                return;
+            }
+
+            const found = await choVanMoi(5 * 60000);
+            if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ ván mới"); return; }
             if (!found) { await outPhong(page, "Dính Hoà rồi - chạy"); return; }
             continue;
         }
@@ -325,15 +420,30 @@ async function vongLapDatCuoc(page, roomType) {
             setting.set("profit", setting.get("profit") - sotienuoc);
             syncKetQua("thua", -sotienuoc);
 
-            thepLocal = thepDanhh >= THEP_MAX ? 1 : thepDanhh + 1;
-
             capNhatStats();
+
+            if (thepDanhh >= 2) {
+                await outPhong(page, `Dí rồi chạy thôi ❌ THUA -${sotienuoc}K - Thếp tiếp: ${thepLocal}`, 5000, "#fb2424ff");
+                return;
+            }
+            thepLocal = thepDanhh >= THEP_MAX ? 1 : thepDanhh + 1;
             showThongBao(page, `❌ THUA -${sotienuoc}K - Thếp tiếp: ${thepLocal}`, 8000, "#fb2424ff");
 
-            const found = await choVanMoi(80000);
+            if (isDung()) {
+                await outPhong(page, "Đã bấm Dừng - Thoát phòng sau ván Thua");
+                return;
+            }
+
+            const found = await choVanMoi(5 * 60000);
+            if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ ván mới"); return; }
             if (!found) { await outPhong(page, "OutPhong -> Không tìm được Status Start"); return; }
             continue;
         }
+    }
+
+    // Nếu thoát vòng lặp do isRunButon = false
+    if (isDung()) {
+        await outPhong(page, "Đã bấm Dừng - Thoát phòng");
     }
 }
 
