@@ -178,7 +178,7 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
                     }
                 }
             );
-            console.log(`[MongoDB] Cập nhật Tool [${tName}] (${result}, ${delta}K) | Hoa Hồng: ${hoaHongDelta > 0 ? `+${hoaHongDelta}` : hoaHongDelta}K`);
+            // console.log(`[MongoDB] Cập nhật Tool [${tName}] (${result}, ${delta}K) | Hoa Hồng: ${hoaHongDelta > 0 ? `+${hoaHongDelta}` : hoaHongDelta}K`);
         }
 
         return true;

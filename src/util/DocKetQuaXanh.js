@@ -48,8 +48,25 @@ async function DocKetQuaXanh(page, roomType) {
         height: 2 * LE,
     };
 
-    const buf = await page.screenshot({ clip: vung, type: "png", scale: "css" });
-    const png = PNG.sync.read(buf);
+    let buf;
+    try {
+        buf = await page.screenshot({
+            clip: vung,
+            type: "png",
+            scale: "css",
+            timeout: 2500,
+            animations: "disabled",
+        });
+    } catch (err) {
+        return false;
+    }
+
+    let png;
+    try {
+        png = PNG.sync.read(buf);
+    } catch (err) {
+        return false;
+    }
 
     const r = demXanh(png, vung, p.x, p.y);
     const nguong = PHAN_TRAM_TOI_THIEU[roomType] ?? NGUONG_MAC_DINH;

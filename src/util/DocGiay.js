@@ -59,8 +59,25 @@ function docO(png, cx, cy) {
  *   false = có đỏ, hoặc không thấy chữ trắng
  */
 async function docGiay(page) {
-    const buf = await page.screenshot({ clip: VUNG, type: "png", scale: "css" });
-    const png = PNG.sync.read(buf);
+    let buf;
+    try {
+        buf = await page.screenshot({
+            clip: VUNG,
+            type: "png",
+            scale: "css",
+            timeout: 3000,
+            animations: "disabled",
+        });
+    } catch (err) {
+        return Array(HANG_BAN * COT_BAN).fill(false);
+    }
+
+    let png;
+    try {
+        png = PNG.sync.read(buf);
+    } catch (err) {
+        return Array(HANG_BAN * COT_BAN).fill(false);
+    }
 
     const kq = [];
     for (let j = 0; j < HANG_BAN; j++) {

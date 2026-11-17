@@ -84,13 +84,13 @@ async function ExposeFC_Main(page) {
                     patch.profit = Number(tool.profit) || 0;
                     patch.solenhwin = Number(tool.win) || 0;
                     patch.solenhthua = Number(tool.Thua) || 0;
-                    console.log(`[Sync] Đã lấy dữ liệu từ MongoDB cho Tool [${toolName}]: Profit=${patch.profit}K, Win=${patch.solenhwin}, Thua=${patch.solenhthua}`);
+                    // console.log(`[Sync] Đã lấy dữ liệu từ MongoDB cho Tool [${toolName}]: Profit=${patch.profit}K, Win=${patch.solenhwin}, Thua=${patch.solenhthua}`);
                 }
             }
 
             setting.set(patch);
             saveSettingTXT();
-            console.log("[Config] Reload dữ liệu từ MongoDB thành công & reset tỉ số");
+            // console.log("[Config] Reload dữ liệu từ MongoDB thành công & reset tỉ số");
         } catch (err) {
             console.error("❌ Reload dữ liệu lỗi:", err.message);
         }

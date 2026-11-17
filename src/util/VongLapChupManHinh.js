@@ -58,83 +58,87 @@ async function vongLapChupManHinh(page) {
         let viTri = "tren"; // "tren" | "duoi"
 
         while (setting.get("isStart")) {
+            try {
+                // 1. Đọc ô số giây
+                const giayHopLe = await docGiay(page);
 
-            // 1. Đọc ô số giây
-            const giayHopLe = await docGiay(page);
+                // 2. Đọc bi 8 phòng
+                const biCacPhong = await docBan(page);
 
-            // 2. Đọc bi 8 phòng
-            const biCacPhong = await docBan(page);
+                // 3. Xử lý dữ liệu phòng
+                const phongCu = setting.get("phongRoomS") || [];
 
-            // 3. Xử lý dữ liệu phòng
-            const phongCu = setting.get("phongRoomS") || [];
+                const phongMoi = giayHopLe.map((hopLe, i) => {
+                    if (hopLe) {
+                        demTruot[i] = 0;
+                        return biCacPhong[i];
+                    }
 
-            const phongMoi = giayHopLe.map((hopLe, i) => {
-                if (hopLe) {
-                    demTruot[i] = 0;
-                    return biCacPhong[i];
+                    demTruot[i]++;
+                    return demTruot[i] >= SO_LAN_TRUOT_DE_XOA
+                        ? []
+                        : (phongCu[i] || []);
+                });
+
+                // 4. Kiểm tra phòng có thay đổi
+                const coPhongDoi = phongMoi.some(
+                    (mangBi, i) =>
+                        mangBi.join("") !== (phongCu[i] || []).join("")
+                );
+
+                // 5. Có thay đổi thì cập nhật + xử lý
+                if (coPhongDoi) {
+                    setting.set("phongRoomS", phongMoi);
+                    await update_UI_KetQua8Phong(page, phongMoi);
+
+                    const tabHienTai = setting.get("tabHienTai");
+                    const ketQua = TimPhongDat_Util(phongMoi) || [];
+
+                    // Lưu kèm tab, sắp sẵn: ngam to nhất lên đầu, bằng ngam thì chenhLech to hơn
+                    const chenhLechHieuLuc = (p) => (p.benUuThe !== p.phe ? p.chenhLech : 0);
+
+                    const danhSach = ketQua
+                        .map(phong => ({ ...phong, tab: tabHienTai }))
+                        .sort((a, b) =>
+                            (b.ngam - a.ngam) ||
+                            (chenhLechHieuLuc(b) - chenhLechHieuLuc(a))
+                        );
+
+                    setting.set("danhSachTimKiemRa", danhSach);
+
+                    // Có >= 1 phòng đạt: vào luôn, khỏi sang tab khác
+                    if (danhSach.length >= 1) {
+                        setting.set("isStart", false);
+                        await xulyVoPhong_Util(page, danhSach);
+                        break;
+                    }
+
+                    // Rỗng: clear sạch trước
+                    if (viTri === "tren") {
+                        // chụp xong phần trên không có -> lăn xuống chụp tiếp
+                        await lanXuongNhuNguoi(page);
+                        viTri = "duoi";
+                    } else if (BAT_TAB_2) {
+                        // chụp xong phần dưới không có -> tab 1 -> tab 2, tab 2 -> về tab 1
+                        const tabMoi = tabHienTai === 1 ? 2 : 1;
+                        setting.set("tabHienTai", tabMoi);
+
+                        const tab = ToaDoTab.find(t => t.tab === tabMoi);
+                        await page.mouse.click(tab.x, tab.y);
+                        await randomSleep(410, 450);
+                        viTri = "tren";
+                    } else {
+                        // chỉ tab 1: lăn ngược lên đầu rồi chụp lại
+                        await lanLenNhuNguoi(page);
+                        viTri = "tren";
+                    }
                 }
 
-                demTruot[i]++;
-                return demTruot[i] >= SO_LAN_TRUOT_DE_XOA
-                    ? []
-                    : (phongCu[i] || []);
-            });
-
-            // 4. Kiểm tra phòng có thay đổi
-            const coPhongDoi = phongMoi.some(
-                (mangBi, i) =>
-                    mangBi.join("") !== (phongCu[i] || []).join("")
-            );
-
-            // 5. Có thay đổi thì cập nhật + xử lý
-            if (coPhongDoi) {
-                setting.set("phongRoomS", phongMoi);
-                await update_UI_KetQua8Phong(page, phongMoi);
-
-                const tabHienTai = setting.get("tabHienTai");
-                const ketQua = TimPhongDat_Util(phongMoi) || [];
-
-                // Lưu kèm tab, sắp sẵn: ngam to nhất lên đầu, bằng ngam thì chenhLech to hơn
-                const chenhLechHieuLuc = (p) => (p.benUuThe !== p.phe ? p.chenhLech : 0);
-
-                const danhSach = ketQua
-                    .map(phong => ({ ...phong, tab: tabHienTai }))
-                    .sort((a, b) =>
-                        (b.ngam - a.ngam) ||
-                        (chenhLechHieuLuc(b) - chenhLechHieuLuc(a))
-                    );
-
-                setting.set("danhSachTimKiemRa", danhSach);
-
-                // Có >= 1 phòng đạt: vào luôn, khỏi sang tab khác
-                if (danhSach.length >= 1) {
-                    setting.set("isStart", false);
-                    await xulyVoPhong_Util(page, danhSach);
-                    break;
-                }
-
-                // Rỗng: clear sạch trước
-                if (viTri === "tren") {
-                    // chụp xong phần trên không có -> lăn xuống chụp tiếp
-                    await lanXuongNhuNguoi(page);
-                    viTri = "duoi";
-                } else if (BAT_TAB_2) {
-                    // chụp xong phần dưới không có -> tab 1 -> tab 2, tab 2 -> về tab 1
-                    const tabMoi = tabHienTai === 1 ? 2 : 1;
-                    setting.set("tabHienTai", tabMoi);
-
-                    const tab = ToaDoTab.find(t => t.tab === tabMoi);
-                    await page.mouse.click(tab.x, tab.y);
-                    await randomSleep(410, 450);
-                    viTri = "tren";
-                } else {
-                    // chỉ tab 1: lăn ngược lên đầu rồi chụp lại
-                    await lanLenNhuNguoi(page);
-                    viTri = "tren";
-                }
+                await randomSleep(410, 460);
+            } catch (errLoop) {
+                // console.error("[VongLapChupManHinh] Lỗi trong nhịp lặp:", errLoop.message);
+                await randomSleep(500, 700);
             }
-
-            await randomSleep(410, 460);
         }
 
     } finally {

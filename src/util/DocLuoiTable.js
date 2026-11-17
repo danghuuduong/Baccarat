@@ -57,8 +57,25 @@ async function DocLuoiTable(page, { goc1, goc2, cot, hang }) {
         height: Math.round((hang - 1) * buocY + 2 * LE),
     };
 
-    const buf = await page.screenshot({ clip: vung, type: "png", scale: "css" });
-    const png = PNG.sync.read(buf);
+    let buf;
+    try {
+        buf = await page.screenshot({
+            clip: vung,
+            type: "png",
+            scale: "css",
+            timeout: 2500,
+            animations: "disabled",
+        });
+    } catch (err) {
+        return [];
+    }
+
+    let png;
+    try {
+        png = PNG.sync.read(buf);
+    } catch (err) {
+        return [];
+    }
 
     const kq = [];
 

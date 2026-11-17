@@ -189,11 +189,18 @@ function createChecker(page, IMAGES_DIR) {
             return;
         }
 
-        const shotBuf = await page.screenshot({
-            clip: { x: cx, y: cy, width: cw, height: ch },
-            type: "png",
-            scale: "css",
-        });
+        let shotBuf;
+        try {
+            shotBuf = await page.screenshot({
+                clip: { x: cx, y: cy, width: cw, height: ch },
+                type: "png",
+                scale: "css",
+                timeout: 3000,
+                animations: "disabled",
+            });
+        } catch (err) {
+            return;
+        }
 
         let scene = null;
         try {
@@ -293,11 +300,18 @@ async function checkOnce(page, IMAGES_DIR, x, y, width, height, threshold = THRE
     const ch = cy2 - cy;
     if (cw <= 0 || ch <= 0) return { name: null, score: 0 };
 
-    const shotBuf = await page.screenshot({
-        clip: { x: cx, y: cy, width: cw, height: ch },
-        type: "png",
-        scale: "css",
-    });
+    let shotBuf;
+    try {
+        shotBuf = await page.screenshot({
+            clip: { x: cx, y: cy, width: cw, height: ch },
+            type: "png",
+            scale: "css",
+            timeout: 3000,
+            animations: "disabled",
+        });
+    } catch (err) {
+        return { name: null, score: 0 };
+    }
 
     let scene = null;
     try {
@@ -353,11 +367,18 @@ async function checkGrid(page, IMAGES_DIR, cells, cellW, cellH, names = KQ_NAMES
     const y1 = Math.min(vp.height, Math.round(Math.max(...cells.map(c => c.y + cellH)) + PAD));
     if (x1 <= x0 || y1 <= y0) return cells.map(() => null);
 
-    const buf = await page.screenshot({
-        clip: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 },
-        type: "png",
-        scale: "css",
-    });
+    let buf;
+    try {
+        buf = await page.screenshot({
+            clip: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 },
+            type: "png",
+            scale: "css",
+            timeout: 3000,
+            animations: "disabled",
+        });
+    } catch (err) {
+        return cells.map(() => null);
+    }
 
     const tmpls = names
         .map((n) => ({ n, t: loadTemplate(IMAGES_DIR, n) }))

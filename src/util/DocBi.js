@@ -72,8 +72,25 @@ function docVien(png, cx, cy) {
  *          Viên cuối mảng là ván mới nhất.
  */
 async function docBan(page) {
-    const buf = await page.screenshot({ clip: VUNG, type: "png", scale: "css" });
-    const png = PNG.sync.read(buf);
+    let buf;
+    try {
+        buf = await page.screenshot({
+            clip: VUNG,
+            type: "png",
+            scale: "css",
+            timeout: 3000,
+            animations: "disabled",
+        });
+    } catch (err) {
+        return Array(HANG_BAN * COT_BAN).fill([]);
+    }
+
+    let png;
+    try {
+        png = PNG.sync.read(buf);
+    } catch (err) {
+        return Array(HANG_BAN * COT_BAN).fill([]);
+    }
 
     const kq = [];
     for (let j = 0; j < HANG_BAN; j++) {

@@ -12,6 +12,16 @@ const { syncKetQua } = require("./syncStats");
 
 const THEP_MAX = SoTienThep.length;
 
+// Tên tool của bot đánh ngược (chỉ sync lên API, không đụng logic bot chính)
+const TEN_NGUOC = "06-Đánh Ngược thằng 06";
+
+// Lãi của bot ngược khi thắng: bot cũ đánh Xanh -> bot ngược đánh Đỏ -> bị phí 5%
+function laiNguoc(benCu, sotienuoc) {
+    return benCu === "blue"
+        ? Math.round(sotienuoc * 0.95 * 100) / 100
+        : sotienuoc;
+}
+
 // Thép hiện tại: thắng/out phòng thì về 1, thua thì +1, quá THEP_MAX thì về 1
 let thepLocal = 1;
 // Số ván ảo thua liên tiếp. Thua ảo +1, thắng thật thì về 0
@@ -348,6 +358,8 @@ async function vongLapDatCuoc(page, roomType, phe) {
             tangThongKeThep(thepDanhh, "thua");
             setting.set("profit", setting.get("profit") - sotienuoc);
             syncKetQua("thua", -sotienuoc);
+            // Bot ngược: không đọc được kết quả -> cũng xử thua, trừ đủ sotienuoc
+            syncKetQua("thua", -sotienuoc, TEN_NGUOC);
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
             return;
@@ -417,6 +429,8 @@ async function vongLapDatCuoc(page, roomType, phe) {
             setting.set("profit", Math.round((setting.get("profit") + lai) * 100) / 100);
             setting.set("solenhwin", setting.get("solenhwin") + 1);
             syncKetQua("win", lai);
+            // Bot ngược: bot cũ thắng -> bot ngược thua, trừ đủ sotienuoc
+            syncKetQua("thua", -sotienuoc, TEN_NGUOC);
             thepLocal = 1;
             countAO = 0;
             capNhatStats();
@@ -436,6 +450,8 @@ async function vongLapDatCuoc(page, roomType, phe) {
 
             setting.set("profit", setting.get("profit") - sotienuoc);
             syncKetQua("thua", -sotienuoc);
+            // Bot ngược: bot cũ thua -> bot ngược thắng
+            syncKetQua("win", laiNguoc(bendat, sotienuoc), TEN_NGUOC);
             capNhatStats();
 
             thepLocal = thepDanhh >= THEP_MAX ? 1 : thepDanhh + 1;

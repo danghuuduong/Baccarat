@@ -8,9 +8,9 @@ const { pushToolStats } = require("./mongoDB");
  * @param {"win" | "thua"} result 
  * @param {number} profitDelta 
  */
-async function syncKetQua(result, profitDelta) {
+async function syncKetQua(result, profitDelta, toolNameTruyenVao) {
     const currentAccount = setting.get("currentAccount");
-    const toolName = setting.get("currentToolName") || "01";
+    const toolName = toolNameTruyenVao || setting.get("currentToolName") || "01";
 
     if (!currentAccount || !currentAccount.taiKhoan) {
         console.log("[Sync] Bỏ qua sync: Chưa đăng nhập tài khoản");

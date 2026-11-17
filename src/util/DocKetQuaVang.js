@@ -6,7 +6,7 @@ const { typeKetQuaToaDo } = require("../config/RoomConfig");
 
 const NUA = 4;                    // 4 vùng 8x8 quanh tâm
 const LE = NUA + 2;               // lề vùng chụp
-const DEBUG = true;               // true để in chi tiết từng điểm
+const DEBUG = false;               // true để in chi tiết từng điểm
 
 // Ngưỡng % pixel vàng tối thiểu để tính là sáng, riêng cho từng type
 const PHAN_TRAM_TOI_THIEU = {
@@ -50,8 +50,26 @@ async function DocKetQuaVang(page, roomType) {
         height: Math.round(Math.max(...ys) - Math.min(...ys) + 2 * LE),
     };
 
-    const buf = await page.screenshot({ clip: vung, type: "png", scale: "css" });
-    const png = PNG.sync.read(buf);
+    let buf;
+    try {
+        buf = await page.screenshot({
+            clip: vung,
+            type: "png",
+            scale: "css",
+            timeout: 2500,
+            animations: "disabled",
+        });
+    } catch (err) {
+        // Tránh sập tool khi lag màn hình hoặc timeout
+        return null;
+    }
+
+    let png;
+    try {
+        png = PNG.sync.read(buf);
+    } catch (err) {
+        return null;
+    }
 
     // Lấy điểm có % pixel vàng cao nhất
     let best = null, max = 0;
@@ -66,7 +84,7 @@ async function DocKetQuaVang(page, roomType) {
     const ketQua = max >= nguong ? best : null;
 
     if (DEBUG) {
-        console.clear();
+        // console.clear();
         console.log(
             "[DocKetQuaVang]😍", roomType, "|", log.join(" | "),
             `| ngưỡng=${nguong}% | cao nhất=${best} ${max.toFixed(1)}% → ${ketQua}`
