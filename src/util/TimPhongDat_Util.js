@@ -2,7 +2,7 @@
 "use strict";
 
 const { DS_PHONG } = require("../config/RoomConfig");
-const { CheckChay2Ngam } = require("./CheckChay2Ngam");
+const { CheckXanh3 } = require("./CheckXanh3");
 const { LayTinHieu } = require("./Laytinhieu_Util");
 
 /**
@@ -15,14 +15,13 @@ function TimPhongDat_Util(phongRoomS = []) {
 
     phongRoomS.forEach((arr, i) => {
         if (!arr || arr.length === 0) return;               // phòng rỗng thì bỏ qua
-        const checkChay2Ngam = CheckChay2Ngam(arr);
+        const isChuoiXanh = CheckXanh3(arr);
         const tinHieu = LayTinHieu([...arr]);
-        if (!checkChay2Ngam?.isDat || !tinHieu) return;                               // chỉ lọc theo cháy ngầm
+        if (!isChuoiXanh || !tinHieu) return;                               // chỉ lọc theo cháy ngầm
 
         DanhSachTimPhong.push({
+            isChuoiXanh: isChuoiXanh,
             phong: i + 1,                                // số phòng 1..8
-            ngam: checkChay2Ngam.chuoiLienTiep,
-            ...checkChay2Ngam,
             ...DS_PHONG[i],                                  // ten, x, y
             arr
         });

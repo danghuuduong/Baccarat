@@ -94,15 +94,8 @@ async function vongLapChupManHinh(page) {
                     const tabHienTai = setting.get("tabHienTai");
                     const ketQua = TimPhongDat_Util(phongMoi) || [];
 
-                    // Lưu kèm tab, sắp sẵn: ngam to nhất lên đầu, bằng ngam thì chenhLech to hơn
-                    const chenhLechHieuLuc = (p) => (p.benUuThe !== p.phe ? p.chenhLech : 0);
 
-                    const danhSach = ketQua
-                        .map(phong => ({ ...phong, tab: tabHienTai }))
-                        .sort((a, b) =>
-                            (b.ngam - a.ngam) ||
-                            (chenhLechHieuLuc(b) - chenhLechHieuLuc(a))
-                        );
+                    const danhSach = ketQua.map(phong => ({ ...phong, tab: tabHienTai }))
 
                     setting.set("danhSachTimKiemRa", danhSach);
 

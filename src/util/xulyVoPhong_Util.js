@@ -12,6 +12,9 @@ const { syncKetQua } = require("./syncStats");
 
 const THEP_MAX = SoTienThep.length;
 
+// Bên đánh khi LayTinHieu trả true: "red" hoặc "blue" (đổi ở đây)
+const BEN_DANH = "blue";
+
 // Tên tool của bot đánh ngược (chỉ sync lên API, không đụng logic bot chính)
 const TEN_NGUOC = "06-Đánh Ngược thằng 06";
 
@@ -106,33 +109,12 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
     }
 }
 
-// chenhLech chỉ có giá trị khi benUuThe khác phe (bên mình đánh đang bị thiếu)
-const chenhLechHieuLuc = (p) => (p.benUuThe !== p.phe ? p.chenhLech : 0);
-
 async function xulyVoPhong_Util(page, danhSach) {
     if (isDung()) return;
     if (!danhSach || danhSach.length === 0) return;
 
-    // Chọn phòng: ngam lớn nhất, bằng nhau thì chenhLech hiệu lực lớn nhất, hòa hoàn toàn thì random
-    let ungVien = [];
-    for (const phong of danhSach) {
-        if (ungVien.length === 0) { ungVien = [phong]; continue; }
-        const best = ungVien[0];
-        const hon =
-            phong.ngam !== best.ngam
-                ? phong.ngam > best.ngam
-                : chenhLechHieuLuc(phong) > chenhLechHieuLuc(best);
-        const hoa =
-            phong.ngam === best.ngam &&
-            chenhLechHieuLuc(phong) === chenhLechHieuLuc(best);
-
-        if (hon) ungVien = [phong];
-        else if (hoa) ungVien.push(phong);
-    }
-
-    if (isDung()) return;
-
-    const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
+    // Chọn phòng: random trong danh sách
+    const phongTotNhat = danhSach[Math.floor(Math.random() * danhSach.length)];
 
     // ── Lần 1: Click vào phòng được chọn ──────────────────────────────────
     await page.mouse.click(
@@ -172,7 +154,7 @@ async function xulyVoPhong_Util(page, danhSach) {
 
     // ── Phần đặt cược ─────────────────────────────────────────────────────
     const thongBao = `Phòng: ${phongTotNhat.phong} => 
-     ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"} | Ngầm: ${phongTotNhat.ngam}`;
+     ${roomType === typeRoom.room_a ? "Sảnh Sexy" : "Sảnh Bacarat"}`;
 
     showThongBao(page, thongBao, 5000);
 
@@ -180,13 +162,13 @@ async function xulyVoPhong_Util(page, danhSach) {
     showLuoiBi(page, arraySuDungChinhList);
     showStats(page, buildStats());
 
-    await vongLapDatCuoc(page, roomType, phongTotNhat.phe);
+    await vongLapDatCuoc(page, roomType);
 
     return roomType;
 }
 
 // ─── Vòng lặp đặt cược chính ─────────────────────────────────────────────────
-async function vongLapDatCuoc(page, roomType, phe) {
+async function vongLapDatCuoc(page, roomType) {
     const coords = TaoDoChip_Room[roomType];
 
     // Di chuột tới điểm rồi mới click (để game nhận hover)
@@ -293,9 +275,8 @@ async function vongLapDatCuoc(page, roomType, phe) {
         const soChuoiDat = setting.get("soChuoiDat");
         const isThat = !(soChuoiDat > 0) || countAO >= soChuoiDat;
 
-        // Phe Đẹp: đánh cùng chiều tín hiệu | Phe Xấu: đánh ngược tín hiệu
-        const benTheoCau = tinHieu.tinhieu === "d" ? "red" : "blue";
-        const benDanh = phe === "Xấu" ? (benTheoCau === "red" ? "blue" : "red") : benTheoCau;
+        // Có tín hiệu thì đánh bên BEN_DANH
+        const benDanh = BEN_DANH;
         const tenBen = benDanh === "red" ? "Đỏ" : "Xanh";
         const coordBen = benDanh === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
         const mauTB = tenBen === "Xanh" ? "#247afbff" : "#e42727ff";
@@ -321,15 +302,11 @@ async function vongLapDatCuoc(page, roomType, phe) {
             capNhatStats();
 
             showThongBao(page, `Đặt ${tenBen} ${sotienuoc}K
-        - Thếp ${thepDanhh} | 
-        Cầu: ${tinHieu.cauphatHien} | 
-        ${phe === "Xấu" ? "Bẻ cầu" : "Theo cầu"}`,
+        - Thếp ${thepDanhh}`,
                 999999, mauTB);
         } else {
             // ── Ván ẢO: không đặt tiền, không xác nhận, không trừ vốn ──────
-            showThongBao(page, `[ẢO ${countAO}/${soChuoiDat}] Giả đặt ${tenBen}
-        Cầu: ${tinHieu.cauphatHien} | 
-        ${phe === "Xấu" ? "Bẻ cầu" : "Theo cầu"}`,
+            showThongBao(page, `[ẢO ${countAO}/${soChuoiDat}] Giả đặt ${tenBen}`,
                 999999, mauTB);
         }
 
