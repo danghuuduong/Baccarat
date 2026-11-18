@@ -2,32 +2,32 @@
 "use strict";
 
 const { DS_PHONG } = require("../config/RoomConfig");
-const { CheckXanh3 } = require("./CheckXanh3");
+const { CheckXanh3 } = require("./CheckChay2Ngam");
 const { LayTinHieu } = require("./Laytinhieu_Util");
 
 /**
  * @param {string[][]} phongRoomS  8 mảng ("B" | "P" | "T"), phòng không đạt giây thì là []
- * @returns {{ChayNgam: number, RoomCuThe: number, ten: string, x: number, y: number}[]}
- *          vd: [{ ChayNgam: 3, RoomCuThe: 1, ten: "Room1", x: 511, y: 217 }, ...]
+ * @returns {{uutien: number, phong: number, ten: string, x: number, y: number, arr: string[]}[]}
  */
 function TimPhongDat_Util(phongRoomS = []) {
     const DanhSachTimPhong = [];
 
     phongRoomS.forEach((arr, i) => {
         if (!arr || arr.length === 0) return;               // phòng rỗng thì bỏ qua
-        const isChuoiXanh = CheckXanh3(arr);
         const tinHieu = LayTinHieu([...arr]);
-        if (!isChuoiXanh || !tinHieu) return;                               // chỉ lọc theo cháy ngầm
+        if (!tinHieu) return;                               // chỉ lọc theo cháy ngầm
+
+        const kq = CheckXanh3(arr.slice(0, -2));
+        if (!kq.isOk) return;
 
         DanhSachTimPhong.push({
-            isChuoiXanh: isChuoiXanh,
-            phong: i + 1,                                // số phòng 1..8
-            ...DS_PHONG[i],                                  // ten, x, y
+            uutien: kq.uutien,
+            phong: i + 1,                                   // số phòng 1..8
+            ...DS_PHONG[i],                                 // ten, x, y
             arr
         });
     });
 
-    DanhSachTimPhong.sort((a, b) => b.ngam - a.ngam);
     return DanhSachTimPhong;
 }
 

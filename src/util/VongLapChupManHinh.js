@@ -95,7 +95,9 @@ async function vongLapChupManHinh(page) {
                     const ketQua = TimPhongDat_Util(phongMoi) || [];
 
 
-                    const danhSach = ketQua.map(phong => ({ ...phong, tab: tabHienTai }))
+                    const danhSach = ketQua
+                        .map(phong => ({ ...phong, tab: tabHienTai }))
+                        .sort((a, b) => b.uutien - a.uutien);   // uutien 1 trước, 0 sau
 
                     setting.set("danhSachTimKiemRa", danhSach);
 
