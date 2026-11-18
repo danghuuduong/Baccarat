@@ -88,8 +88,11 @@ async function verifyLogin(taiKhoan, pass) {
  * @param {string} params.toolName - Mã tool (VD: "01", "02")
  * @param {"win" | "thua"} params.result - Kết quả ván cược
  * @param {number} params.profitDelta - Tiền thắng hoặc thua (+lai hoặc -sotienuoc)
+ * @param {number} [params.khoiLuong] - Khối lượng vào lệnh của ván (VD: đánh 20k thì 20)
+ * @param {number} [params.phi] - Phí giao dịch của ván
+ * @param {number} [params.tut] - Mức tụt so với đỉnh hiện tại (đỉnh - tiền hiện tại)
  */
-async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
+async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuong, phi, tut }) {
     try {
         const database = await getDB();
         if (!database) {
@@ -102,6 +105,9 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
         const isWin = result === "win";
         const isThua = result === "thua";
         const delta = Math.round(Number(profitDelta || 0) * 100) / 100;
+        const kl = Math.round(Number(khoiLuong || 0) * 100) / 100;
+        const phiGD = Math.round(Number(phi || 0) * 100) / 100;
+        const tutVal = Math.round(Number(tut || 0) * 100) / 100;
 
         if (!tk) {
             console.error("[MongoDB] pushToolStats lỗi: Thiếu tài khoản");
@@ -128,6 +134,9 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
                 win: isWin ? 1 : 0,
                 Thua: isThua ? 1 : 0,
                 profit: delta,
+                KhoiluongVaoLenh: kl,
+                PhiGiaodich: phiGD,
+                tut: tutVal,
                 currentWinStreak: curWin,
                 currentLossStreak: curLoss,
                 chuoiThangLienTiepCaoNhat: curWin,
@@ -167,9 +176,12 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta }) {
                         "tools.$.win": isWin ? 1 : 0,
                         "tools.$.Thua": isThua ? 1 : 0,
                         "tools.$.profit": delta,
+                        "tools.$.KhoiluongVaoLenh": kl,
+                        "tools.$.PhiGiaodich": phiGD,
                         "tools.$.hoaHongHienTai": hoaHongDelta,
                     },
                     $set: {
+                        "tools.$.tut": tutVal,
                         "tools.$.currentWinStreak": curWin,
                         "tools.$.currentLossStreak": curLoss,
                         "tools.$.chuoiThangLienTiepCaoNhat": maxWin,
