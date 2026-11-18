@@ -3,7 +3,7 @@
 const { chromium } = require("playwright");
 const { UI_Btn_BatDau, updateBatDau } = require("./src/UI/UI_Btn_BatDau");
 const { UI_Login, removeLoginUI } = require("./src/UI/UI_Login");
-const { verifyLogin } = require("./src/util/mongoDB");
+const { verifyLogin } = require("./src/UtilCM/mongoDB");
 require("dotenv").config();
 const setting = require("./src/State/setting");   // đường dẫn tuỳ file bạn đứng
 
@@ -16,7 +16,7 @@ const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
 const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
 const { setupKiemTraLED, UI_KiemTraLED } = require("./src/UI/UI_KiemTraLED");
-const { hienKhung } = require("./src/util/DocBi");
+const { hienKhung } = require("./src/UtilCM/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
