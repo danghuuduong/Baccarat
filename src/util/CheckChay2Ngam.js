@@ -4,13 +4,47 @@ const setting = require("../State/setting");
 
 const TIE = "T";
 
+// Gom mảng thành các cột bệt (kiểu tài xỉu), bỏ qua Tie.
+// VD: d d x x x d -> [{ mau: "d", dai: 2 }, { mau: "x", dai: 3 }, { mau: "d", dai: 1 }]
+function GomCotBet(arr) {
+    const cols = [];
+    for (const x of arr) {
+        if (x === TIE) continue;
+        const last = cols[cols.length - 1];
+        if (last && last.mau === x) last.dai++;
+        else cols.push({ mau: x, dai: 1 });
+    }
+    return cols;
+}
+
+// Bộ lọc bệt:
+//   1. Từ cuối mảng đi ngược, tìm cột gần nhất có dài >= 3 làm cột chuẩn.
+//   2. Sau cột chuẩn phải có đúng 5 cột, cột thứ 5 là cột cuối mảng.
+//   3. Cả 5 cột đó đều dài <= 2.
+function LocBet(arr) {
+    const cols = GomCotBet(arr);
+
+    let iChuan = -1;
+    for (let i = cols.length - 1; i >= 0; i--) {
+        if (cols[i].dai >= 3) {
+            iChuan = i;
+            break;
+        }
+    }
+    if (iChuan === -1) return false;                  // không có cột chuẩn
+
+    const cotSau = cols.slice(iChuan + 1);
+    if (cotSau.length !== 5) return false;            // phải đúng 5 cột sau chuẩn
+
+    return cotSau.every((c) => c.dai <= 2);
+}
+
 // Trả về true nếu chuỗi cháy ngầm hiện tại >= soChuoiDat (mặc định 2), ngược lại false.
 // Mảng đọc theo cột, mỗi cột 6 ô. Mỗi cột có 2 chu kỳ:
 //   - Chu kỳ 1 (ô 1-3) theo màu ô 2 của cột trước
 //   - Chu kỳ 2 (ô 4-6) theo màu ô 5 của cột trước
 function CheckChay2Ngam(arr) {
     // Cần cột 1 đủ 6 ô và ít nhất 1 ô của cột 2
-    // if (!Array.isArray(arr) || arr.length < 7) return false;
     if (!Array.isArray(arr) || arr.length < 7) return { chuoi: 0, isDat: false };
 
     // Chia mảng thành các cột 6 ô (cột cuối có thể dở dang)
@@ -44,10 +78,9 @@ function CheckChay2Ngam(arr) {
         }
     }
 
-    // console.log(`⚠️ [CheckChay2Ngam] ngầm = ${chuoi} → ${chuoi >= SO_CHUOI_DAT}`);
-    // return chuoi >= SO_CHUOI_DAT;
     const soChuoiDat = setting.get("soChuoiDat") ?? 2;
-    return { chuoi, isDat: chuoi >= soChuoiDat };
+    const quaLoc = LocBet(arr);                    // màng lọc bệt
+    return { chuoi, isDat: chuoi >= soChuoiDat && quaLoc };
 }
 
 module.exports = { CheckChay2Ngam };
