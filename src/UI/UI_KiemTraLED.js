@@ -1,8 +1,8 @@
 // src/UI/UI_KiemTraLED.js – Nút kiểm tra LED (vàng / xanh lá), gắn ở góc dưới trái
 "use strict";
 
-const { DocKetQuaVang } = require("../Util/DocKetQuaVang");
-const { DocKetQuaXanh } = require("../Util/DocKetQuaXanh");
+const { DocKetQuaVang } = require("../UtilCM/DocKetQuaVang");
+const { DocKetQuaXanh } = require("../UtilCM/DocKetQuaXanh");
 const { typeKetQuaToaDo } = require("../config/RoomConfig");
 
 const DUNG_VANG = true;   // true = vàng | false = xanh lá

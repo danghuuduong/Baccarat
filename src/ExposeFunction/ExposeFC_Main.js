@@ -2,9 +2,9 @@
 
 const setting = require("../State/setting");
 const { updateBatDau } = require("../UI/UI_Btn_BatDau");
-const { vongLapChupManHinh } = require("../util/VongLapChupManHinh");
+const { vongLapChupManHinh } = require("../UtilCM/VongLapChupManHinh");
 const { saveSettingTXT } = require("../TXT/settingState");
-const { getToolStats } = require("../util/mongoDB");
+const { getToolStats } = require("../UtilCM/mongoDB");
 
 /**
  * Đăng ký tất cả exposeFunction vào page.

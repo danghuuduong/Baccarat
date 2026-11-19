@@ -103,24 +103,24 @@ async function xulyVoPhong_Util(page, danhSach) {
 
     // Chọn phòng có ngam lớn nhất; bằng nhau thì chọn phòng có thép lớn nhất
 
-    // const phongTotNhat = danhSach.reduce((max, phong) => {
-    //     if (phong.ngam !== max.ngam) return phong.ngam > max.ngam ? phong : max;
-    //     return phong.infoTinHieu.thep > max.infoTinHieu.thep ? phong : max;
-    // });
+    const phongTotNhat = danhSach.reduce((max, phong) => {
+        if (phong.ngam !== max.ngam) return phong.ngam > max.ngam ? phong : max;
+        return phong.infoTinHieu.thep > max.infoTinHieu.thep ? phong : max;
+    });
 
 
-    let ungVien = [];
-    for (const phong of danhSach) {
-        if (ungVien.length === 0) { ungVien = [phong]; continue; }
-        const best = ungVien[0];
-        if (phong.ngam > best.ngam ||
-            (phong.ngam === best.ngam && phong.infoTinHieu.thep > best.infoTinHieu.thep)) {
-            ungVien = [phong];          // có thằng mạnh hơn, reset
-        } else if (phong.ngam === best.ngam &&
-            phong.infoTinHieu.thep === best.infoTinHieu.thep) {
-            ungVien.push(phong);        // hòa hoàn toàn, thêm vào
-        }
-    }
+    // let ungVien = [];
+    // for (const phong of danhSach) {
+    //     if (ungVien.length === 0) { ungVien = [phong]; continue; }
+    //     const best = ungVien[0];
+    //     if (phong.ngam > best.ngam ||
+    //         (phong.ngam === best.ngam && phong.infoTinHieu.thep > best.infoTinHieu.thep)) {
+    //         ungVien = [phong];          // có thằng mạnh hơn, reset
+    //     } else if (phong.ngam === best.ngam &&
+    //         phong.infoTinHieu.thep === best.infoTinHieu.thep) {
+    //         ungVien.push(phong);        // hòa hoàn toàn, thêm vào
+    //     }
+    // }
 
     // let ungVien = [];
     // for (const phong of danhSach) {
@@ -144,7 +144,7 @@ async function xulyVoPhong_Util(page, danhSach) {
     //     else if (hoa) ungVien.push(phong); // hòa hoàn toàn, thêm vào
     // }
 
-    const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
+    // const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
 
     // ── Lần 1: Click vào phòng được chọn ──────────────────────────────────
     await page.mouse.click(
@@ -215,9 +215,9 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
         let con = tien;
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
-                await click(coords[ten]);
+                // await click(coords[ten]);
                 await randomSleep(222, 333);
-                await click(coordBen);
+                // await click(coordBen);
                 await randomSleep(222, 333);
                 con -= gia;
             }

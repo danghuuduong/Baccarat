@@ -4,7 +4,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { createChecker, checkOnce } = require("../Util/checker");
+const { createChecker, checkOnce } = require("../UtilCM/checker");
 const { captureItems, saveStateTXT, IMAGES_DIR } = require("../TXT/captureState");
 /**
  * Đăng ký tất cả exposeFunction vào page.
