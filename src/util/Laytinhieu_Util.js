@@ -1,19 +1,18 @@
 "use strict";
 
-// Độ dài đúng của cột xanh gần nhất để trả true (đổi ở đây)
 const DO_DAI_XANH = 2;
 
-// Đi từ cuối mảng về đầu: bỏ qua đỏ cho tới khi gặp xanh, đếm liên tiếp xanh, gặp đỏ thì dừng.
-// Hòa (T) bỏ qua. Cột xanh gần nhất dài đúng DO_DAI_XANH thì true, còn lại false.
-// BPP => true | PPP => false | PPBPP => true
+// Hoà (T/H/...) bị bỏ qua: chỉ giữ B và P
+// BPTP => BPP | PTP => PP | BPPTB => BPPB
 function LayTinHieu(arr) {
     if (!Array.isArray(arr)) return false;
-    let dem = 0;
-    for (let i = arr.length - 1; i >= 0; i--) {
-        if (arr[i] === "P") dem++;
-        else if (arr[i] === "B" && dem > 0) break;
+    const a = arr.filter(x => x === "B" || x === "P");
+    const n = a.length;
+    if (n < DO_DAI_XANH) return false;
+    for (let i = n - DO_DAI_XANH; i < n; i++) {
+        if (a[i] !== "P") return false;
     }
-    return dem === DO_DAI_XANH;
+    return a[n - DO_DAI_XANH - 1] !== "P";
 }
 
 module.exports = { LayTinHieu };

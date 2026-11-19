@@ -23,8 +23,8 @@ const round2 = (n) => Math.round(n * 100) / 100;
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Thống kê lãi/lỗ THẬT riêng từng bot (để tính tut = đỉnh - hiện tại) ─────
-const TEN_BOT1 = "01-Thep5";
-const TEN_BOT2 = "02-Thep3";
+const TEN_BOT1 = "01-Thếp5";
+const TEN_BOT2 = "02-Thếp3";
 const TEN_BOT3 = "03-ChờLỗ180k";
 const TEN_BOT4 = "04-TíSố";
 
