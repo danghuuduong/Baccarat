@@ -229,20 +229,20 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
         phongRoomS: [],
         tabHienTai: 1,
     });
-    showThongBao(page, `${lyDo}`, 8000, cl);
-    await randomSleep(2500, 3500);
+    showThongBao(page, `${lyDo}`, 6000, cl);
+    await randomSleep(2000, 3000);
     const tab1 = ToaDoTab.find(t => t.tab === 1);
     await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
     await randomSleep(70, 150);
     if (tab1) await page.mouse.click(Math.round(tab1.x), Math.round(tab1.y));
     setting.set("tabHienTai", 1);
-    await randomSleep(200, 333);
+    await randomSleep(333, 444);
 
 
     const isTypeHotUI = await TimAnhDuaTrenListPop_Util(page, ["HotUi"], 1200);
     if (isTypeHotUI) {
         await page.mouse.click(51, 370);
-        await randomSleep(300, 500);
+        await randomSleep(222, 333);
     }
     // Chỉ tiếp tục chạy vòng lặp chụp màn hình nếu nút Bắt Đầu vẫn đang bật
     if (setting.get("isRunButon")) {
