@@ -238,6 +238,12 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
     setting.set("tabHienTai", 1);
     await randomSleep(200, 333);
 
+
+    const isTypeHotUI = await TimAnhDuaTrenListPop_Util(page, ["HotUi"], 1200);
+    if (isTypeHotUI) {
+        await page.mouse.click(51, 370);
+        await randomSleep(300, 500);
+    }
     // Chỉ tiếp tục chạy vòng lặp chụp màn hình nếu nút Bắt Đầu vẫn đang bật
     if (setting.get("isRunButon")) {
         setting.set("isStart", true);
