@@ -230,7 +230,7 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
         tabHienTai: 1,
     });
     showThongBao(page, `${lyDo}`, 6000, cl);
-    await randomSleep(2000, 3000);
+    await randomSleep(1500, 2000);
     const tab1 = ToaDoTab.find(t => t.tab === 1);
     await page.mouse.click(TOA_DO_THOAT_PHONG.x, TOA_DO_THOAT_PHONG.y);
     await randomSleep(70, 150);
@@ -238,12 +238,21 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
     setting.set("tabHienTai", 1);
     await randomSleep(333, 444);
 
-
-    const isTypeHotUI = await TimAnhDuaTrenListPop_Util(page, ["HotUi"], 1200);
+    const isTypeHotUI = await TimAnhDuaTrenListPop_Util(page, ["HotUi"], 2000);
     if (isTypeHotUI) {
-        await page.mouse.click(51, 370);
-        await randomSleep(222, 333);
+        for (let i = 1; i <= 3; i++) {
+            await page.mouse.move(51, 370);
+            await page.mouse.click(51, 370, { delay: 100 });
+            await randomSleep(200, 333);
+
+            // Kiểm tra nếu đã mất HotUi thì dừng click sớm
+            const stillHot = await TimAnhDuaTrenListPop_Util(page, ["HotUi"], 700);
+            if (!stillHot) {
+                break;
+            }
+        }
     }
+
     // Chỉ tiếp tục chạy vòng lặp chụp màn hình nếu nút Bắt Đầu vẫn đang bật
     if (setting.get("isRunButon")) {
         setting.set("isStart", true);
