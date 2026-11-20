@@ -23,10 +23,10 @@ const round2 = (n) => Math.round(n * 100) / 100;
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Thống kê lãi/lỗ THẬT riêng từng bot (để tính tut = đỉnh - hiện tại) ─────
-const TEN_BOT1 = "01-Thếp5";
-const TEN_BOT2 = "02-Thếp3";
-const TEN_BOT3 = "03-ChờLỗ180k";
-const TEN_BOT4 = "04-TíSố";
+const TEN_BOT1 = "10-Thếp5";
+const TEN_BOT2 = "11-Thếp3";
+const TEN_BOT3 = "12-ChờLỗ180k";
+const TEN_BOT4 = "13-TíSố";
 
 const thongKeThat = {
     [TEN_BOT1]: { profit: 0, dinh: 0 },
@@ -522,17 +522,19 @@ async function vongLapDatCuoc(page, roomType) {
                 setting.set("soVonBanDau", round2(setting.get("soVonBanDau") + tongCuoc));
                 capNhatStats();
             }
-            showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
+            // showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 
             if (isDung()) {
                 await outPhong(page, "Đã bấm Dừng - Thoát phòng sau ván Hòa");
                 return;
             }
+            await outPhong(page, "Hoà cút");
+            return;
 
-            const found = await choVanMoi(5 * 60000);
-            if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ ván mới"); return; }
-            if (!found) { await outPhong(page, "Dính Hoà rồi - chạy"); return; }
-            continue;
+            // const found = await choVanMoi(5 * 60000);
+            // if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ ván mới"); return; }
+            // if (!found) { await outPhong(page, "Dính Hoà rồi - chạy"); return; }
+            // continue;
         }
 
         const ketQuaMau = ketQua === "B" ? "red" : "blue";
