@@ -1,53 +1,121 @@
+
+
 "use strict";
 
-// Độ dài tối thiểu của cột xanh gần nhất (đổi qua 4 ở đây)
-const DO_DAI_XANH = 4;
+const setting = require("../State/setting");
 
-// Cột xanh từ cuối về đầu: cot[0] là cột gần nhất. Hòa (T) bỏ qua, đỏ (B) ngắt cột.
-function LayCotXanh(arr) {
-    const cot = [];
-    let dem = 0;
-    for (let i = arr.length - 1; i >= 0; i--) {
-        if (arr[i] === "P") dem++;
-        else if (arr[i] === "B" && dem > 0) { cot.push(dem); dem = 0; }
+
+const BANKER = "B"; // đỏ  → "d"
+const PLAYER = "P"; // xanh → "x"
+const DEP = "Đẹp";
+const XAU = "Xấu";
+
+// Tìm 2 3 ngầm ở cuối
+
+const SO_LIEN_TIEP = 3;
+
+// Tìm 2 3 ngầm ở cuối  . nhưng mà phải đếm đống  đó xem có hơn không nữa. ví dụ tìm được 2 xấu . => đẹp  nhưng xấu phải hơn 2
+
+
+// ============================================================================
+// CHỈ NHẬN DẠNG CẦU 2-2 (và 2-2 plus), đếm xấu/đẹp theo từng ván.
+// [tên, mẫu, chu kỳ lặp, màu ván kế được tính ĐẸP, số con đầu được thiếu khi mới bắt đầu chuỗi, g]
+//  - mẫu: a = màu con đầu, b = màu kia
+//  - chu kỳ lặp: cửa sổ lùi 1 chu kỳ cũng khớp thì là chuỗi đang lặp, bỏ qua (chỉ chấm lúc hình thành)
+//  - g = true: con ngay trước cửa sổ phải khác màu con đầu
+// ============================================================================
+const CAU = [
+    ["2-2", "abaabb", 0, "a", 2],
+    // ["2-2 plus", "abbaab", 2, "b"],
+];
+
+const doiMau = (c) => (c === "d" ? "x" : "d");
+
+// Bỏ Hòa và dữ liệu lạ, đổi sang chuỗi d/x
+function layChuoi(arr) {
+    const s = [];
+    for (const n of arr) {
+        if (n === BANKER) s.push("d");
+        else if (n === PLAYER) s.push("x");
     }
-    if (dem > 0) cot.push(dem);
-    return cot;
+    return s;
 }
 
-// Đếm số đoạn ">=3, (một hoặc nhiều cột =2), >=3" nối tiếp nhau, tính từ cột gần nhất.
-// Giữa 2 đầu >=3 chỉ được toàn cột =2 (có cột >2 chen vào thì không tính), phải có ít nhất 1 cột =2.
-// loc = các cột xanh gần nhất trước, đã bỏ cột 1 con.
-function demDoan(loc) {
-    if (!(loc[0] >= 3)) return 0;
-    let doan = 0;
-    let i = 0;
-    while (true) {
-        let j = i + 1;
-        let soHai = 0;
-        while (j < loc.length && loc[j] === 2) { soHai++; j++; }
-        if (soHai >= 1 && j < loc.length && loc[j] >= 3) { doan++; i = j; }
-        else break;
+// Cửa sổ mẫu t kết thúc tại end. Trả về màu 'a' nếu khớp, không thì null.
+// m = số con đầu của mẫu được phép thiếu khi mới bắt đầu chuỗi
+function khop(s, end, t, m = 1, g = false) {
+    const st = end - t.length;
+    if (st < -m) return null;
+    const j0 = st < 0 ? -st : 0;
+    const c = s[st + j0];
+    const a = t[j0] === "a" ? c : doiMau(c);
+    const b = doiMau(a);
+    if (g && st > 0 && s[st - 1] === a) return null;
+    for (let j = j0; j < t.length; j++) {
+        if (s[st + j] !== (t[j] === "a" ? a : b)) return null;
     }
-    return doan;
+    return a;
 }
 
-// Trả { isOk, uutien }. Ưu tiên 1 và 2 bỏ cột xanh 1 con (không tính) rồi mới xét:
-//  uutien 2: 2 đoạn liên tiếp (>=3, 2.., >=3, 2.., >=3) (cao nhất)
-//  uutien 1: 1 đoạn (>=3, 2.., >=3)
-//  uutien 0: cột xanh gần nhất >= DO_DAI_XANH (xét trên cột gốc, không bỏ cột 1 con)
-function CheckXanh3(arr) {
-    if (!Array.isArray(arr)) return { isOk: false, uutien: 0 };
-    const cot = LayCotXanh(arr);
-    const loc = cot.filter((n) => n >= 2);
+// Rà từ đầu mảng, trả về danh sách kết quả theo thứ tự thời gian: ["Đẹp", "Xấu", ...]
+function layArrayXauDep(s) {
+    const out = [];
 
-    const doan = demDoan(loc);
-    if (doan >= 2) return { isOk: true, uutien: 1 };
-    // if (doan === 1) return { isOk: true, uutien: 1 };
-    if (cot.length >= 1 && cot[0] >= DO_DAI_XANH) {
-        return { isOk: true, uutien: 0 };
+    for (let i = 1; i < s.length; i++) {
+        for (const [, t, P, dep, m = 1, g = false] of CAU) {
+            const a = khop(s, i, t, m, g);
+            if (!a) continue;
+            if (P && khop(s, i - P, t, m, g)) continue; // chuỗi đang lặp thì bỏ qua
+            const mauDep = dep === "a" ? a : doiMau(a);
+            out.push(s[i] === mauDep ? DEP : XAU);
+        }
     }
-    return { isOk: false, uutien: 0 };
+    return out;
 }
 
-module.exports = { CheckXanh3 };
+function xuLyXauDep(arrayXauDep) {
+    const n = arrayXauDep.length;
+
+    if (n === 1) {
+        return { isDat: true, phe: arrayXauDep[0] };
+    }
+
+    if (n >= 2) {
+        const [a, b] = arrayXauDep.slice(-2);
+        if (a !== b) {
+            return { isDat: true, phe: b };
+        }
+    }
+
+    return { isDat: false, phe: null };
+}
+
+function CheckChay2Ngam(arr) {
+    if (!Array.isArray(arr)) {
+        return { isDat: false, phe: null, chuoiLienTiep: 0, benUuThe: null, chenhLech: 0 };
+    }
+
+    const arrayXauDep = layArrayXauDep(layChuoi(arr));
+    const kq = xuLyXauDep(arrayXauDep);
+
+    const n = arrayXauDep.length;
+    const cuoi = arrayXauDep[n - 1];
+    let chuoiCuoi = 0;
+    while (chuoiCuoi < n && arrayXauDep[n - 1 - chuoiCuoi] === cuoi) chuoiCuoi++;
+    const soXau = arrayXauDep.filter((x) => x === XAU).length;
+    const soDep = n - soXau;
+
+    const benUuThe = soDep === soXau ? null : soDep > soXau ? DEP : XAU;
+    const chenhLech = Math.abs(soDep - soXau);
+    return {
+        isDat: kq.isDat,
+        phe: kq.phe,
+        chuoiLienTiep: chuoiCuoi,
+        benUuThe,
+        chenhLech,
+        soDep,
+        soXau,
+    };
+}
+
+module.exports = { CheckChay2Ngam };

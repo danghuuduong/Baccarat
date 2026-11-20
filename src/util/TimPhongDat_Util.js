@@ -17,11 +17,9 @@ function TimPhongDat_Util(phongRoomS = []) {
         const tinHieu = LayTinHieu([...arr]);
         if (!tinHieu) return;                               // chỉ lọc theo cháy ngầm
 
-        const kq = CheckXanh3(arr.slice(0, -2));
-        if (!kq.isOk) return;
 
         DanhSachTimPhong.push({
-            uutien: kq.uutien,
+            uutien: 0,
             phong: i + 1,                                   // số phòng 1..8
             ...DS_PHONG[i],                                 // ten, x, y
             arr

@@ -1,0 +1,1 @@
+settingData={"soVonBanDau":1369,"SoTienLonNhatTungSoHuu":2039,"profit":0,"solenhwin":0,"solenhthua":0,"solenhwin_Red":1,"solenhthua_Red":0,"solenhWin_Xanh":1,"solenhthua_Xanh":10,"soChuoiDat":1}

@@ -10,7 +10,7 @@ const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
 const { syncKetQua } = require("./syncStats");
 
-// Bên đánh khi LayTinHieu trả true: "red" hoặc "blue" (đổi ở đây)
+// Bên đánh mặc định nếu cần fallback
 const BEN_DANH = "blue";
 
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -23,10 +23,10 @@ const round2 = (n) => Math.round(n * 100) / 100;
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Thống kê lãi/lỗ THẬT riêng từng bot (để tính tut = đỉnh - hiện tại) ─────
-const TEN_BOT1 = "01-Thếp5";
-const TEN_BOT2 = "02-Thếp3";
-const TEN_BOT3 = "03-ChờLỗ180k";
-const TEN_BOT4 = "04-TíSố";
+const TEN_BOT1 = "6-Thếp5-22";
+const TEN_BOT2 = "7-Thếp3-22";
+const TEN_BOT3 = "8-ChờLỗ180k";
+const TEN_BOT4 = "9-TíSố";
 
 const thongKeThat = {
     [TEN_BOT1]: { profit: 0, dinh: 0 },
@@ -438,8 +438,8 @@ async function vongLapDatCuoc(page, roomType) {
             .map((q) => `${q.bot.nhan}:${q.isThat ? q.amount + "K" : "ảo"}`)
             .join(" | ");
 
-        // Có tín hiệu thì đánh bên BEN_DANH
-        const benDanh = BEN_DANH;
+        // Lấy bên đánh từ LayTinHieu: "d" (Đỏ) -> "red", "x" (Xanh) -> "blue"
+        const benDanh = (tinHieu?.tinhieu === "d" || tinHieu === "d") ? "blue" : "red";
         const tenBen = benDanh === "red" ? "Đỏ" : "Xanh";
         const coordBen = benDanh === "red" ? coords.datCuoc_Red : coords.datCuoc_Blue;
         const mauTB = tenBen === "Xanh" ? "#247afbff" : "#e42727ff";
@@ -521,6 +521,7 @@ async function vongLapDatCuoc(page, roomType) {
             if (coThat) {
                 setting.set("soVonBanDau", round2(setting.get("soVonBanDau") + tongCuoc));
                 capNhatStats();
+                ux
             }
             showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 

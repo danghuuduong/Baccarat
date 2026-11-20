@@ -9,6 +9,7 @@ const { TimPhongDat_Util } = require("./TimPhongDat_Util");
 const { ToaDoTab } = require("../config/RoomConfig");
 const { xulyVoPhong_Util } = require("./xulyVoPhong_Util");
 const { randomSleep } = require("./Sleep_Util");
+const { checkTrend } = require("./checkTrend");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -56,7 +57,8 @@ async function vongLapChupManHinh(page) {
         const SO_LAN_TRUOT_DE_XOA = 2;
         const demTruot = Array(8).fill(0);
         let viTri = "tren"; // "tren" | "duoi"
-
+        const abc = await checkTrend(page);
+        console.log(abc)
         while (setting.get("isStart")) {
             try {
                 // 1. Đọc ô số giây
@@ -86,14 +88,14 @@ async function vongLapChupManHinh(page) {
                         mangBi.join("") !== (phongCu[i] || []).join("")
                 );
 
-                // 5. Có thay đổi thì cập nhật + xử lý
+                const tabHienTai = setting.get("tabHienTai");
+
+                // 5. Có thay đổi thì cập nhật + tìm phòng đạt
                 if (coPhongDoi) {
                     setting.set("phongRoomS", phongMoi);
                     await update_UI_KetQua8Phong(page, phongMoi);
 
-                    const tabHienTai = setting.get("tabHienTai");
                     const ketQua = TimPhongDat_Util(phongMoi) || [];
-
 
                     const danhSach = ketQua
                         .map(phong => ({ ...phong, tab: tabHienTai }))
@@ -107,26 +109,26 @@ async function vongLapChupManHinh(page) {
                         await xulyVoPhong_Util(page, danhSach);
                         break;
                     }
+                }
 
-                    // Rỗng: clear sạch trước
-                    if (viTri === "tren") {
-                        // chụp xong phần trên không có -> lăn xuống chụp tiếp
-                        await lanXuongNhuNguoi(page);
-                        viTri = "duoi";
-                    } else if (BAT_TAB_2) {
-                        // chụp xong phần dưới không có -> tab 1 -> tab 2, tab 2 -> về tab 1
-                        const tabMoi = tabHienTai === 1 ? 2 : 1;
-                        setting.set("tabHienTai", tabMoi);
+                // 6. Chưa có phòng đạt: lăn đều mỗi nhịp, không phụ thuộc phòng có đổi hay không
+                if (viTri === "tren") {
+                    // chụp xong phần trên -> lăn xuống chụp tiếp
+                    await lanXuongNhuNguoi(page);
+                    viTri = "duoi";
+                } else if (BAT_TAB_2) {
+                    // chụp xong phần dưới -> tab 1 -> tab 2, tab 2 -> về tab 1
+                    const tabMoi = tabHienTai === 1 ? 2 : 1;
+                    setting.set("tabHienTai", tabMoi);
 
-                        const tab = ToaDoTab.find(t => t.tab === tabMoi);
-                        await page.mouse.click(tab.x, tab.y);
-                        await randomSleep(410, 450);
-                        viTri = "tren";
-                    } else {
-                        // chỉ tab 1: lăn ngược lên đầu rồi chụp lại
-                        await lanLenNhuNguoi(page);
-                        viTri = "tren";
-                    }
+                    const tab = ToaDoTab.find(t => t.tab === tabMoi);
+                    await page.mouse.click(tab.x, tab.y);
+                    await randomSleep(410, 450);
+                    viTri = "tren";
+                } else {
+                    // chỉ tab 1: lăn ngược lên đầu rồi chụp lại
+                    await lanLenNhuNguoi(page);
+                    viTri = "tren";
                 }
 
                 await randomSleep(410, 460);

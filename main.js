@@ -16,7 +16,7 @@ const { ExposeFC_Main } = require("./src/ExposeFunction/ExposeFC_Main");
 const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
 const { setupKiemTraLED, UI_KiemTraLED } = require("./src/UI/UI_KiemTraLED");
-const { hienKhung } = require("./src/Util/DocBi");
+const { hienKhung } = require("./src/util/DocBi");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
