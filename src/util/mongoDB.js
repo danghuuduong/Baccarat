@@ -91,8 +91,12 @@ async function verifyLogin(taiKhoan, pass) {
  * @param {number} [params.khoiLuong] - Khối lượng vào lệnh của ván (VD: đánh 20k thì 20)
  * @param {number} [params.phi] - Phí giao dịch của ván
  * @param {number} [params.tut] - Mức tụt so với đỉnh hiện tại (đỉnh - tiền hiện tại)
+ * @param {number} [params.tiSo] - Tỉ số hiện tại của bot (bot 1/3/4/5)
+ * @param {number} [params.khungB] - Khung biên dưới hiện tại (bot 1/3/4/5)
+ * @param {number} [params.khungA] - Khung biên trên hiện tại (bot 1/3/4/5)
+ * @param {number} [params.botN] - Bộ đếm nhân hiện tại (bot 2K)
  */
-async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuong, phi, tut }) {
+async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuong, phi, tut, tiSo, khungB, khungA, botN }) {
     try {
         const database = await getDB();
         if (!database) {
@@ -108,6 +112,10 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
         const kl = Math.round(Number(khoiLuong || 0) * 100) / 100;
         const phiGD = Math.round(Number(phi || 0) * 100) / 100;
         const tutVal = Math.round(Number(tut || 0) * 100) / 100;
+        // Trạng thái bot: dùng $set nên chỉ ghi đè khi có giá trị (không ghi undefined lên Mongo)
+        const hasTiSo = tiSo !== undefined && tiSo !== null;
+        const hasKhung = khungB !== undefined && khungB !== null && khungA !== undefined && khungA !== null;
+        const hasBotN = botN !== undefined && botN !== null;
 
         if (!tk) {
             console.error("[MongoDB] pushToolStats lỗi: Thiếu tài khoản");
@@ -137,6 +145,10 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
                 KhoiluongVaoLenh: kl,
                 PhiGiaodich: phiGD,
                 tut: tutVal,
+                // Trạng thái bot: tỉ số và khung (bot 1/3/4/5) hoặc bộ đếm n (bot 2K)
+                ...(hasTiSo ? { tiSo: Number(tiSo) } : {}),
+                ...(hasKhung ? { khungB: Number(khungB), khungA: Number(khungA) } : {}),
+                ...(hasBotN ? { botN: Number(botN) } : {}),
                 currentWinStreak: curWin,
                 currentLossStreak: curLoss,
                 chuoiThangLienTiepCaoNhat: curWin,
@@ -186,6 +198,10 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
                         "tools.$.currentLossStreak": curLoss,
                         "tools.$.chuoiThangLienTiepCaoNhat": maxWin,
                         "tools.$.chuoiThuaLienTiepCaoNhat": maxLoss,
+                        // Ghi đè trạng thái bot (snapshot hiện tại — không cộng dồn)
+                        ...(hasTiSo ? { "tools.$.tiSo": Number(tiSo) } : {}),
+                        ...(hasKhung ? { "tools.$.khungB": Number(khungB), "tools.$.khungA": Number(khungA) } : {}),
+                        ...(hasBotN ? { "tools.$.botN": Number(botN) } : {}),
                         updatedAt: new Date()
                     }
                 }

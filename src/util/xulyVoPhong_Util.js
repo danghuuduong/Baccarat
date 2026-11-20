@@ -55,7 +55,18 @@ function taoBotTiSo(ten, nhan, khungB0, khungA0, cuocNho, cuocLon) {
     return {
         ten,
         nhan,
+        // Getter để đọc trạng thái nội tại từ bên ngoài (dùng để sync lên API và khôi phục)
         get demTarget() { return demTarget; },
+        get tiSo() { return tiSo; },
+        get khungA() { return khungA; },
+        get khungB() { return khungB; },
+        // Setter để khôi phục trạng thái từ API (khi bấm Reload hoặc khởi động lại)
+        restore(state) {
+            if (state == null) return;
+            if (state.tiSo !== undefined) tiSo = state.tiSo;
+            if (state.khungA !== undefined) khungA = state.khungA;
+            if (state.khungB !== undefined) khungB = state.khungB;
+        },
         quyet() {
             if (giaiDoan === cuocLon) return { amount: cuocLon, isThat: true, ben: benKhoa };
             if (tiSo >= khungA) return { amount: cuocNho, isThat: true, ben: "blue" };
@@ -99,6 +110,13 @@ function taoBot2K(botGoc, ten, nhan) {
     return {
         ten,
         nhan,
+        // Getter để đọc bộ đếm n từ bên ngoài (dùng để sync và khôi phục)
+        get n() { return n; },
+        // Setter để khôi phục bộ đếm n từ API (khi bấm Reload hoặc khởi động lại)
+        restore(state) {
+            if (state == null) return;
+            if (state.n !== undefined) n = Math.max(1, Number(state.n) || 1);
+        },
         quyet(dsQuyetTruoc) {
             // Bot gốc vừa đạt target -> reset
             if (botGoc.demTarget !== demTargetDaThay) {
@@ -124,9 +142,9 @@ function taoBot2K(botGoc, ten, nhan) {
 // taoBotTiSo(ten, nhan, khungB, khungA, cuocNho, cuocLon)
 const bot1 = taoBotTiSo(TEN_BOT1, "TS4", -4, 4, 20, 40);
 const bot2 = taoBot2K(bot1, TEN_BOT2, "2K");
-const bot3 = taoBotTiSo(TEN_BOT3, "TS8", -6, 6, 5, 10);
-const bot4 = taoBotTiSo(TEN_BOT4, "TS13", -8, 8, 5, 10);
-const bot5 = taoBotTiSo(TEN_BOT5, "TS18", -8, 8, 5, 10);
+const bot3 = taoBotTiSo(TEN_BOT3, "TS8", -8, 8, 10, 20);
+const bot4 = taoBotTiSo(TEN_BOT4, "TS13", -13, 13, 10, 20);
+const bot5 = taoBotTiSo(TEN_BOT5, "TS18", -18, 18, 10, 20);
 
 // bot2 phải đứng sau bot1
 const DANH_SACH_BOT = [bot1, bot2, bot3, bot4, bot5];
@@ -469,10 +487,10 @@ async function vongLapDatCuoc(page, roomType) {
 
                 // Chỉ gọi API thống kê bên XANH (A). Bên ĐỎ (B) vẫn tính bình thường ở trên nhưng không gọi API.
                 if (q.ben === "blue") {
-                    syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut });
+                    syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut, ...layTrangThaiBotExtra(q.bot) });
                 }
                 // (BBB)TẠM THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
-                // syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut });
+                // syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut, ...layTrangThaiBotExtra(q.bot) });
             }
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
@@ -535,10 +553,10 @@ async function vongLapDatCuoc(page, roomType) {
 
             // Chỉ gọi API thống kê bên XANH (A). Bên ĐỎ (B) vẫn tính bình thường ở trên nhưng không gọi API.
             if (q.ben === "blue") {
-                syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut });
+                syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
             }
             // (BBB) THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
-            // syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut });
+            // syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
         }
 
         // Vốn chung + profit chung
@@ -572,4 +590,51 @@ async function vongLapDatCuoc(page, roomType) {
     }
 }
 
-module.exports = { xulyVoPhong_Util };
+// ─── Lấy trạng thái nội tại của bot để gửi kèm lên API (tiSo, khungB, khungA hoặc n) ──
+// Bot TíSố (1,3,4,5): gửi tiSo + khungB + khungA
+// Bot 2K (bot2): chỉ gửi n (bộ đếm nhân)
+function layTrangThaiBotExtra(bot) {
+    const currentTrangThai = setting.get("botTrangThai") || {};
+    let extra;
+    if (typeof bot.n === "number") {
+        // Bot 2K — chỉ có bộ đếm n
+        extra = { botN: bot.n };
+        currentTrangThai[bot.ten] = { n: bot.n };
+    } else {
+        // Bot TíSố — tỉ số + khung
+        extra = {
+            tiSo: bot.tiSo,
+            khungB: bot.khungB,
+            khungA: bot.khungA,
+        };
+        currentTrangThai[bot.ten] = { tiSo: bot.tiSo, khungB: bot.khungB, khungA: bot.khungA };
+    }
+    setting.set("botTrangThai", { ...currentTrangThai });
+    return extra;
+}
+
+// ─── Khôi phục trạng thái các bot từ dữ liệu API (gọi khi Reload hoặc login xong) ───
+// Mỗi tool trong mảng tools cần có các field tương ứng: tiSo, khungB, khungA, botN
+async function restoreBotState(taiKhoan) {
+    const { getToolStats } = require("./mongoDB");
+    const currentTrangThai = setting.get("botTrangThai") || {};
+    for (const bot of DANH_SACH_BOT) {
+        try {
+            const tool = await getToolStats(taiKhoan, bot.ten);
+            if (tool) {
+                bot.restore(tool); // bot.restore đọc tiSo/khungB/khungA hoặc n từ object
+                if (typeof bot.n === "number") {
+                    currentTrangThai[bot.ten] = { n: bot.n };
+                } else {
+                    currentTrangThai[bot.ten] = { tiSo: bot.tiSo, khungB: bot.khungB, khungA: bot.khungA };
+                }
+                console.log(`[BotRestore] ${bot.ten} <- tiSo=${tool.tiSo ?? "-"} khung=[${tool.khungB ?? "-"},${tool.khungA ?? "-"}] n=${tool.botN ?? "-"}`);
+            }
+        } catch (e) {
+            console.error(`[BotRestore] Lỗi khi khôi phục ${bot.ten}:`, e.message);
+        }
+    }
+    setting.set("botTrangThai", { ...currentTrangThai });
+}
+
+module.exports = { xulyVoPhong_Util, restoreBotState };

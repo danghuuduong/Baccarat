@@ -17,6 +17,7 @@ const { showStats } = require("./src/UI/UI_InGame");
 const { setupExposeFunctions } = require("./src/ExposeFunction/setupExposeFunctions");
 const { setupKiemTraLED, UI_KiemTraLED } = require("./src/UI/UI_KiemTraLED");
 const { hienKhung } = require("./src/Util/DocBi");
+const { restoreBotState } = require("./src/Util/xulyVoPhong_Util");
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // true = bật tâm xanh + chuột phải lấy toạ độ (khi chụp ảnh mẫu thì để false, kẻo tâm xanh dính vào ảnh)
@@ -222,6 +223,9 @@ async function ganUI(page) {
         // Lưu thông tin account & tool vào setting
         setting.set("currentAccount", result.account);
         setting.set("currentToolName", toolName);
+
+        // Khôi phục trạng thái nội tại tất cả bot (tiSo, khungB, khungA, botN) từ MongoDB khi khởi động/đăng nhập
+        await restoreBotState(taiKhoan);
 
         // Set lại 3 thông số từ BE vào setting và lưu đồng bộ vào state2.txt
         setting.set({

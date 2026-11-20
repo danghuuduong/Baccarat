@@ -5,6 +5,7 @@ const { updateBatDau } = require("../UI/UI_Btn_BatDau");
 const { vongLapChupManHinh } = require("../Util/VongLapChupManHinh");
 const { saveSettingTXT } = require("../TXT/settingState");
 const { getToolStats } = require("../Util/mongoDB");
+const { restoreBotState } = require("../Util/xulyVoPhong_Util");
 
 /**
  * Đăng ký tất cả exposeFunction vào page.
@@ -86,6 +87,10 @@ async function ExposeFC_Main(page) {
                     patch.solenhthua = Number(tool.Thua) || 0;
                     // console.log(`[Sync] Đã lấy dữ liệu từ MongoDB cho Tool [${toolName}]: Profit=${patch.profit}K, Win=${patch.solenhwin}, Thua=${patch.solenhthua}`);
                 }
+
+                // Khôi phục trạng thái nội tại tất cả bot (tiSo, khungB, khungA, botN)
+                // từ API — đồng bộ lại khi bấm Reload hoặc khởi động lại sau mất mạng
+                await restoreBotState(taiKhoan);
             }
 
             setting.set(patch);

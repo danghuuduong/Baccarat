@@ -36,4 +36,14 @@ module.exports = createStore({
     bendat: null,                // "red" | "blue" | null – bên vừa đặt cược
 
     TonThat_Max: 0,
+
+    // ── Trạng thái nội tại từng bot (Tỉ số, Khung hoặc Bộ đếm n) ────────
+    // Được cập nhật mỗi ván và khôi phục từ MongoDB khi mở bot / Reload
+    botTrangThai: {
+        "01-TíSố": { tiSo: 0, khungB: -4, khungA: 4 },
+        "02-TíSố2K": { n: 1 },                          // bot 2K: bộ đếm nhân
+        "03-TíSố8": { tiSo: 0, khungB: -8, khungA: 8 },
+        "04-TíSố13": { tiSo: 0, khungB: -13, khungA: 13 },
+        "05-TíSố18": { tiSo: 0, khungB: -18, khungA: 18 },
+    },
 });
