@@ -217,6 +217,80 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
 }
 
 /**
+ * Đẩy trạng thái nội tại của bot (tỉ số, khung hoặc bộ đếm n) lên MongoDB mà KHÔNG cộng trừ tiền hay win/thua
+ * Dùng cho các ván ẢO để UI web luôn hiển thị đúng tỉ số và khung theo thời gian thực
+ * @param {Object} params
+ * @param {string} params.taiKhoan
+ * @param {string} params.toolName
+ * @param {number} [params.tiSo]
+ * @param {number} [params.khungB]
+ * @param {number} [params.khungA]
+ * @param {number} [params.botN]
+ */
+async function pushBotState({ taiKhoan, toolName, tiSo, khungB, khungA, botN }) {
+    try {
+        const database = await getDB();
+        if (!database) return false;
+
+        const tk = String(taiKhoan || "").trim();
+        const tName = String(toolName || "01").trim();
+        if (!tk) return false;
+
+        const hasTiSo = tiSo !== undefined && tiSo !== null;
+        const hasKhung = khungB !== undefined && khungB !== null && khungA !== undefined && khungA !== null;
+        const hasBotN = botN !== undefined && botN !== null;
+
+        const updateSet = {
+            updatedAt: new Date(),
+        };
+        if (hasTiSo) updateSet["tools.$.tiSo"] = Number(tiSo);
+        if (hasKhung) {
+            updateSet["tools.$.khungB"] = Number(khungB);
+            updateSet["tools.$.khungA"] = Number(khungA);
+        }
+        if (hasBotN) updateSet["tools.$.botN"] = Number(botN);
+
+        const res = await database.collection("accounts").updateOne(
+            { taiKhoan: tk, "tools.toolName": tName },
+            { $set: updateSet }
+        );
+
+        // Nếu tool chưa có trong account -> thêm mới với các chỉ số ban đầu = 0
+        if (res.matchedCount === 0) {
+            const newTool = {
+                toolName: tName,
+                win: 0,
+                Thua: 0,
+                profit: 0,
+                KhoiluongVaoLenh: 0,
+                PhiGiaodich: 0,
+                tut: 0,
+                ...(hasTiSo ? { tiSo: Number(tiSo) } : {}),
+                ...(hasKhung ? { khungB: Number(khungB), khungA: Number(khungA) } : {}),
+                ...(hasBotN ? { botN: Number(botN) } : {}),
+                currentWinStreak: 0,
+                currentLossStreak: 0,
+                chuoiThangLienTiepCaoNhat: 0,
+                chuoiThuaLienTiepCaoNhat: 0,
+                hoaHongHienTai: 0,
+                tongHoaHongDaThu: 0,
+            };
+            await database.collection("accounts").updateOne(
+                { taiKhoan: tk },
+                {
+                    $push: { tools: newTool },
+                    $set: { updatedAt: new Date() }
+                }
+            );
+        }
+        return true;
+    } catch (error) {
+        console.error("[MongoDB] pushBotState lỗi:", error.message);
+        return false;
+    }
+}
+
+/**
  * Lấy thông số mới nhất của Tool từ MongoDB
  * @param {string} taiKhoan 
  * @param {string} toolName 
@@ -242,5 +316,6 @@ module.exports = {
     getDB,
     verifyLogin,
     pushToolStats,
+    pushBotState,
     getToolStats
 };

@@ -8,7 +8,7 @@ const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
-const { syncKetQua } = require("./syncStats");
+const { syncKetQua, syncTrangThaiBot } = require("./syncStats");
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -410,9 +410,15 @@ async function vongLapDatCuoc(page, roomType) {
         const tongRed = botThat.filter((q) => q.ben === "red").reduce((s, q) => s + q.amount, 0);
         const tongBlue = botThat.filter((q) => q.ben === "blue").reduce((s, q) => s + q.amount, 0);
         const coThat = tongCuoc > 0;
-        const tomTat = quyetDinh
-            .map((q) => `${q.bot.nhan}:${q.isThat ? q.amount + "K " + tenBenViet(q.ben) : "ảo"}`)
-            .join(" | ");
+        const formatBotTomTat = (q) => {
+            const b = q.bot;
+            const action = q.isThat ? `${q.amount}K ${tenBenViet(q.ben)}` : "ảo";
+            if (typeof b.n === "number") {
+                return `${b.nhan}[x${b.n}]: ${action}`;
+            }
+            return `${b.nhan}[${b.tiSo} / ${b.khungB},${b.khungA}]: ${action}`;
+        };
+        const tomTat = quyetDinh.map(formatBotTomTat).join(" | ");
 
         const mauTB = tongRed > 0 && tongBlue === 0 ? "#e42727ff"
             : tongBlue > 0 && tongRed === 0 ? "#247afbff"
@@ -533,7 +539,11 @@ async function vongLapDatCuoc(page, roomType) {
             // Tỉ số tính theo màu kết quả (ảo cũng tính)
             q.bot.ketQua(ketQuaMau, q.isThat, q.ben, delta, q.amount);
 
-            if (!q.isThat) continue;
+            if (!q.isThat) {
+                // ── VÁN ẢO: Đồng bộ tỉ số và khung hiện tại lên API/MongoDB ngay lập tức ──
+                syncTrangThaiBot(q.bot.ten, layTrangThaiBotExtra(q.bot));
+                continue;
+            }
 
             // ── Thống kê + sync cho lệnh THẬT ──────────────────────────────
             tongDelta = round2(tongDelta + delta);
@@ -566,20 +576,23 @@ async function vongLapDatCuoc(page, roomType) {
             capNhatStats();
         }
 
+        // Tóm tắt sau ván với tỉ số mới nhất để hiển thị khi out phòng
+        const tomTatSauVan = quyetDinh.map(formatBotTomTat).join(" | ");
+
         // ── Out phòng sau mỗi ván ──────────────────────────────────────────
         if (!coThat) {
             await outPhong(
                 page,
-                `Ảo | ${ketQua === "B" ? "ĐỎ" : "XANH"} | ${tomTat}`,
+                `Ảo | ${ketQua === "B" ? "ĐỎ" : "XANH"} | ${tomTatSauVan}`,
                 "#d7f706ff"
             );
             return;
         }
 
         if (tongDelta > 0) {
-            await outPhong(page, `✅ Chuồn thôi- Ăn +${tongDelta}K | ${tomTat}`, "#00fd59ff");
+            await outPhong(page, `✅ Chuồn thôi- Ăn +${tongDelta}K | ${tomTatSauVan}`, "#00fd59ff");
         } else {
-            await outPhong(page, `Dí rồi chạy thôi ❌ THUA ${tongDelta}K | ${tomTat}`, "#fb2424ff");
+            await outPhong(page, `Dí rồi chạy thôi ❌ THUA ${tongDelta}K | ${tomTatSauVan}`, "#fb2424ff");
         }
         return;
     }

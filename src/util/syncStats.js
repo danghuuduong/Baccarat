@@ -1,7 +1,7 @@
 "use strict";
 
 const setting = require("../State/setting");
-const { pushToolStats } = require("./mongoDB");
+const { pushToolStats, pushBotState } = require("./mongoDB");
 
 /**
  * Gửi kết quả ván cược lên MongoDB của account đang đăng nhập
@@ -42,4 +42,30 @@ async function syncKetQua(result, profitDelta, toolNameTruyenVao, extra = {}) {
     }
 }
 
-module.exports = { syncKetQua };
+/**
+ * Gửi trạng thái bot (tỉ số, khung hoặc bộ đếm n) lên MongoDB
+ * Dùng cho các ván ẢO (không cộng dồn tiền/win/loss, chỉ ghi đè snapshot tỉ số & khung)
+ * @param {string} toolNameTruyenVao 
+ * @param {{tiSo?: number, khungB?: number, khungA?: number, botN?: number}} [extra]
+ */
+async function syncTrangThaiBot(toolNameTruyenVao, extra = {}) {
+    const currentAccount = setting.get("currentAccount");
+    const toolName = toolNameTruyenVao || setting.get("currentToolName") || "01";
+
+    if (!currentAccount || !currentAccount.taiKhoan) return;
+
+    try {
+        await pushBotState({
+            taiKhoan: currentAccount.taiKhoan,
+            toolName: toolName,
+            tiSo: extra && extra.tiSo !== undefined ? Number(extra.tiSo) : undefined,
+            khungB: extra && extra.khungB !== undefined ? Number(extra.khungB) : undefined,
+            khungA: extra && extra.khungA !== undefined ? Number(extra.khungA) : undefined,
+            botN: extra && extra.botN !== undefined ? Number(extra.botN) : undefined,
+        });
+    } catch (e) {
+        console.error("[Sync] Lỗi khi sync trạng thái bot:", e.message);
+    }
+}
+
+module.exports = { syncKetQua, syncTrangThaiBot };
