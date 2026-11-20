@@ -307,10 +307,10 @@ async function vongLapDatCuoc(page, roomType) {
         for (const [ten, gia] of CHIP_THU_TU) {
             while (con >= gia) {
                 if (isDung()) return;
-                // await click(coords[ten]);
+                // await click(coords[ten]); đang test xem hiểu quả không , nên comment 
                 await randomSleep(222, 333);
                 if (isDung()) return;
-                // await click(coordBen);
+                // await click(coordBen); đang test xem hiểu quả không , nên comment 
                 await randomSleep(222, 333);
                 con -= gia;
             }
@@ -404,14 +404,20 @@ async function vongLapDatCuoc(page, roomType) {
             // ── 3. THẬT: đặt từng bên ──────────────────────────────────────
             await randomSleep(50, 100);
             if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy cược"); return; }
-            if (tongRed > 0) await datTien(tongRed, coords.datCuoc_Red);
+
+            // (BBB) TẠM THỜI TẮT bên ĐỎ (B): không click chip đỏ vì bên đó mất phí. Khi nào cần đánh đỏ thật thì mở dòng dưới ra.
+            // if (tongRed > 0) await datTien(tongRed, coords.datCuoc_Red);
+
             if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy cược"); return; }
             if (tongBlue > 0) await datTien(tongBlue, coords.datCuoc_Blue);
 
             // ── 4. Xác nhận ─────────────────────────────────────────────────
             if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy xác nhận cược"); return; }
-            await randomSleep(200, 300);
-            await click(coords.buttonXacNhan);
+            // Chỉ bấm xác nhận khi có đặt chip bên xanh (nếu chỉ có đỏ thì không đặt gì, khỏi xác nhận)
+            if (tongBlue > 0) {
+                await randomSleep(200, 300);
+                await click(coords.buttonXacNhan);
+            }
 
             // ── 5. Lưu trạng thái ──────────────────────────────────────────
             setting.set({
@@ -460,7 +466,13 @@ async function vongLapDatCuoc(page, roomType) {
                 else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
                 setting.set("profit", round2(setting.get("profit") - q.amount));
                 const tut = ghiThat(q.bot.ten, -q.amount);
-                syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut });
+
+                // Chỉ gọi API thống kê bên XANH (A). Bên ĐỎ (B) vẫn tính bình thường ở trên nhưng không gọi API.
+                if (q.ben === "blue") {
+                    syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut });
+                }
+                // (BBB)TẠM THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
+                // syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut });
             }
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
@@ -520,7 +532,13 @@ async function vongLapDatCuoc(page, roomType) {
             }
 
             const tut = ghiThat(q.bot.ten, delta);
-            syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut });
+
+            // Chỉ gọi API thống kê bên XANH (A). Bên ĐỎ (B) vẫn tính bình thường ở trên nhưng không gọi API.
+            if (q.ben === "blue") {
+                syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut });
+            }
+            // (BBB) THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
+            // syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut });
         }
 
         // Vốn chung + profit chung
