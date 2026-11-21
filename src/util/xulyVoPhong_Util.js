@@ -8,7 +8,7 @@ const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
-const { syncKetQua, syncTrangThaiBot } = require("./syncStats");
+const { syncKetQua } = require("./syncStats");
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -21,7 +21,7 @@ const round2 = (n) => Math.round(n * 100) / 100;
 
 // Tên bot (đổi ở đây nếu server sync cần tên khác)
 const TEN_BOT1 = "01-TíSố";
-const TEN_BOT2 = "02-TíSố2K";
+const TEN_BOT2 = "02-SW-2K";
 const TEN_BOT3 = "03-TíSố8";
 const TEN_BOT4 = "04-TíSố13";
 const TEN_BOT5 = "05-TíSố18";
@@ -140,7 +140,7 @@ function taoBot2K(botGoc, ten, nhan) {
 }
 
 // taoBotTiSo(ten, nhan, khungB, khungA, cuocNho, cuocLon)
-const bot1 = taoBotTiSo(TEN_BOT1, "TS4", -4, 4, 20, 40);
+const bot1 = taoBotTiSo(TEN_BOT1, "TS5", -5, 5, 20, 40);
 const bot2 = taoBot2K(bot1, TEN_BOT2, "2K");
 const bot3 = taoBotTiSo(TEN_BOT3, "TS8", -8, 8, 10, 20);
 const bot4 = taoBotTiSo(TEN_BOT4, "TS13", -13, 13, 10, 20);
@@ -452,14 +452,10 @@ async function vongLapDatCuoc(page, roomType) {
             });
             capNhatStats();
 
-            showThongBao(page, `Đặt ${tongCuoc}K
-        ${tomTat}`,
-                999999, mauTB);
+            showThongBao(page, `Đặt ${tongCuoc}K `, 999999, mauTB);
         } else {
             // ── Ảo: không đặt tiền, không xác nhận, không trừ vốn ──────────
-            showThongBao(page, `[ẢO] Chờ khung
-        ${tomTat}`,
-                999999, mauTB);
+            showThongBao(page, `[ẢO] Chờ khung `, 999999, mauTB);
         }
 
         // ── 6. Chờ rồi tìm kết quả bằng LED vàng ───────────────────────────
@@ -529,6 +525,9 @@ async function vongLapDatCuoc(page, roomType) {
 
         let tongDelta = 0;
         let tongVonVe = 0;
+        // Flag: chỉ cộng win/thua ảo vào UI 1 lần/ván (5 bot cùng ảo thì không x5)
+        let daThongKeAo = false;
+        const thangAo = ketQuaMau === "blue";   // dùng chung cho cả vòng lặp ảo
         for (const q of quyetDinh) {
             // Thắng/thua theo bên của riêng từng bot
             const thang = q.isThat && ketQuaMau === q.ben;
@@ -540,8 +539,20 @@ async function vongLapDatCuoc(page, roomType) {
             q.bot.ketQua(ketQuaMau, q.isThat, q.ben, delta, q.amount);
 
             if (!q.isThat) {
-                // ── VÁN ẢO: Đồng bộ tỉ số và khung hiện tại lên API/MongoDB ngay lập tức ──
-                syncTrangThaiBot(q.bot.ten, layTrangThaiBotExtra(q.bot));
+                // ── VÁN ẢO: sync tỉ số & khung lên API (1 lần/bot) ─────────────────────
+                // Local UI win/thua: chỉ cộng 1 lần dù có nhiều bot ảo cùng ván
+                if (!daThongKeAo) {
+                    daThongKeAo = true;
+                    if (thangAo) {
+                        setting.set("solenhwin", setting.get("solenhwin") + 1);
+                        setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
+                    } else {
+                        setting.set("solenhthua", setting.get("solenhthua") + 1);
+                        setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
+                    }
+                }
+                // MongoDB: push riêng mỗi bot (delta=0, khoiLuong=0 — chỉ đếm, không cộng tiền)
+                syncKetQua(thangAo ? "win" : "thua", 0, q.bot.ten, { khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
                 continue;
             }
 
@@ -581,18 +592,19 @@ async function vongLapDatCuoc(page, roomType) {
 
         // ── Out phòng sau mỗi ván ──────────────────────────────────────────
         if (!coThat) {
+            capNhatStats();
             await outPhong(
                 page,
-                `Ảo | ${ketQua === "B" ? "ĐỎ" : "XANH"} | ${tomTatSauVan}`,
+                `Ảo | ${ketQua === "B" ? "ĐỎ" : "XANH"}`,
                 "#d7f706ff"
             );
             return;
         }
 
         if (tongDelta > 0) {
-            await outPhong(page, `✅ Chuồn thôi- Ăn +${tongDelta}K | ${tomTatSauVan}`, "#00fd59ff");
+            await outPhong(page, `✅ Chuồn thôi- Ăn +${tongDelta}K`, "#00fd59ff");
         } else {
-            await outPhong(page, `Dí rồi chạy thôi ❌ THUA ${tongDelta}K | ${tomTatSauVan}`, "#fb2424ff");
+            await outPhong(page, `Dí rồi chạy thôi ❌ THUA ${tongDelta}K`, "#fb2424ff");
         }
         return;
     }
@@ -641,7 +653,6 @@ async function restoreBotState(taiKhoan) {
                 } else {
                     currentTrangThai[bot.ten] = { tiSo: bot.tiSo, khungB: bot.khungB, khungA: bot.khungA };
                 }
-                console.log(`[BotRestore] ${bot.ten} <- tiSo=${tool.tiSo ?? "-"} khung=[${tool.khungB ?? "-"},${tool.khungA ?? "-"}] n=${tool.botN ?? "-"}`);
             }
         } catch (e) {
             console.error(`[BotRestore] Lỗi khi khôi phục ${bot.ten}:`, e.message);
