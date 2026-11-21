@@ -142,7 +142,7 @@ function taoBot2K(botGoc, ten, nhan) {
 }
 
 // taoBotTiSo(ten, nhan, khungB, khungA, cuocNho, cuocLon)
-const bot1 = taoBotTiSo(TEN_BOT1, "TS5", -5, 5, 20, 40);
+const bot1 = taoBotTiSo(TEN_BOT1, "TS5", -4, 4, 20, 40);
 const bot2 = taoBot2K(bot1, TEN_BOT2, "2K");
 const bot3 = taoBotTiSo(TEN_BOT3, "TS8", -8, 8, 10, 20);
 const bot4 = taoBotTiSo(TEN_BOT4, "TS13", -13, 13, 10, 20);
