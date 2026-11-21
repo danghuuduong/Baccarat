@@ -95,8 +95,9 @@ async function verifyLogin(taiKhoan, pass) {
  * @param {number} [params.khungB] - Khung biên dưới hiện tại (bot 1/3/4/5)
  * @param {number} [params.khungA] - Khung biên trên hiện tại (bot 1/3/4/5)
  * @param {number} [params.botN] - Bộ đếm nhân hiện tại (bot 2K)
+ * @param {number} [params.cycleProfit] - Lãi/lỗ ròng chu kỳ hiện tại của bot
  */
-async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuong, phi, tut, tiSo, khungB, khungA, botN }) {
+async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuong, phi, tut, tiSo, khungB, khungA, botN, cycleProfit }) {
     try {
         const database = await getDB();
         if (!database) {
@@ -116,6 +117,7 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
         const hasTiSo = tiSo !== undefined && tiSo !== null;
         const hasKhung = khungB !== undefined && khungB !== null && khungA !== undefined && khungA !== null;
         const hasBotN = botN !== undefined && botN !== null;
+        const hasCycleProfit = cycleProfit !== undefined && cycleProfit !== null;
 
         if (!tk) {
             console.error("[MongoDB] pushToolStats lỗi: Thiếu tài khoản");
@@ -145,10 +147,11 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
                 KhoiluongVaoLenh: kl,
                 PhiGiaodich: phiGD,
                 tut: tutVal,
-                // Trạng thái bot: tỉ số và khung (bot 1/3/4/5) hoặc bộ đếm n (bot 2K)
+                // Trạng thái bot: tỉ số và khung (bot 1/3/4/5) hoặc bộ đếm n (bot 2K) hoặc cycleProfit
                 ...(hasTiSo ? { tiSo: Number(tiSo) } : {}),
                 ...(hasKhung ? { khungB: Number(khungB), khungA: Number(khungA) } : {}),
                 ...(hasBotN ? { botN: Number(botN) } : {}),
+                ...(hasCycleProfit ? { cycleProfit: Number(cycleProfit) } : {}),
                 currentWinStreak: curWin,
                 currentLossStreak: curLoss,
                 chuoiThangLienTiepCaoNhat: curWin,
@@ -202,6 +205,7 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
                         ...(hasTiSo ? { "tools.$.tiSo": Number(tiSo) } : {}),
                         ...(hasKhung ? { "tools.$.khungB": Number(khungB), "tools.$.khungA": Number(khungA) } : {}),
                         ...(hasBotN ? { "tools.$.botN": Number(botN) } : {}),
+                        ...(hasCycleProfit ? { "tools.$.cycleProfit": Number(cycleProfit) } : {}),
                         updatedAt: new Date()
                     }
                 }
@@ -226,8 +230,9 @@ async function pushToolStats({ taiKhoan, toolName, result, profitDelta, khoiLuon
  * @param {number} [params.khungB]
  * @param {number} [params.khungA]
  * @param {number} [params.botN]
+ * @param {number} [params.cycleProfit]
  */
-async function pushBotState({ taiKhoan, toolName, tiSo, khungB, khungA, botN }) {
+async function pushBotState({ taiKhoan, toolName, tiSo, khungB, khungA, botN, cycleProfit }) {
     try {
         const database = await getDB();
         if (!database) return false;
@@ -239,6 +244,7 @@ async function pushBotState({ taiKhoan, toolName, tiSo, khungB, khungA, botN }) 
         const hasTiSo = tiSo !== undefined && tiSo !== null;
         const hasKhung = khungB !== undefined && khungB !== null && khungA !== undefined && khungA !== null;
         const hasBotN = botN !== undefined && botN !== null;
+        const hasCycleProfit = cycleProfit !== undefined && cycleProfit !== null;
 
         const updateSet = {
             updatedAt: new Date(),
@@ -249,6 +255,7 @@ async function pushBotState({ taiKhoan, toolName, tiSo, khungB, khungA, botN }) 
             updateSet["tools.$.khungA"] = Number(khungA);
         }
         if (hasBotN) updateSet["tools.$.botN"] = Number(botN);
+        if (hasCycleProfit) updateSet["tools.$.cycleProfit"] = Number(cycleProfit);
 
         const res = await database.collection("accounts").updateOne(
             { taiKhoan: tk, "tools.toolName": tName },
@@ -268,6 +275,7 @@ async function pushBotState({ taiKhoan, toolName, tiSo, khungB, khungA, botN }) 
                 ...(hasTiSo ? { tiSo: Number(tiSo) } : {}),
                 ...(hasKhung ? { khungB: Number(khungB), khungA: Number(khungA) } : {}),
                 ...(hasBotN ? { botN: Number(botN) } : {}),
+                ...(hasCycleProfit ? { cycleProfit: Number(cycleProfit) } : {}),
                 currentWinStreak: 0,
                 currentLossStreak: 0,
                 chuoiThangLienTiepCaoNhat: 0,

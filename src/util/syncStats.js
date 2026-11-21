@@ -36,6 +36,7 @@ async function syncKetQua(result, profitDelta, toolNameTruyenVao, extra = {}) {
             khungB: extra && extra.khungB !== undefined ? Number(extra.khungB) : undefined,
             khungA: extra && extra.khungA !== undefined ? Number(extra.khungA) : undefined,
             botN: extra && extra.botN !== undefined ? Number(extra.botN) : undefined,
+            cycleProfit: extra && extra.cycleProfit !== undefined ? Number(extra.cycleProfit) : undefined,
         });
     } catch (e) {
         console.error("[Sync] Lỗi khi sync kết quả:", e.message);
@@ -46,7 +47,7 @@ async function syncKetQua(result, profitDelta, toolNameTruyenVao, extra = {}) {
  * Gửi trạng thái bot (tỉ số, khung hoặc bộ đếm n) lên MongoDB
  * Dùng cho các ván ẢO (không cộng dồn tiền/win/loss, chỉ ghi đè snapshot tỉ số & khung)
  * @param {string} toolNameTruyenVao 
- * @param {{tiSo?: number, khungB?: number, khungA?: number, botN?: number}} [extra]
+ * @param {{tiSo?: number, khungB?: number, khungA?: number, botN?: number, cycleProfit?: number}} [extra]
  */
 async function syncTrangThaiBot(toolNameTruyenVao, extra = {}) {
     const currentAccount = setting.get("currentAccount");
@@ -62,6 +63,7 @@ async function syncTrangThaiBot(toolNameTruyenVao, extra = {}) {
             khungB: extra && extra.khungB !== undefined ? Number(extra.khungB) : undefined,
             khungA: extra && extra.khungA !== undefined ? Number(extra.khungA) : undefined,
             botN: extra && extra.botN !== undefined ? Number(extra.botN) : undefined,
+            cycleProfit: extra && extra.cycleProfit !== undefined ? Number(extra.cycleProfit) : undefined,
         });
     } catch (e) {
         console.error("[Sync] Lỗi khi sync trạng thái bot:", e.message);

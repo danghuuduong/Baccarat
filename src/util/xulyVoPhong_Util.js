@@ -60,12 +60,14 @@ function taoBotTiSo(ten, nhan, khungB0, khungA0, cuocNho, cuocLon) {
         get tiSo() { return tiSo; },
         get khungA() { return khungA; },
         get khungB() { return khungB; },
+        get cycleProfit() { return cycleProfit; },
         // Setter để khôi phục trạng thái từ API (khi bấm Reload hoặc khởi động lại)
         restore(state) {
             if (state == null) return;
             if (state.tiSo !== undefined) tiSo = state.tiSo;
             if (state.khungA !== undefined) khungA = state.khungA;
             if (state.khungB !== undefined) khungB = state.khungB;
+            if (state.cycleProfit !== undefined) cycleProfit = Number(state.cycleProfit) || 0;
         },
         quyet() {
             if (giaiDoan === cuocLon) return { amount: cuocLon, isThat: true, ben: benKhoa };
@@ -493,6 +495,11 @@ async function vongLapDatCuoc(page, roomType) {
                 }
                 // (BBB)TẠM THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
                 // syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut, ...layTrangThaiBotExtra(q.bot) });
+                // Đoạn này giả lập để biết tỉ số và khung đang ở đâu thôi
+                // Đỏ: sync nhưng thua thì không push tiền lỗ
+                if (q.ben === "red") {
+                    syncKetQua("thua", 0, q.bot.ten, { khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
+                }
             }
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
@@ -578,6 +585,11 @@ async function vongLapDatCuoc(page, roomType) {
             }
             // (BBB) THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
             // syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
+
+            // Đỏ: chỉ gửi tỉ số + khung, không push tiền, thạm thời
+            if (q.ben === "red") {
+                syncKetQua(thang ? "win" : "thua", 0, q.bot.ten, { khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
+            }
         }
 
         // Vốn chung + profit chung
@@ -626,13 +638,19 @@ function layTrangThaiBotExtra(bot) {
         extra = { botN: bot.n };
         currentTrangThai[bot.ten] = { n: bot.n };
     } else {
-        // Bot TíSố — tỉ số + khung
+        // Bot TíSố — tỉ số + khung + cycleProfit
         extra = {
             tiSo: bot.tiSo,
             khungB: bot.khungB,
             khungA: bot.khungA,
+            cycleProfit: bot.cycleProfit,
         };
-        currentTrangThai[bot.ten] = { tiSo: bot.tiSo, khungB: bot.khungB, khungA: bot.khungA };
+        currentTrangThai[bot.ten] = {
+            tiSo: bot.tiSo,
+            khungB: bot.khungB,
+            khungA: bot.khungA,
+            cycleProfit: bot.cycleProfit,
+        };
     }
     setting.set("botTrangThai", { ...currentTrangThai });
     return extra;
