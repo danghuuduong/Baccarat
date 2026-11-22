@@ -99,7 +99,7 @@ const TaoDoChip_Room = {
 // ── Toạ độ click nút thoát phòng ─────────────────────────────────────────────
 const TOA_DO_THOAT_PHONG = { x: 1250, y: 32 };
 // ------------------------------------------ xử lý thếp -------------------------------------
-const SoTienThep = [25, 60, 130, 260, 530];
+const SoTienThep = [25, 60, 130];
 
 
 module.exports = {

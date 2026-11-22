@@ -10,8 +10,8 @@ const XAU = "Xấu";
 
 // Tìm 2 3 ngầm ở cuối
 
-const SO_LIEN_TIEP = 5;
-const SO_XEN_KE = 5; // số lượng xen kẽ tối thiểu
+const SO_LIEN_TIEP = 1118;
+const SO_XEN_KE = 4; // số lượng xen kẽ tối thiểu
 
 // Tìm 2 3 ngầm ở cuối  . nhưng mà phải đếm đống  đó xem có hơn không nữa. ví dụ tìm được 2 xấu . => đẹp  nhưng xấu phải hơn 2
 
