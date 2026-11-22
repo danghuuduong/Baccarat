@@ -1,11 +1,5 @@
 "use strict";
 
-// Độ dài tối thiểu của cột xanh gần nhất (đã hạ từ 4 xuống 3)
-const DO_DAI_XANH = 3;
-
-// Cột từ 3 con trở lên = lần đánh trước đã ăn (2 con chờ + 1 con thắng)
-const DO_DAI_DA_AN = 3;
-
 // Cột xanh từ cuối về đầu: cot[0] là cột gần nhất. Hòa (T) bỏ qua, đỏ (B) ngắt cột.
 function LayCotXanh(arr) {
     const cot = [];
@@ -18,42 +12,36 @@ function LayCotXanh(arr) {
     return cot;
 }
 
-// Đếm số đoạn ">=3, (một hoặc nhiều cột =2), >=3" nối tiếp nhau, tính từ cột gần nhất.
-// Giữa 2 đầu >=3 chỉ được toàn cột =2, phải có ít nhất 1 cột =2.
+// Đếm số đoạn ">=3, (một hoặc nhiều cột =2), >=3" ở bất kỳ vị trí nào.
+// Đoạn chỉ hợp lệ khi cột ngay sau cột cuối của đoạn không phải >=3.
+// 2 đoạn có thể dính nhau (dùng chung cột >=3 ở giữa).
 // loc = các cột xanh gần nhất trước, đã bỏ cột 1 con.
 function demDoan(loc) {
-    if (!(loc[0] >= 3)) return 0;
     let doan = 0;
-    let i = 0;
-    while (true) {
+    for (let i = 0; i < loc.length; i++) {
+        if (!(loc[i] >= 3)) continue;
         let j = i + 1;
         let soHai = 0;
         while (j < loc.length && loc[j] === 2) { soHai++; j++; }
-        if (soHai >= 1 && j < loc.length && loc[j] >= 3) { doan++; i = j; }
-        else break;
+        if (soHai < 1 || j >= loc.length || !(loc[j] >= 3)) continue;
+        if (j + 1 < loc.length && loc[j + 1] >= 3) continue;
+        doan++;
     }
     return doan;
 }
 
 // Trả { isOk, uutien }. Bỏ cột xanh 1 con rồi mới xét.
-//  A = cột gần nhất (phải >= DO_DAI_XANH), B = cột liền trước A.
-//  B >= 3 -> lần trước đã ăn rồi -> không vào.
-//  B = 2 hoặc không có B -> được vào:
-//    uutien 1: có >= 1 đoạn (>=3, 2.., >=3)
-//    uutien 0: còn lại
+//  >= 2 đoạn -> uutien 1
+//  1 đoạn    -> uutien 0
+//  0 đoạn    -> không vào
 function CheckXanh3(arr) {
     if (!Array.isArray(arr)) return { isOk: false, uutien: 0 };
-    const cot = LayCotXanh(arr);
-    const loc = cot.filter((n) => n >= 2);
+    const loc = LayCotXanh(arr).filter((n) => n >= 2);
 
-    const A = loc[0];
-    const B = loc[1];
-
-    if (!(A >= DO_DAI_XANH)) return { isOk: false, uutien: 0 };
-    if (B >= DO_DAI_DA_AN) return { isOk: false, uutien: 0 };
-
-    if (demDoan(loc) >= 1) return { isOk: true, uutien: 1 };
-    return { isOk: true, uutien: 0 };
+    const doan = demDoan(loc);
+    if (doan >= 2) return { isOk: true, uutien: 1 };
+    if (doan === 1) return { isOk: true, uutien: 0 };
+    return { isOk: false, uutien: 0 };
 }
 
 module.exports = { CheckXanh3 };
