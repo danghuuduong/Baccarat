@@ -333,8 +333,8 @@ function showStats(page, stats) {
         extraInfo.innerHTML = `
             <div style="margin-top:4px;border-top:1px solid rgba(0,0,0,0.08);padding-top:3px">
                 <div id="ui-stats-extra-body" style="display:${mo ? "block" : "none"}">
-                    <div><span class="s-label">Đỏ </span><span class="s-win">${s.solenhwin_Red || 0}</span> / <span class="s-lose">${s.solenhthua_Red || 0}</span></div>
-                    <div><span class="s-label">Xanh </span><span class="s-win">${s.solenhWin_Xanh || 0}</span> / <span class="s-lose">${s.solenhthua_Xanh || 0}</span></div>
+                    <div><span class="s-label">Bẻ </span><span class="s-win">${s.LienTiep_Win || 0}</span> / <span class="s-lose">${s.LienTiep_Thua || 0}</span></div>
+                    <div><span class="s-label">SenKẽ </span><span class="s-win">${s.SenKe_Win || 0}</span> / <span class="s-lose">${s.SenKe_Thua || 0}</span></div>
                     ${dongThep}
                 </div>
                 <div style="text-align:right">

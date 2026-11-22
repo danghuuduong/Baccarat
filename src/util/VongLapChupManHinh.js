@@ -1,4 +1,5 @@
 // src/Util/VongLapChupManHinh.js – Vòng lặp đọc 8 phòng, tìm phòng đạt và vào phòng
+// Chụp nửa trên -> cuộn xuống chụp nửa dưới -> cuộn lên ... (chỉ tab 1)
 "use strict";
 
 const setting = require("../State/setting");
@@ -6,44 +7,27 @@ const { docBan } = require("./DocBi");
 const { docGiay } = require("./DocGiay");
 const { update_UI_KetQua8Phong } = require("../UI/UI_KetQua8Phong");
 const { TimPhongDat_Util } = require("./TimPhongDat_Util");
-const { ToaDoTab } = require("../config/RoomConfig");
 const { xulyVoPhong_Util } = require("./xulyVoPhong_Util");
 const { randomSleep } = require("./Sleep_Util");
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const SO_LAN_TRUOT_DE_XOA = 2;
 
-// true = dùng cả tab 1 và tab 2 | false = chỉ tab 1, chụp xong thì lăn ngược lên
-const BAT_TAB_2 = false;
+// ── Cấu hình cuộn (giống bản gốc, chỉ rút ngắn thời gian chờ) ───────────────
+const DELTA_CUON = 3333;
+const SO_CU_XUONG = 4;       // số cú lăn xuống
+const SO_CU_LEN = 5;         // số cú lăn lên (dư 1 cho chắc)
+const GIAN_CACH_CU_MS = [20, 30];   // nghỉ giữa các cú lăn
+const CHO_SAU_CUON_MS = [150, 200]; // chờ 1 lần duy nhất cho màn hình ổn định rồi mới chụp
 
-// Đưa chuột vào giữa màn hình rồi lăn xuống như người: 2 nhịp x 600px = 1200px
-async function lanXuongNhuNguoi(page) {
-    const { w, h } = await page.evaluate(() => ({
-        w: window.innerWidth,
-        h: window.innerHeight,
-    }));
-
-    await page.mouse.move(w / 2, h / 2);
-
-    const soLan = setting.get("tabHienTai") === 1 ? 4 : 3;
-    for (let i = 0; i < soLan; i++) {
-        await page.mouse.wheel(0, 3333);
-        await randomSleep(55, 60);
+// Lăn chuột: huong = 1 (xuống) | -1 (lên)
+async function cuon(page, toaDo, huong) {
+    await page.mouse.move(toaDo.x, toaDo.y);
+    const soCu = huong === 1 ? SO_CU_XUONG : SO_CU_LEN;
+    for (let i = 0; i < soCu; i++) {
+        await page.mouse.wheel(0, huong * DELTA_CUON);
+        await randomSleep(GIAN_CACH_CU_MS[0], GIAN_CACH_CU_MS[1]);
     }
-}
-
-// Lăn ngược lên đầu trang (dư 1 lần cho chắc)
-async function lanLenNhuNguoi(page) {
-    const { w, h } = await page.evaluate(() => ({
-        w: window.innerWidth,
-        h: window.innerHeight,
-    }));
-
-    await page.mouse.move(w / 2, h / 2);
-
-    for (let i = 0; i < 5; i++) {
-        await page.mouse.wheel(0, -3333);
-        await randomSleep(55, 60);
-    }
+    await randomSleep(CHO_SAU_CUON_MS[0], CHO_SAU_CUON_MS[1]);
 }
 
 /**
@@ -53,9 +37,20 @@ async function vongLapChupManHinh(page) {
     if (setting.get("dangChay")) return;
     setting.set("dangChay", true);
     try {
-        const SO_LAN_TRUOT_DE_XOA = 2;
-        const demTruot = Array(8).fill(0);
+        // Dữ liệu tách riêng cho nửa trên và nửa dưới
+        const duLieu = { tren: [], duoi: [] };
+        const demTruot = {
+            tren: Array(8).fill(0),
+            duoi: Array(8).fill(0),
+        };
         let viTri = "tren"; // "tren" | "duoi"
+
+        // Lấy kích thước màn hình 1 lần
+        const { w, h } = await page.evaluate(() => ({
+            w: window.innerWidth,
+            h: window.innerHeight,
+        }));
+        const toaDo = { x: Math.round(w / 2), y: Math.round(h / 2) };
 
         while (setting.get("isStart")) {
             try {
@@ -65,17 +60,18 @@ async function vongLapChupManHinh(page) {
                 // 2. Đọc bi 8 phòng
                 const biCacPhong = await docBan(page);
 
-                // 3. Xử lý dữ liệu phòng
-                const phongCu = setting.get("phongRoomS") || [];
+                // 3. Xử lý dữ liệu phòng (theo đúng nửa đang đứng)
+                const phongCu = duLieu[viTri];
+                const dem = demTruot[viTri];
 
                 const phongMoi = giayHopLe.map((hopLe, i) => {
                     if (hopLe) {
-                        demTruot[i] = 0;
+                        dem[i] = 0;
                         return biCacPhong[i];
                     }
 
-                    demTruot[i]++;
-                    return demTruot[i] >= SO_LAN_TRUOT_DE_XOA
+                    dem[i]++;
+                    return dem[i] >= SO_LAN_TRUOT_DE_XOA
                         ? []
                         : (phongCu[i] || []);
                 });
@@ -86,19 +82,20 @@ async function vongLapChupManHinh(page) {
                         mangBi.join("") !== (phongCu[i] || []).join("")
                 );
 
-                // 5. Có thay đổi thì cập nhật + xử lý
+                duLieu[viTri] = phongMoi;
+
+                // 5. Có thay đổi thì cập nhật UI + tìm phòng đạt
                 if (coPhongDoi) {
                     setting.set("phongRoomS", phongMoi);
                     await update_UI_KetQua8Phong(page, phongMoi);
 
-                    const tabHienTai = setting.get("tabHienTai");
                     const ketQua = TimPhongDat_Util(phongMoi) || [];
 
-                    // Lưu kèm tab, sắp sẵn: ngam to nhất lên đầu, bằng ngam thì chenhLech to hơn
+                    // Sắp sẵn: ngam to nhất lên đầu, bằng ngam thì chenhLech to hơn
                     const chenhLechHieuLuc = (p) => (p.benUuThe !== p.phe ? p.chenhLech : 0);
 
                     const danhSach = ketQua
-                        .map(phong => ({ ...phong, tab: tabHienTai }))
+                        .map((phong) => ({ ...phong, tab: 1 }))
                         .sort((a, b) =>
                             (b.ngam - a.ngam) ||
                             (chenhLechHieuLuc(b) - chenhLechHieuLuc(a))
@@ -106,38 +103,20 @@ async function vongLapChupManHinh(page) {
 
                     setting.set("danhSachTimKiemRa", danhSach);
 
-                    // Có >= 1 phòng đạt: vào luôn, khỏi sang tab khác
+                    // Có >= 1 phòng đạt: vào luôn
                     if (danhSach.length >= 1) {
                         setting.set("isStart", false);
                         await xulyVoPhong_Util(page, danhSach);
                         break;
                     }
-
-                    // Rỗng: clear sạch trước
-                    if (viTri === "tren") {
-                        // chụp xong phần trên không có -> lăn xuống chụp tiếp
-                        await lanXuongNhuNguoi(page);
-                        viTri = "duoi";
-                    } else if (BAT_TAB_2) {
-                        // chụp xong phần dưới không có -> tab 1 -> tab 2, tab 2 -> về tab 1
-                        const tabMoi = tabHienTai === 1 ? 2 : 1;
-                        setting.set("tabHienTai", tabMoi);
-
-                        const tab = ToaDoTab.find(t => t.tab === tabMoi);
-                        await page.mouse.click(tab.x, tab.y);
-                        await randomSleep(410, 450);
-                        viTri = "tren";
-                    } else {
-                        // chỉ tab 1: lăn ngược lên đầu rồi chụp lại
-                        await lanLenNhuNguoi(page);
-                        viTri = "tren";
-                    }
                 }
 
-                await randomSleep(410, 460);
+                // 6. Không có phòng đạt: cuộn sang nửa còn lại rồi chụp tiếp
+                await cuon(page, toaDo, viTri === "tren" ? 1 : -1);
+                viTri = viTri === "tren" ? "duoi" : "tren";
             } catch (errLoop) {
                 // console.error("[VongLapChupManHinh] Lỗi trong nhịp lặp:", errLoop.message);
-                await randomSleep(500, 700);
+                await randomSleep(300, 500);
             }
         }
 

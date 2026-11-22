@@ -10,7 +10,8 @@ const XAU = "Xấu";
 
 // Tìm 2 3 ngầm ở cuối
 
-const SO_LIEN_TIEP = 3;
+const SO_LIEN_TIEP = 5;
+const SO_XEN_KE = 5; // số lượng xen kẽ tối thiểu
 
 // Tìm 2 3 ngầm ở cuối  . nhưng mà phải đếm đống  đó xem có hơn không nữa. ví dụ tìm được 2 xấu . => đẹp  nhưng xấu phải hơn 2
 
@@ -136,15 +137,19 @@ function layArrayXauDep(s) {
 function xuLyXauDep(arrayXauDep) {
     const n = arrayXauDep.length;
 
-    if (n === 1) {
-        return { isDat: true, phe: arrayXauDep[0] };
+    // N xấu/đẹp liên tiếp ở cuối
+    if (n >= SO_LIEN_TIEP) {
+        const cuoi = arrayXauDep.slice(-SO_LIEN_TIEP);
+        if (cuoi.every((x) => x === XAU)) return { isDat: true, phe: DEP, type: "lientiep" };
+        if (cuoi.every((x) => x === DEP)) return { isDat: true, phe: XAU, type: "lientiep" };
     }
 
-    // Từ 4 phần tử trở lên: 3 con cuối giống nhau, con trước đó khác -> trả về con trước đó
-    if (n >= 2) {
-        const [a, b] = arrayXauDep.slice(-2);
-        if (a !== b) {
-            return { isDat: true, phe: b };
+    // Xen kẽ >= 4 con ở cuối, kết thúc bằng Đẹp (xấu đẹp xấu đẹp) -> Đẹp
+    if (n >= SO_XEN_KE) {
+        let dem = 1;
+        for (let i = n - 1; i > 0 && arrayXauDep[i] !== arrayXauDep[i - 1]; i--) dem++;
+        if (dem >= SO_XEN_KE && arrayXauDep[n - 1] === DEP) {
+            return { isDat: true, phe: DEP, type: "senke" };
         }
     }
 
@@ -171,6 +176,7 @@ function CheckChay2Ngam(arr) {
     return {
         isDat: kq.isDat,
         phe: kq.phe,
+        type: kq.type,
         chuoiLienTiep: chuoiCuoi,
         benUuThe,
         chenhLech,

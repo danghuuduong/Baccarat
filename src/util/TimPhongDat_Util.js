@@ -22,6 +22,7 @@ function TimPhongDat_Util(phongRoomS = []) {
         DanhSachTimPhong.push({
             phong: i + 1,                                // số phòng 1..8
             ngam: checkChay2Ngam.chuoiLienTiep,
+            type: checkChay2Ngam.type,
             ...checkChay2Ngam,
             ...DS_PHONG[i],                                  // ten, x, y
             arr

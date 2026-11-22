@@ -18,11 +18,11 @@ module.exports = createStore({
     solenhwin: 0,                // số lệnh thắng
     solenhthua: 0,               // số lệnh thua
 
-    solenhwin_Red: 0,           // số lệnh thắng Tab 1
-    solenhthua_Red: 0,          // số lệnh thua Tab 1
+    LienTiep_Win: 0,           // số lệnh thắng Tab 1
+    LienTiep_Thua: 0,          // số lệnh thua Tab 1
 
-    solenhWin_Xanh: 0,           // số lệnh thắng Tab 2
-    solenhthua_Xanh: 0,          // số lệnh thua Tab 2
+    SenKe_Win: 0,           // số lệnh thắng Tab 2
+    SenKe_Thua: 0,          // số lệnh thua Tab 2
 
     // Thống kê theo thép: key là số thép 1..5
     thongkesolieuthep: {
