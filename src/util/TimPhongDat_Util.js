@@ -13,19 +13,22 @@ function TimPhongDat_Util(phongRoomS = []) {
     const DanhSachTimPhong = [];
 
     phongRoomS.forEach((arr, i) => {
-        if (!arr || arr.length === 0) return;               // phòng rỗng thì bỏ qua
-        const tinHieu = LayTinHieu([...arr]);
-        if (!tinHieu) return;                               // chỉ lọc theo cháy ngầm
+        if (!arr || arr.length === 0) return;
+        // phòng rỗng thì bỏ qua
+        const sach = arr.filter(x => x === "B" || x === "P");
+        const tinHieu = LayTinHieu(sach);
+        const kq = CheckXanh3(sach.slice(0, -2));
 
-        const kq = CheckXanh3(arr.slice(0, -2));
-        if (!kq.isOk) return;
+        if (tinHieu && kq.isOk && kq.uutien >= 1) {
+            DanhSachTimPhong.push({
+                uutien: kq.uutien,
+                phong: i + 1,                                   // số phòng 1..8
+                ...DS_PHONG[i],                                 // ten, x, y
+                arr
+            });
+        }               // chỉ lọc theo cháy ngầm
+        return
 
-        DanhSachTimPhong.push({
-            uutien: kq.uutien,
-            phong: i + 1,                                   // số phòng 1..8
-            ...DS_PHONG[i],                                 // ten, x, y
-            arr
-        });
     });
 
     return DanhSachTimPhong;

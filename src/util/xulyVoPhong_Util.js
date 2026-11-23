@@ -9,6 +9,7 @@ const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
 const { syncKetQua } = require("./syncStats");
+const { CheckXanh3 } = require("./CheckChay2Ngam");
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -256,16 +257,19 @@ async function vongLapDatCuoc(page, roomType) {
         }
 
         // ── 1. Lấy tín hiệu ────────────────────────────────────────────────
-        const vanMoi = await choVanMoi(5 * 60000);
+        const vanMoi = await choVanMoi(8 * 60000);
         if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ ván mới"); return; }
         if (!vanMoi) { await outPhong(page, "OutPhong -> Không tìm Bắt đầu ván mới - Hoặc Tráo Bài"); return; }
 
-        const tinHieu = LayTinHieu([...arraySuDungChinhList]);
+        const sach = arraySuDungChinhList.filter(x => x === "B" || x === "P");
+        const tinHieu = LayTinHieu(sach);
+        const kq = CheckXanh3(sach.slice(0, -2));
+        const abc = tinHieu && kq.isOk;
 
         // Không có tín hiệu: ngồi chờ, đọc kết quả ván kế rồi lấy tín hiệu lại
-        if (!tinHieu) {
+        if (!abc) {
             showThongBao(page, "Chờ tín hiệu...", 5000, "#d7f706ff");
-            const kqCho = await choKetQuaVang(2 * 60000);
+            const kqCho = await choKetQuaVang(6 * 60000);
             if (isDung()) { await outPhong(page, "Đã bấm Dừng khi chờ kết quả"); return; }
             if (!kqCho) { await outPhong(page, "OutPhong -> Không đọc được kết quả khi chờ tín hiệu"); return; }
             arraySuDungChinhList.push(kqCho);
@@ -302,7 +306,7 @@ async function vongLapDatCuoc(page, roomType) {
 
         // ── 3. Chờ rồi tìm kết quả bằng LED vàng ───────────────────────────
         await sleepKiemTra(10000);
-        const ketQua = await choKetQuaVang(4 * 60000);
+        const ketQua = await choKetQuaVang(7 * 60000);
 
         cancelThongBao(page);
         setting.set("isDatCuocXong", false);
@@ -337,8 +341,9 @@ async function vongLapDatCuoc(page, roomType) {
         if (ketQua === "T") {
             setting.set("soVonBanDau", round2(setting.get("soVonBanDau") + amount));
             capNhatStats();
-            await outPhong(page, "Hoà cút");
-            return;
+            // await outPhong(page, "Hoà cút");
+            // return;
+            continue;
         }
 
         const thang = ketQua === "P";
@@ -375,7 +380,7 @@ async function vongLapDatCuoc(page, roomType) {
             return;
         }
 
-        // ── 8. Thua: ở lại phòng, lên thép kế, chờ tín hiệu ────────────────
+        // ── 8. Thua: lên thép kế, out phòng (giữ thép cho phòng sau) ───────
         thepIdx++;
         showThongBao(page, `Thua -${amount}K -> Thép ${thepIdx + 1}: ${SoTienThep[thepIdx]}K, chờ tín hiệu`, 5000, "#fb2424ff");
         continue;

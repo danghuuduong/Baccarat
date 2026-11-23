@@ -325,7 +325,7 @@ function showStats(page, stats) {
         if (window.__uiStatsExtraOpen === undefined) window.__uiStatsExtraOpen = false;
         const mo = window.__uiStatsExtraOpen;
 
-        const dongThep = [1, 2, 3, 4, 5, 6].map((n) => {
+        const dongThep = [1, 2, 3, 4, 5].map((n) => {
             const t = (s.thongkesolieuthep || {})[n] || {};
             return `<div><span class="s-label">thếp: ${n} </span><span class="s-win">${t.win || 0}</span> / <span class="s-lose">${t.thua || 0}</span></div>`;
         }).join("");
