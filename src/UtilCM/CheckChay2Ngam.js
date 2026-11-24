@@ -4,6 +4,12 @@ const setting = require("../State/setting");
 
 const TIE = "T";
 
+// ── Cấu hình bộ lọc bệt ─────────────────────────────────────────────────────
+const SO_COT_SAU_CHUAN = 3;     // số cột phải có sau cột chuẩn
+const DAI_CHUAN_MIN = 3;        // cột chuẩn dài >= 3
+const DAI_COT_SAU_MAX = 2;      // mỗi cột sau chuẩn dài <= 2
+const DAI_CHUAN_MIEN_CHAN = 7;  // cột chuẩn >= 7 thì không bị chặn cầu 1-1
+
 // Gom mảng thành các cột bệt (kiểu tài xỉu), bỏ qua Tie.
 // VD: d d x x x d -> [{ mau: "d", dai: 2 }, { mau: "x", dai: 3 }, { mau: "d", dai: 1 }]
 function GomCotBet(arr) {
@@ -19,27 +25,35 @@ function GomCotBet(arr) {
 
 // Bộ lọc bệt:
 //   1. Từ cuối mảng đi ngược, tìm cột gần nhất có dài >= 3 làm cột chuẩn.
-//   2. Sau cột chuẩn phải có đúng 5 cột, cột thứ 5 là cột cuối mảng.
-//   3. Cả 5 cột đó đều dài <= 2.
+//   2. Sau cột chuẩn phải có đúng 3 cột, cột thứ 3 là cột cuối mảng.
+//   3. Cả 3 cột đó đều dài <= 2.
+//   4. Chặn cầu 1-1: 2 cột đầu dài 1, cột cuối chỉ tính ô đầu (1 hoặc 2 đều coi là 1)
+//      -> loại, trừ khi cột chuẩn dài >= 7.
 function LocBet(arr) {
     const cols = GomCotBet(arr);
 
     let iChuan = -1;
     for (let i = cols.length - 1; i >= 0; i--) {
-        if (cols[i].dai >= 3) {
+        if (cols[i].dai >= DAI_CHUAN_MIN) {
             iChuan = i;
             break;
         }
     }
-    if (iChuan === -1) return false;                  // không có cột chuẩn
+    if (iChuan === -1) return false;                       // không có cột chuẩn
 
     const cotSau = cols.slice(iChuan + 1);
-    if (cotSau.length !== 5) return false;            // phải đúng 5 cột sau chuẩn
+    if (cotSau.length !== SO_COT_SAU_CHUAN) return false;  // phải đúng 3 cột sau chuẩn
 
-    return cotSau.every((c) => c.dai <= 2);
+    if (!cotSau.every((c) => c.dai <= DAI_COT_SAU_MAX)) return false;
+
+    // Chặn cầu 1-1: 2 cột đầu dài 1, cột cuối (<= 2) tính như 1. Chuẩn >= 7 thì miễn chặn
+    const laCau11 = cotSau[0].dai === 1 && cotSau[1].dai === 1;
+    if (laCau11 && cols[iChuan].dai < DAI_CHUAN_MIEN_CHAN) return false;
+
+    return true;
 }
 
-// Trả về true nếu chuỗi cháy ngầm hiện tại >= soChuoiDat (mặc định 2), ngược lại false.
+// Trả về { chuoi, isDat }: isDat = true nếu chuỗi cháy ngầm hiện tại >= soChuoiDat (mặc định 2) và qua màng lọc bệt.
 // Mảng đọc theo cột, mỗi cột 6 ô. Mỗi cột có 2 chu kỳ:
 //   - Chu kỳ 1 (ô 1-3) theo màu ô 2 của cột trước
 //   - Chu kỳ 2 (ô 4-6) theo màu ô 5 của cột trước
@@ -78,7 +92,7 @@ function CheckChay2Ngam(arr) {
         }
     }
 
-    const soChuoiDat = setting.get("soChuoiDat") ?? 2;
+    const soChuoiDat = setting.get("soChuoiDat");
     const quaLoc = LocBet(arr);                    // màng lọc bệt
     return { chuoi, isDat: chuoi >= soChuoiDat && quaLoc };
 }

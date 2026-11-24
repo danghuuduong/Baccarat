@@ -10,7 +10,7 @@ const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
 const { syncKetQua } = require("./syncStats");
 
-const SO_TIEN_UOC_LIST = [20, 50, 110];
+const SO_TIEN_UOC_LIST = [20, 60, 180];
 const MOC = SO_TIEN_UOC_LIST.reduce((a, b) => a + b, 0); // 180
 
 function capNhatMoc(delta) {
