@@ -91,6 +91,21 @@ async function outPhong(page, lyDo, cl = "#d7f706ff") {
     setting.set("tabHienTai", 1);
     await randomSleep(200, 333);
 
+    const isTypeHotUI = await TimAnhDuaTrenListPop_Util(page, ["HotIUi"], 2000);
+    if (isTypeHotUI) {
+        for (let i = 1; i <= 3; i++) {
+            await page.mouse.move(51, 370);
+            await page.mouse.click(51, 370, { delay: 100 });
+            await randomSleep(200, 333);
+
+            // Kiểm tra nếu đã mất HotUi thì dừng click sớm
+            const stillHot = await TimAnhDuaTrenListPop_Util(page, ["HotIUi"], 700);
+            if (!stillHot) {
+                break;
+            }
+        }
+    }
+
     setTimeout(() => {
         const { vongLapChupManHinh } = require("./VongLapChupManHinh");
         vongLapChupManHinh(page);
