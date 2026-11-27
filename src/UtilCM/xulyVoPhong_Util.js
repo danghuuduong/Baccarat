@@ -10,7 +10,7 @@ const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
 const { syncKetQua } = require("./syncStats");
 
-const SO_TIEN_UOC_LIST = [20, 60, 180];
+const SO_TIEN_UOC_LIST = [20, 50, 110];
 const MOC = SO_TIEN_UOC_LIST.reduce((a, b) => a + b, 0); // 180
 
 function capNhatMoc(delta) {
@@ -116,50 +116,11 @@ async function xulyVoPhong_Util(page, danhSach) {
 
     if (!danhSach || danhSach.length === 0) return;
 
-    // Chọn phòng có ngam lớn nhất; bằng nhau thì chọn phòng có thép lớn nhất
 
     const phongTotNhat = danhSach.reduce((max, phong) => {
         if (phong.ngam !== max.ngam) return phong.ngam > max.ngam ? phong : max;
         return phong.infoTinHieu.thep > max.infoTinHieu.thep ? phong : max;
     });
-
-
-    // let ungVien = [];
-    // for (const phong of danhSach) {
-    //     if (ungVien.length === 0) { ungVien = [phong]; continue; }
-    //     const best = ungVien[0];
-    //     if (phong.ngam > best.ngam ||
-    //         (phong.ngam === best.ngam && phong.infoTinHieu.thep > best.infoTinHieu.thep)) {
-    //         ungVien = [phong];          // có thằng mạnh hơn, reset
-    //     } else if (phong.ngam === best.ngam &&
-    //         phong.infoTinHieu.thep === best.infoTinHieu.thep) {
-    //         ungVien.push(phong);        // hòa hoàn toàn, thêm vào
-    //     }
-    // }
-
-    // let ungVien = [];
-    // for (const phong of danhSach) {
-    //     phong.tongChay = DemTongChay(phong.arr); // arr: sửa đúng tên field mảng của phòng
-    //     if (ungVien.length === 0) { ungVien = [phong]; continue; }
-    //     const best = ungVien[0];
-
-    //     const hon =
-    //         phong.ngam !== best.ngam
-    //             ? phong.ngam > best.ngam
-    //             : phong.infoTinHieu.thep !== best.infoTinHieu.thep
-    //                 ? phong.infoTinHieu.thep > best.infoTinHieu.thep
-    //                 : phong.tongChay > best.tongChay;
-
-    //     const hoa =
-    //         phong.ngam === best.ngam &&
-    //         phong.infoTinHieu.thep === best.infoTinHieu.thep &&
-    //         phong.tongChay === best.tongChay;
-
-    //     if (hon) ungVien = [phong];     // mạnh hơn, reset
-    //     else if (hoa) ungVien.push(phong); // hòa hoàn toàn, thêm vào
-    // }
-
-    // const phongTotNhat = ungVien[Math.floor(Math.random() * ungVien.length)];
 
     // ── Lần 1: Click vào phòng được chọn ──────────────────────────────────
     await page.mouse.click(
@@ -352,10 +313,10 @@ async function vongLapDatCuoc(page, roomType, tab = setting.get("tabHienTai") ||
             capNhatStats();
             showThongBao(page, `🤝 HÒA | Vốn: ${setting.get("soVonBanDau")}K`, 8000, "#36ca0dff");
 
-            if (tinHieu.thep === 3) {
-                await outPhong(page, `🤝Lượn thôi  HÒA`, "#36ca0dff");
-                return;
-            }
+            // if (tinHieu.thep === 3) {
+            //     await outPhong(page, `🤝Lượn thôi  HÒA`, "#36ca0dff");
+            //     return;
+            // }
 
             // Hòa thép 1, 2 → chờ ván mới rồi tiếp tục
             const found = await choVanMoi(80000);

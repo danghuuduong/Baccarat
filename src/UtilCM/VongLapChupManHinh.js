@@ -128,6 +128,7 @@ async function vongLapChupManHinh(page) {
                     viTri = "tren";
                 }
             } catch (errLoop) {
+                console.error("❌ [VongLapChupManHinh] Lỗi trong vòng lặp:", errLoop);
                 await randomSleep(150, 300);
             }
         }

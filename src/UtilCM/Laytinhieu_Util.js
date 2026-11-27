@@ -9,44 +9,30 @@ const MAU = {
     T: "green",
 };
 
-// Trả về { tinhieu: "blue" | "red" | "green", thep: 1 | 2 | 3 } cho ô kế tiếp, không có tín hiệu thì trả null.
-// Mảng đọc theo cột, mỗi cột 6 ô. Ô kế tiếp sẽ ra nằm ở vị trí arr.length:
-//   - Thuộc chu kỳ 1 (hàng 1-3) thì lấy màu ô 2 của cột đầy liền trước
-//   - Thuộc chu kỳ 2 (hàng 4-6) thì lấy màu ô 5 của cột đầy liền trước
-//   - thep = thứ tự của ô trong chu kỳ: hàng 1/4 → 1, hàng 2/5 → 2, hàng 3/6 → 3
-// boQuaCheckHoa = true thì không check hòa trong chu kỳ, trả như cũ (mặc định false)
-function LayTinHieu(arr, boQuaCheckHoa = false) {
-    // Cần ít nhất cột 1 đủ 6 ô để có cột chuẩn
-    if (!Array.isArray(arr) || arr.length < 6) return null;
-    while (arr.length >= 24) arr = arr.slice(6);   // ← thêm: đủ 24 ô thì bỏ cột đầu (6 ô), lặp tới khi < 24
+// Bệt cuối mảng (bỏ qua Tie): 4 con → thep 1, 5 con → thep 2, 6-7 con → thep 3.
+// Ngoài khoảng 4-7 thì trả null.
+function LayTinHieu(arr) {
+    if (!Array.isArray(arr)) return null;
 
-    const pos = arr.length;              // vị trí ô kế tiếp
-    const k = Math.floor(pos / 6);       // cột chứa ô kế tiếp (tính từ 0)
-    if (k >= 4) return null;             // bảng đã đủ 24 ô, không còn cột
-
-    const cy = (pos % 6) < 3 ? 0 : 1;    // 0 = chu kỳ 1, 1 = chu kỳ 2
-    const cotChuan = arr.slice((k - 1) * 6, k * 6); // cột đầy liền trước
-    const tinHieu = cotChuan[cy === 0 ? 1 : 4];     // ô 2 hoặc ô 5
-
-    if (tinHieu === TIE) return null;    // tín hiệu là Tie thì bỏ qua chu kỳ
-
-    // Các ô đã ra trong chu kỳ này, có ô trùng màu tín hiệu rồi thì thôi
-    const daRa = arr.slice(k * 6 + cy * 3, pos);
-    if (daRa.includes(tinHieu)) return null;
-
-    const tinhieu = MAU[tinHieu];
-    if (!tinhieu) return null;           // dữ liệu lạ
-
-    const thep = (pos % 3) + 1;          // hàng 1/4 → 1, 2/5 → 2, 3/6 → 3
-
-    // ── Check hòa trong chu kỳ (bỏ qua nếu boQuaCheckHoa = true) ──
-    if (!boQuaCheckHoa) {
-        if (thep === 2 && arr[arr.length - 1] === TIE) return null;
-        if (thep === 3 && arr.slice(-2).includes(TIE)) return null;
+    let mau = null;
+    let dai = 0;
+    for (let i = arr.length - 1; i >= 0; i--) {
+        const x = arr[i];
+        if (x === TIE) continue;
+        if (mau === null) { mau = x; dai = 1; }
+        else if (x === mau) dai++;
+        else break;
     }
 
-    // if (tinhieu === "red") return null;  // chỉ cho qua blue
-    return { tinhieu, thep };
+    if (!MAU[mau]) return null;
+
+    let thep;
+    if (dai === 4) thep = 1;
+    else if (dai === 5) thep = 2;
+    else if (dai === 6 || dai === 7) thep = 3;
+    else return null;
+
+    return { tinhieu: MAU[mau === "P" ? "B" : "P"], thep };
 }
 
 module.exports = { LayTinHieu };
