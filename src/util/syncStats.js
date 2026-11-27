@@ -1,7 +1,7 @@
 "use strict";
 
 const setting = require("../State/setting");
-const { pushToolStats, pushBotState } = require("./mongoDB");
+const { pushToolStats, pushBotState, pushVanStats } = require("./mongoDB");
 
 /**
  * Gửi kết quả ván cược lên MongoDB của account đang đăng nhập
@@ -70,4 +70,19 @@ async function syncTrangThaiBot(toolNameTruyenVao, extra = {}) {
     }
 }
 
-module.exports = { syncKetQua, syncTrangThaiBot };
+async function syncKetQuaBatch(items, vanId = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`) {
+    const currentAccount = setting.get("currentAccount");
+    if (!currentAccount || !currentAccount.taiKhoan) return false;
+    if (!items || items.length === 0) return true;
+
+    for (let lan = 1; lan <= 3; lan++) {
+        const ok = await pushVanStats({ taiKhoan: currentAccount.taiKhoan, vanId, items });
+        if (ok) return true;
+        await sleep(500 * lan);
+    }
+    console.error("[Sync] Gửi kết quả ván thất bại sau 3 lần:", vanId);
+    return false;
+}
+
+
+module.exports = { syncKetQua, syncTrangThaiBot, syncKetQuaBatch };

@@ -8,7 +8,7 @@ const { LayTinHieu } = require("./Laytinhieu_Util");
 const { showLuoiBi, hideLuoiBi, showStats } = require("../UI/UI_InGame");
 const { randomSleep, sleep } = require("./Sleep_Util");
 const { DocKetQuaXanh } = require("./DocKetQuaXanh");
-const { syncKetQua } = require("./syncStats");
+const { syncKetQuaBatch } = require("./syncStats");
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -19,12 +19,13 @@ const round2 = (n) => Math.round(n * 100) / 100;
 //      mau = màu kết quả ván: "red" (Banker) | "blue" (Player)
 // ═══════════════════════════════════════════════════════════════════════════
 
-// Tên bot (đổi ở đây nếu server sync cần tên khác)
-const TEN_BOT1 = "01-TíSố";
-const TEN_BOT2 = "02-SW-2K";
-const TEN_BOT3 = "03-TíSố8";
-const TEN_BOT4 = "04-TíSố13";
-const TEN_BOT5 = "05-TíSố18";
+// Tên bot (đây cũng là key sync lên Mongo)
+const TEN_BOT_SW = "Bot SW";
+const TEN_BOT1 = "Bot 1";
+const TEN_BOT2 = "Bot 2";
+const TEN_BOT3 = "Bot 3";
+const TEN_BOT4 = "Bot 4";
+const TEN_BOT5 = "Bot 5";
 
 // Thống kê lãi/lỗ THẬT riêng từng bot (để tính tut = đỉnh - hiện tại)
 const thongKeThat = {};
@@ -37,30 +38,37 @@ function ghiThat(ten, delta) {
     return round2(t.dinh - t.profit);
 }
 
-const LO_CHUYEN = 100;    // lỗ ròng chu kỳ chạm 100K thì sang 40K
+const LO_CHUYEN = 100;    // lỗ ròng chu kỳ chạm 100K thì sang cược lớn
 const DU_TARGET = 10;     // ròng chu kỳ >= +10K thì đạt target
-const DICH_KHUNG = 2;     // đạt target thì khung dịch 2
+const DICH_KHUNG = 1;     // đạt target thì khung dịch 2
 
-// ─── Bot tỉ số (dùng cho bot 1, 3, 4 — khác khung + mức cược) ─────────────
+// ─── Bot tỉ số (bot 1..5 — khác khung + mức cược) ─────────────────────────
 //  cuocNho: cược giai đoạn nhỏ (tỉ số ±1) | cuocLon: cược giai đoạn lớn (tỉ số ±2)
+//  onTarget(d): callback khi bot đạt target (d = +2 xanh | -2 đỏ) để kéo bot khác theo
 function taoBotTiSo(ten, nhan, khungB0, khungA0, cuocNho, cuocLon) {
     let tiSo = 0;
     let khungA = khungA0;
     let khungB = khungB0;
     let giaiDoan = cuocNho;    // cuocNho hoặc cuocLon
     let cycleProfit = 0;       // lãi/lỗ ròng các lệnh thật của chu kỳ
-    let benKhoa = null;        // bên bị khoá khi ở 40K
-    let demTarget = 0;         // số lần đạt target (cho bot 2K biết mà reset)
+    let benKhoa = null;        // bên bị khoá khi ở cược lớn
+    let phiaKhoa = null;       // phía ("A" hay "B") bị khoá khi ở cược lớn
+    let demTarget = 0;         // số lần đạt target (cho Bot SW biết mà reset)
 
-    return {
+    const bot = {
         ten,
         nhan,
+        onTarget: null,
         // Getter để đọc trạng thái nội tại từ bên ngoài (dùng để sync lên API và khôi phục)
         get demTarget() { return demTarget; },
         get tiSo() { return tiSo; },
         get khungA() { return khungA; },
         get khungB() { return khungB; },
         get cycleProfit() { return cycleProfit; },
+        // Bị bot khác kéo: dịch khung d đơn vị
+        dich(d) { khungA += d; khungB += d; },
+        // Bị bot 1 kéo: đặt thẳng khung
+        datKhung(b, a) { khungB = b; khungA = a; },
         // Setter để khôi phục trạng thái từ API (khi bấm Reload hoặc khởi động lại)
         restore(state) {
             if (state == null) return;
@@ -69,43 +77,49 @@ function taoBotTiSo(ten, nhan, khungB0, khungA0, cuocNho, cuocLon) {
             if (state.khungB !== undefined) khungB = state.khungB;
             if (state.cycleProfit !== undefined) cycleProfit = Number(state.cycleProfit) || 0;
         },
-        quyet() {
-            if (giaiDoan === cuocLon) return { amount: cuocLon, isThat: true, ben: benKhoa };
-            if (tiSo >= khungA) return { amount: cuocNho, isThat: true, ben: "blue" };
-            if (tiSo <= khungB) return { amount: cuocNho, isThat: true, ben: "red" };
-            return { amount: cuocNho, isThat: false, ben: null };
+        quyet(dsQuyetTruoc, tinhieu) {
+            if (giaiDoan === cuocLon) return { amount: cuocLon, isThat: true, ben: benKhoa, phia: phiaKhoa };
+            if (!tinhieu) return { amount: cuocNho, isThat: false, ben: null, phia: null };
+            const nguocTH = tinhieu === "red" ? "blue" : "red";
+            if (tiSo >= khungA) return { amount: cuocNho, isThat: true, ben: tinhieu, phia: "A" };
+            if (tiSo <= khungB) return { amount: cuocNho, isThat: true, ben: nguocTH, phia: "B" };
+            return { amount: cuocNho, isThat: false, ben: null, phia: null };
         },
-        ketQua(mau, isThat, ben, delta) {
-            // Tỉ số: xanh ra trừ, đỏ ra cộng (cả ảo lẫn thật), cược nhỏ ±1, cược lớn ±2
+        ketQua(mau, isThat, ben, delta, amount, tinhieu, phia) {
+            // Tỉ số: trùng tín hiệu (win) → trừ, khác tín hiệu (thua) → cộng. Cược nhỏ ±1, cược lớn ±2
             const buoc = giaiDoan === cuocLon ? 2 : 1;
-            tiSo += mau === "blue" ? -buoc : buoc;
+            tiSo += (mau === tinhieu) ? -buoc : buoc;
 
             if (!isThat) return;
 
             cycleProfit = round2(cycleProfit + delta);
 
             if (cycleProfit >= DU_TARGET) {
-                // Đạt target: bên xanh (A) khung +2, bên đỏ (B) khung -2. Không đụng tỉ số.
-                const d = ben === "blue" ? DICH_KHUNG : -DICH_KHUNG;
+                // Đạt target: bên cùng tín hiệu (khung phải A) +DICH_KHUNG, bên ngược tín hiệu (khung trái B) -DICH_KHUNG
+                const d = phia === "A" ? DICH_KHUNG : -DICH_KHUNG;
                 khungA += d;
                 khungB += d;
                 giaiDoan = cuocNho;
                 cycleProfit = 0;
                 benKhoa = null;
+                phiaKhoa = null;
                 demTarget++;
+                if (bot.onTarget) bot.onTarget(d);
             } else if (giaiDoan === cuocNho && cycleProfit <= -LO_CHUYEN) {
                 giaiDoan = cuocLon;
                 benKhoa = ben;
+                phiaKhoa = phia;
             }
         },
     };
+    return bot;
 }
 
-// ─── Bot 2K: chạy song song bot gốc, cùng bên, cược 2K × n (trần 70K) ──────
-const BOT2_CUOC_GOC = 2;
-const BOT2_TRAN = 70;
+// ─── Bot SW: chạy song song bot gốc, cùng bên, cược 2K × n (trần 70K) ──────
+const BOT_SW_CUOC_GOC = 1;
+const BOT_SW_TRAN = 50;
 
-function taoBot2K(botGoc, ten, nhan) {
+function taoBotSW(botGoc, ten, nhan) {
     let n = 1;
     let demTargetDaThay = botGoc.demTarget;
 
@@ -114,10 +128,11 @@ function taoBot2K(botGoc, ten, nhan) {
         nhan,
         // Getter để đọc bộ đếm n từ bên ngoài (dùng để sync và khôi phục)
         get n() { return n; },
-        // Setter để khôi phục bộ đếm n từ API (khi bấm Reload hoặc khởi động lại)
+        // Setter để khôi phục bộ đếm n từ API (Mongo lưu là botN)
         restore(state) {
             if (state == null) return;
-            if (state.n !== undefined) n = Math.max(1, Number(state.n) || 1);
+            const v = state.botN !== undefined ? state.botN : state.n;
+            if (v !== undefined) n = Math.max(1, Number(v) || 1);
         },
         quyet(dsQuyetTruoc) {
             // Bot gốc vừa đạt target -> reset
@@ -126,12 +141,12 @@ function taoBot2K(botGoc, ten, nhan) {
                 n = 1;
             }
             const q1 = dsQuyetTruoc.find((q) => q.bot === botGoc);
-            // Bot gốc không đánh thật -> bot 2K dừng, reset
+            // Bot gốc không đánh thật -> Bot SW dừng, reset
             if (!q1 || !q1.isThat) {
                 n = 1;
-                return { amount: BOT2_CUOC_GOC, isThat: false, ben: null };
+                return { amount: BOT_SW_CUOC_GOC, isThat: false, ben: null };
             }
-            return { amount: Math.min(BOT2_CUOC_GOC * n, BOT2_TRAN), isThat: true, ben: q1.ben };
+            return { amount: Math.min(BOT_SW_CUOC_GOC * n, BOT_SW_TRAN), isThat: true, ben: q1.ben };
         },
         ketQua(mau, isThat, ben) {
             if (!isThat) return;
@@ -142,14 +157,32 @@ function taoBot2K(botGoc, ten, nhan) {
 }
 
 // taoBotTiSo(ten, nhan, khungB, khungA, cuocNho, cuocLon)
-const bot1 = taoBotTiSo(TEN_BOT1, "TS5", -4, 4, 20, 40);
-const bot2 = taoBot2K(bot1, TEN_BOT2, "2K");
-const bot3 = taoBotTiSo(TEN_BOT3, "TS8", -8, 8, 10, 20);
-const bot4 = taoBotTiSo(TEN_BOT4, "TS13", -13, 13, 10, 20);
-const bot5 = taoBotTiSo(TEN_BOT5, "TS18", -18, 18, 10, 20);
+const bot1 = taoBotTiSo(TEN_BOT1, "B1", -2, 2, 10, 20);
+const botSW = taoBotSW(bot1, TEN_BOT_SW, "SW");
+const bot2 = taoBotTiSo(TEN_BOT2, "B2", -5, 5, 10, 20);
+const bot3 = taoBotTiSo(TEN_BOT3, "B3", -8, 8, 10, 20);
+const bot4 = taoBotTiSo(TEN_BOT4, "B4", -11, 11, 10, 20);
+const bot5 = taoBotTiSo(TEN_BOT5, "B5", -14, 14, 10, 20);
 
-// bot2 phải đứng sau bot1
-const DANH_SACH_BOT = [bot1, bot2, bot3, bot4, bot5];
+
+// ─── Liên kết khung ─────────────────────────────────────────────────────────
+// Offset so với bot1 (mỗi phía): khungB = B1 - off, khungA = A1 + off
+const OFFSET_SO_VOI_BOT1 = [[bot2, 3], [bot3, 6], [bot4, 9], [bot5, 12]];
+
+// Bot1 đạt target -> kéo TẤT CẢ về theo bot1 (đè phần tự dịch)
+bot1.onTarget = () => {
+    for (const [b, off] of OFFSET_SO_VOI_BOT1) {
+        b.datKhung(bot1.khungB - off, bot1.khungA + off);
+    }
+};
+// Bot 2/3/4 tự đạt target -> các bot phía sau dịch theo cùng hướng
+bot2.onTarget = (d) => { bot3.dich(d); bot4.dich(d); bot5.dich(d); };
+bot3.onTarget = (d) => { bot4.dich(d); bot5.dich(d); };
+bot4.onTarget = (d) => { bot5.dich(d); };
+// bot5: chỉ dịch mình nó (đã làm trong ketQua)
+
+// botSW phải đứng sau bot1
+const DANH_SACH_BOT = [bot1, botSW, bot2, bot3, bot4, bot5];
 
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -405,7 +438,7 @@ async function vongLapDatCuoc(page, roomType) {
         // ── 2. Bot tự quyết: mức cược, ảo hay thật, bên nào ────────────────
         const quyetDinh = [];
         for (const bot of DANH_SACH_BOT) {
-            quyetDinh.push({ bot, ...bot.quyet(quyetDinh) });
+            quyetDinh.push({ bot, ...bot.quyet(quyetDinh, tinHieu.tinhieu) });
         }
         const botThat = quyetDinh.filter((q) => q.isThat);
         const tongCuoc = botThat.reduce((s, q) => s + q.amount, 0);
@@ -431,16 +464,14 @@ async function vongLapDatCuoc(page, roomType) {
             await randomSleep(50, 100);
             if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy cược"); return; }
 
-            // (BBB) TẠM THỜI TẮT bên ĐỎ (B): không click chip đỏ vì bên đó mất phí. Khi nào cần đánh đỏ thật thì mở dòng dưới ra.
-            // if (tongRed > 0) await datTien(tongRed, coords.datCuoc_Red);
+            if (tongRed > 0) await datTien(tongRed, coords.datCuoc_Red);
 
             if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy cược"); return; }
             if (tongBlue > 0) await datTien(tongBlue, coords.datCuoc_Blue);
 
             // ── 4. Xác nhận ─────────────────────────────────────────────────
             if (isDung()) { await outPhong(page, "Đã bấm Dừng - Hủy xác nhận cược"); return; }
-            // Chỉ bấm xác nhận khi có đặt chip bên xanh (nếu chỉ có đỏ thì không đặt gì, khỏi xác nhận)
-            if (tongBlue > 0) {
+            if (tongCuoc > 0) {
                 await randomSleep(200, 300);
                 await click(coords.buttonXacNhan);
             }
@@ -481,26 +512,19 @@ async function vongLapDatCuoc(page, roomType) {
             }
 
             showThongBao(page, "Lỗi khi check kết quả", 5000, "#fb2424ff");
-            // Lệnh thật: coi như thua, trừ đủ khoản cược, sync
+            // Lệnh thật: coi như thua, trừ đủ khoản cược, gộp sync 1 request (chỉ đếm thua 1 lần/ván)
+            setting.set("solenhthua", setting.get("solenhthua") + 1);
+            if (tongRed > tongBlue) setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
+            else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
+
+            const ketQuaVanLoi = [];
             for (const q of botThat) {
-                setting.set("solenhthua", setting.get("solenhthua") + 1);
-                if (q.ben === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
-                else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
                 setting.set("profit", round2(setting.get("profit") - q.amount));
                 const tut = ghiThat(q.bot.ten, -q.amount);
 
-                // Chỉ gọi API thống kê bên XANH (A). Bên ĐỎ (B) vẫn tính bình thường ở trên nhưng không gọi API.
-                if (q.ben === "blue") {
-                    syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut, ...layTrangThaiBotExtra(q.bot) });
-                }
-                // (BBB)TẠM THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
-                // syncKetQua("thua", -q.amount, q.bot.ten, { khoiLuong: q.amount, phi: 0, tut, ...layTrangThaiBotExtra(q.bot) });
-                // Đoạn này giả lập để biết tỉ số và khung đang ở đâu thôi
-                // Đỏ: sync nhưng thua thì không push tiền lỗ
-                if (q.ben === "red") {
-                    syncKetQua("thua", 0, q.bot.ten, { khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
-                }
+                ketQuaVanLoi.push({ result: "thua", profitDelta: -q.amount, toolName: q.bot.ten, khoiLuong: q.amount, phi: 0, tut, ...layTrangThaiBotExtra(q.bot) });
             }
+            await syncKetQuaBatch(ketQuaVanLoi);
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
             return;
@@ -532,9 +556,15 @@ async function vongLapDatCuoc(page, roomType) {
 
         let tongDelta = 0;
         let tongVonVe = 0;
-        // Flag: chỉ cộng win/thua ảo vào UI 1 lần/ván (5 bot cùng ảo thì không x5)
+        // Flag: chỉ cộng win/thua vào UI 1 lần/ván (nhiều bot cùng chạy thì không nhân lên)
         let daThongKeAo = false;
-        const thangAo = ketQuaMau === "blue";   // dùng chung cho cả vòng lặp ảo
+        let daThongKeThat = false;
+        const thangAo = ketQuaMau === tinHieu.tinhieu;   // win ảo = kết quả trùng tín hiệu
+        // Gom kết quả cả ván, cuối vòng gửi 1 request duy nhất
+        const ketQuaVan = [];
+
+        // Bước 1: chốt delta + thống kê UI cho từng bot (CHƯA cập nhật bot, để quyết định không bị ảnh hưởng)
+        // Bước 2: cập nhật bot theo thứ tự (bot1 trước -> kéo khung các bot sau)
         for (const q of quyetDinh) {
             // Thắng/thua theo bên của riêng từng bot
             const thang = q.isThat && ketQuaMau === q.ben;
@@ -542,55 +572,60 @@ async function vongLapDatCuoc(page, roomType) {
             const phi = thang && q.ben === "red" ? round2(q.amount * 0.05) : 0;
             const delta = !q.isThat ? 0 : (thang ? round2(q.amount - phi) : -q.amount);
 
-            // Tỉ số tính theo màu kết quả (ảo cũng tính)
-            q.bot.ketQua(ketQuaMau, q.isThat, q.ben, delta, q.amount);
+            // Tỉ số tính theo màu kết quả (ảo cũng tính). Có thể kích hoạt onTarget kéo khung bot khác.
+            q.bot.ketQua(ketQuaMau, q.isThat, q.ben, delta, q.amount, tinHieu.tinhieu, q.phia);
 
             if (!q.isThat) {
-                // ── VÁN ẢO: sync tỉ số & khung lên API (1 lần/bot) ─────────────────────
+                // ── VÁN ẢO ──────────────────────────────────────────────────
                 // Local UI win/thua: chỉ cộng 1 lần dù có nhiều bot ảo cùng ván
                 if (!daThongKeAo) {
                     daThongKeAo = true;
                     if (thangAo) {
                         setting.set("solenhwin", setting.get("solenhwin") + 1);
-                        setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
+                        if (tinHieu.tinhieu === "red") setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
+                        else setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
                     } else {
                         setting.set("solenhthua", setting.get("solenhthua") + 1);
-                        setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
+                        if (tinHieu.tinhieu === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
+                        else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
                     }
                 }
-                // MongoDB: push riêng mỗi bot (delta=0, khoiLuong=0 — chỉ đếm, không cộng tiền)
-                syncKetQua(thangAo ? "win" : "thua", 0, q.bot.ten, { khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
+                // delta=0, khoiLuong=0 — chỉ đếm, không cộng tiền
+                ketQuaVan.push({ result: thangAo ? "win" : "thua", profitDelta: 0, toolName: q.bot.ten, khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
                 continue;
             }
 
-            // ── Thống kê + sync cho lệnh THẬT ──────────────────────────────
+            // ── Thống kê cho lệnh THẬT ─────────────────────────────────────
             tongDelta = round2(tongDelta + delta);
             if (thang) tongVonVe = round2(tongVonVe + q.amount + delta);
 
-            if (thang) {
-                setting.set("solenhwin", setting.get("solenhwin") + 1);
-                if (q.ben === "red") setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
-                else setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
-            } else {
-                setting.set("solenhthua", setting.get("solenhthua") + 1);
-                if (q.ben === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
-                else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
+            if (!daThongKeThat) {
+                daThongKeThat = true;
+                if (thang) {
+                    setting.set("solenhwin", setting.get("solenhwin") + 1);
+                    if (q.ben === "red") setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
+                    else setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
+                } else {
+                    setting.set("solenhthua", setting.get("solenhthua") + 1);
+                    if (q.ben === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
+                    else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
+                }
             }
 
             const tut = ghiThat(q.bot.ten, delta);
 
-            // Chỉ gọi API thống kê bên XANH (A). Bên ĐỎ (B) vẫn tính bình thường ở trên nhưng không gọi API.
-            if (q.ben === "blue") {
-                syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
-            }
-            // (BBB) THỜI TẮT sync bên ĐỎ (B). Khi nào cần thống kê đỏ lên API thì mở dòng dưới ra (và bỏ if blue ở trên).
-            // syncKetQua(thang ? "win" : "thua", delta, q.bot.ten, { khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
-
-            // Đỏ: chỉ gửi tỉ số + khung, không push tiền, thạm thời
-            if (q.ben === "red") {
-                syncKetQua(thang ? "win" : "thua", 0, q.bot.ten, { khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
-            }
+            ketQuaVan.push({ result: thang ? "win" : "thua", profitDelta: delta, toolName: q.bot.ten, khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
         }
+
+        // Trạng thái bot có thể bị kéo khung sau khi bot đứng trước đã được ghi vào ketQuaVan
+        // -> chụp lại trạng thái cuối cùng của ván cho đồng nhất
+        for (const it of ketQuaVan) {
+            const bot = DANH_SACH_BOT.find((b) => b.ten === it.toolName);
+            if (bot) Object.assign(it, layTrangThaiBotExtra(bot));
+        }
+
+        // Gửi cả ván trong 1 request (atomic + chống ghi trùng + retry bên syncStats)
+        await syncKetQuaBatch(ketQuaVan);
 
         // Vốn chung + profit chung
         if (coThat) {
@@ -628,17 +663,17 @@ async function vongLapDatCuoc(page, roomType) {
 }
 
 // ─── Lấy trạng thái nội tại của bot để gửi kèm lên API (tiSo, khungB, khungA hoặc n) ──
-// Bot TíSố (1,3,4,5): gửi tiSo + khungB + khungA
-// Bot 2K (bot2): chỉ gửi n (bộ đếm nhân)
+// Bot 1..5: gửi tiSo + khungB + khungA + cycleProfit
+// Bot SW: chỉ gửi n (bộ đếm nhân)
 function layTrangThaiBotExtra(bot) {
     const currentTrangThai = setting.get("botTrangThai") || {};
     let extra;
     if (typeof bot.n === "number") {
-        // Bot 2K — chỉ có bộ đếm n
+        // Bot SW — chỉ có bộ đếm n
         extra = { botN: bot.n };
         currentTrangThai[bot.ten] = { n: bot.n };
     } else {
-        // Bot TíSố — tỉ số + khung + cycleProfit
+        // Bot tỉ số — tỉ số + khung + cycleProfit
         extra = {
             tiSo: bot.tiSo,
             khungB: bot.khungB,
@@ -665,7 +700,7 @@ async function restoreBotState(taiKhoan) {
         try {
             const tool = await getToolStats(taiKhoan, bot.ten);
             if (tool) {
-                bot.restore(tool); // bot.restore đọc tiSo/khungB/khungA hoặc n từ object
+                bot.restore(tool); // bot.restore đọc tiSo/khungB/khungA hoặc botN từ object
                 if (typeof bot.n === "number") {
                     currentTrangThai[bot.ten] = { n: bot.n };
                 } else {

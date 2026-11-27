@@ -303,6 +303,105 @@ async function pushBotState({ taiKhoan, toolName, tiSo, khungB, khungA, botN, cy
  * @param {string} taiKhoan 
  * @param {string} toolName 
  */
+
+const r2 = (n) => Math.round(Number(n || 0) * 100) / 100;
+const hasV = (v) => v !== undefined && v !== null;
+
+function taoToolMoi(toolName) {
+    return {
+        toolName, win: 0, Thua: 0, profit: 0, KhoiluongVaoLenh: 0, PhiGiaodich: 0, tut: 0,
+        currentWinStreak: 0, currentLossStreak: 0,
+        chuoiThangLienTiepCaoNhat: 0, chuoiThuaLienTiepCaoNhat: 0,
+        hoaHongHienTai: 0, tongHoaHongDaThu: 0,
+    };
+}
+
+/**
+ * Ghi kết quả CẢ VÁN (nhiều bot) bằng 1 lần updateOne.
+ * items: [{ toolName, result, profitDelta, khoiLuong, phi, tut, tiSo, khungB, khungA, botN, cycleProfit }]
+ * Mỗi toolName chỉ xuất hiện 1 lần trong items.
+ */
+async function pushVanStats({ taiKhoan, vanId, items }) {
+    try {
+        const database = await getDB();
+        if (!database) return false;
+        const tk = String(taiKhoan || "").trim();
+        if (!tk || !vanId || !Array.isArray(items) || items.length === 0) return false;
+
+        const col = database.collection("accounts");
+        const account = await col.findOne({ taiKhoan: tk });
+        if (!account) { console.error(`[MongoDB] Không tìm thấy tài khoản: ${tk}`); return false; }
+        if (account.lastVanId === vanId) return true; // đã ghi rồi (retry)
+
+        const phanTram = Number(account.phanTramChiuThue ?? 50);
+        let tools = Array.isArray(account.tools) ? account.tools : [];
+
+        // Tool nào chưa có thì thêm trước (chỉ xảy ra lần đầu)
+        const thieu = [...new Set(items.map((i) => String(i.toolName)))]
+            .filter((n) => !tools.some((t) => String(t.toolName) === n));
+        if (thieu.length) {
+            await col.updateOne(
+                { taiKhoan: tk },
+                { $push: { tools: { $each: thieu.map(taoToolMoi) } } }
+            );
+        }
+
+        const inc = {};
+        const set = { updatedAt: new Date(), lastVanId: vanId };
+        const arrayFilters = [];
+
+        items.forEach((it, i) => {
+            const name = String(it.toolName);
+            const id = `t${i}`;
+            const p = `tools.$[${id}]`;
+            arrayFilters.push({ [`${id}.toolName`]: name });
+
+            const cur = tools.find((t) => String(t.toolName) === name) || taoToolMoi(name);
+            const isWin = it.result === "win";
+            const isThua = it.result === "thua";
+            const delta = r2(it.profitDelta);
+
+            let curWin = Number(cur.currentWinStreak) || 0;
+            let curLoss = Number(cur.currentLossStreak) || 0;
+            let maxWin = Number(cur.chuoiThangLienTiepCaoNhat) || 0;
+            let maxLoss = Number(cur.chuoiThuaLienTiepCaoNhat) || 0;
+            if (isWin) { curWin++; curLoss = 0; if (curWin > maxWin) maxWin = curWin; }
+            else if (isThua) { curLoss++; curWin = 0; if (curLoss > maxLoss) maxLoss = curLoss; }
+
+            inc[`${p}.win`] = isWin ? 1 : 0;
+            inc[`${p}.Thua`] = isThua ? 1 : 0;
+            inc[`${p}.profit`] = delta;
+            inc[`${p}.KhoiluongVaoLenh`] = r2(it.khoiLuong);
+            inc[`${p}.PhiGiaodich`] = r2(it.phi);
+            inc[`${p}.hoaHongHienTai`] = r2(delta * (phanTram / 100));
+
+            set[`${p}.tut`] = r2(it.tut);
+            set[`${p}.currentWinStreak`] = curWin;
+            set[`${p}.currentLossStreak`] = curLoss;
+            set[`${p}.chuoiThangLienTiepCaoNhat`] = maxWin;
+            set[`${p}.chuoiThuaLienTiepCaoNhat`] = maxLoss;
+            if (hasV(it.tiSo)) set[`${p}.tiSo`] = Number(it.tiSo);
+            if (hasV(it.khungB) && hasV(it.khungA)) {
+                set[`${p}.khungB`] = Number(it.khungB);
+                set[`${p}.khungA`] = Number(it.khungA);
+            }
+            if (hasV(it.botN)) set[`${p}.botN`] = Number(it.botN);
+            if (hasV(it.cycleProfit)) set[`${p}.cycleProfit`] = Number(it.cycleProfit);
+        });
+
+        // Filter lastVanId != vanId: chống ghi trùng ngay trong 1 lệnh atomic
+        const res = await col.updateOne(
+            { taiKhoan: tk, lastVanId: { $ne: vanId } },
+            { $inc: inc, $set: set },
+            { arrayFilters }
+        );
+        return res.matchedCount === 1 || res.matchedCount === 0; // 0 = đã ghi trước đó
+    } catch (error) {
+        console.error("[MongoDB] pushVanStats lỗi:", error.message);
+        return false;
+    }
+}
+
 async function getToolStats(taiKhoan, toolName) {
     try {
         const database = await getDB();
@@ -325,5 +424,6 @@ module.exports = {
     verifyLogin,
     pushToolStats,
     pushBotState,
-    getToolStats
+    getToolStats,
+    pushVanStats
 };
