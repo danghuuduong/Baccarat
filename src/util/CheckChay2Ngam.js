@@ -21,7 +21,7 @@ function CheckChay2Ngam(arr) {
     if (cols.length === 0) return { chuoi: 0, isDat: false };
 
     const chuoi = cols[cols.length - 1].dai;
-    return { chuoi, isDat: chuoi === 3, uutien: 0 };
+    return { chuoi, isDat: chuoi === 5, uutien: 0 };
 }
 
 module.exports = { CheckChay2Ngam, GomCotBet };

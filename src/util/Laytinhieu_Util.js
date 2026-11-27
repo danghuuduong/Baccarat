@@ -26,7 +26,7 @@ function LayTinHieu(arr) {
 
     if (!MAU[mau]) return null;
 
-    if (!MAU[mau] || dai !== 3) return null;
+    if (!MAU[mau] || dai !== 5) return null;
 
     return { tinhieu: MAU[mau === "P" ? "B" : "P"] };
 }
