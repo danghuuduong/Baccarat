@@ -39,7 +39,7 @@ function ghiThat(ten, delta) {
 }
 
 const LO_CHUYEN = 100;    // lỗ ròng chu kỳ chạm 100K thì sang cược lớn
-const DU_TARGET = 10;     // ròng chu kỳ >= +10K thì đạt target
+const DU_TARGET = 2;     // ròng chu kỳ >= +10K thì đạt target
 const DICH_KHUNG = 1;     // đạt target thì khung dịch 2
 
 // ─── Bot tỉ số (bot 1..5 — khác khung + mức cược) ─────────────────────────
@@ -116,7 +116,7 @@ function taoBotTiSo(ten, nhan, khungB0, khungA0, cuocNho, cuocLon) {
 }
 
 // ─── Bot SW: chạy song song bot gốc, cùng bên, cược 2K × n (trần 70K) ──────
-const BOT_SW_CUOC_GOC = 1;
+const BOT_SW_CUOC_GOC = 2;
 const BOT_SW_TRAN = 50;
 
 function taoBotSW(botGoc, ten, nhan) {
