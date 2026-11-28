@@ -13,6 +13,13 @@ require("dotenv").config();
 
 let client = null;
 let db = null;
+let connectPromise = null;
+
+const clientOptions = {
+    maxPoolSize: 1,         // Dùng duy nhất 1 kết nối, tái sử dụng xuyên suốt quá trình chạy
+    minPoolSize: 1,         // Luôn giữ kết nối sẵn sàng
+    serverSelectionTimeoutMS: 5000,
+};
 
 async function getDB() {
     if (db) return db;
@@ -24,14 +31,17 @@ async function getDB() {
 
     try {
         if (!client) {
-            client = new MongoClient(uri);
-            await client.connect();
-            console.log("[MongoDB] Kết nối MongoDB thành công!");
+            client = new MongoClient(uri, clientOptions);
+            connectPromise = client.connect();
         }
+        await connectPromise;
         db = client.db();
         return db;
     } catch (error) {
         console.error("[MongoDB] Lỗi kết nối MongoDB:", error.message);
+        client = null;
+        db = null;
+        connectPromise = null;
         return null;
     }
 }
@@ -419,8 +429,32 @@ async function getToolStats(taiKhoan, toolName) {
     }
 }
 
+async function closeDB() {
+    if (client) {
+        try {
+            await client.close();
+            client = null;
+            db = null;
+            console.log("[MongoDB] Đã đóng kết nối MongoDB.");
+        } catch (e) {
+            // ignore
+        }
+    }
+}
+
+process.once("SIGINT", async () => {
+    await closeDB();
+    process.exit(0);
+});
+
+process.once("SIGTERM", async () => {
+    await closeDB();
+    process.exit(0);
+});
+
 module.exports = {
     getDB,
+    closeDB,
     verifyLogin,
     pushToolStats,
     pushBotState,
