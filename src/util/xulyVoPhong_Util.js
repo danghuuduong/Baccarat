@@ -20,12 +20,18 @@ const round2 = (n) => Math.round(n * 100) / 100;
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Tên bot (đây cũng là key sync lên Mongo)
-const TEN_BOT_SW = "Bot SW";
 const TEN_BOT1 = "Bot 1";
 const TEN_BOT2 = "Bot 2";
 const TEN_BOT3 = "Bot 3";
 const TEN_BOT4 = "Bot 4";
 const TEN_BOT5 = "Bot 5";
+const TEN_BOT6 = "Bot 6";
+const TEN_BOT7 = "Bot 7";
+const TEN_BOT8 = "Bot 8";
+const TEN_BOT9 = "Bot 9";
+const TEN_BOT10 = "Bot 10";
+const TEN_BOT_SW = "Bot SW";
+
 
 // Thống kê lãi/lỗ THẬT riêng từng bot (để tính tut = đỉnh - hiện tại)
 const thongKeThat = {};
@@ -172,17 +178,22 @@ function taoBotSW(botGoc, ten, nhan) {
 }
 
 // taoBotTiSo(ten, nhan, khungB, khungA, cuocNho, cuocLon)
-const bot1 = taoBotTiSo(TEN_BOT1, "B1", -3, 3, 10, 20);
-const bot2 = taoBotTiSo(TEN_BOT2, "B2", -6, 6, 10, 20);
-const bot3 = taoBotTiSo(TEN_BOT3, "B3", -9, 9, 10, 20);
-const bot4 = taoBotTiSo(TEN_BOT4, "B4", -12, 12, 10, 20);
-const bot5 = taoBotTiSo(TEN_BOT5, "B5", -15, 15, 10, 20);
+const bot1 = taoBotTiSo(TEN_BOT1, "B1", -3, 3, 8, 16);
+const bot2 = taoBotTiSo(TEN_BOT2, "B2", -5, 5, 5, 10);
+const bot3 = taoBotTiSo(TEN_BOT3, "B3", -7, 7, 5, 10);
+const bot4 = taoBotTiSo(TEN_BOT4, "B4", -9, 9, 5, 10);
+const bot5 = taoBotTiSo(TEN_BOT5, "B5", -11, 11, 5, 10);
+const bot6 = taoBotTiSo(TEN_BOT6, "B6", -13, 13, 5, 10);
+const bot7 = taoBotTiSo(TEN_BOT7, "B7", -15, 15, 5, 10);
+const bot8 = taoBotTiSo(TEN_BOT8, "B8", -17, 17, 5, 10);
+const bot9 = taoBotTiSo(TEN_BOT9, "B9", -19, 19, 5, 10);
+const bot10 = taoBotTiSo(TEN_BOT10, "B10", -21, 21, 5, 10);
 const botSW = taoBotSW(bot1, TEN_BOT_SW, "SW");
 
 // ─── Liên kết khung ─────────────────────────────────────────────────────────
 // Thứ tự bot tỉ số; khung mỗi bot cách bot liền kề 3
-const BOT_TISO = [bot1, bot2, bot3, bot4, bot5];
-const BUOC_KHUNG = 3;
+const BOT_TISO = [bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10];
+const BUOC_KHUNG = 2;
 
 // Bot thứ i đạt target -> kéo cả khung + tiSo của các bot sau (off tính so với bot i)
 //   B1 -> kéo 2-5 | B2 -> kéo 3-5 | B3 -> kéo 4-5 | B4 -> kéo 5 | B5 -> chỉ tự reset
@@ -196,7 +207,7 @@ BOT_TISO.forEach((x, i) => {
 });
 
 // botSW phải đứng sau bot1
-const DANH_SACH_BOT = [bot1, bot2, bot3, bot4, bot5, botSW];
+const DANH_SACH_BOT = [bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10, botSW];
 
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -360,12 +371,12 @@ async function vongLapDatCuoc(page, roomType) {
 
     // Chip ưu tiên số to trước
     const CHIP_THU_TU = [
-        ["chip1000", 1000],
-        ["chip500", 500],
         ["chip100", 100],
         ["chip50", 50],
         ["chip20", 20],
         ["chip10", 10],
+        ["chip3", 3],
+        ["chip1", 1],
     ];
 
     // Mỗi chip: chọn chip -> click bên cược

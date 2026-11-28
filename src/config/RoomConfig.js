@@ -72,6 +72,8 @@ const typeStatusBatDauToaDo = {
 };
 const TaoDoChip_Room = {
     [typeRoom.room_a]: {
+        chip1: { x: 0, y: 0 },   // TODO: sửa toạ độ
+        chip3: { x: 0, y: 0 },   // TODO: sửa toạ độ
         chip10: { x: 492, y: 686 },
         chip20: { x: 541, y: 686 },
         chip50: { x: 586, y: 686 },
@@ -83,6 +85,8 @@ const TaoDoChip_Room = {
         buttonXacNhan: { x: 900, y: 686 }
     },
     [typeRoom.room_b]: {
+        chip1: { x: 0, y: 0 },   // TODO: sửa toạ độ
+        chip3: { x: 0, y: 0 },   // TODO: sửa toạ độ
         chip10: { x: 933, y: 560 },
         chip20: { x: 988, y: 560 },
         chip50: { x: 1043, y: 560 },
@@ -94,7 +98,6 @@ const TaoDoChip_Room = {
         buttonXacNhan: { x: 786, y: 567 }
     }
 }
-
 
 // ── Toạ độ click nút thoát phòng ─────────────────────────────────────────────
 const TOA_DO_THOAT_PHONG = { x: 1250, y: 32 };
