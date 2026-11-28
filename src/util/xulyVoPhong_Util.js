@@ -48,7 +48,15 @@ const LO_CHUYEN = 100;    // lỗ ròng chu kỳ chạm 100K thì sang cược l
 const DU_TARGET = 2;      // ròng chu kỳ >= +2K thì đạt target
 const DICH_KHUNG = 1;     // đạt target thì khung dịch 1
 
-// ─── Bot tỉ số (bot 1..5 — khác khung + mức cược) ─────────────────────────
+// ─── Hàng đợi kéo khung ─────────────────────────────────────────────────────
+// Bot đạt target chỉ XẾP LỊCH kéo; mọi bot cập nhật kết quả ván xong rồi mới chạy
+// (theo thứ tự bot 1 -> 10) để các bot sau không bị cộng kết quả lên giá trị đã bị kéo.
+const hangDoiKeo = [];
+function chayKeoKhung() {
+    while (hangDoiKeo.length) hangDoiKeo.shift()();
+}
+
+// ─── Bot tỉ số (bot 1..10 — khác khung + mức cược) ────────────────────────
 //  cuocNho: cược giai đoạn nhỏ (tỉ số ±1) | cuocLon: cược giai đoạn lớn (tỉ số ±2)
 //  onTarget(d): callback khi bot đạt target (d = +1 phía A | -1 phía B) để kéo bot khác theo
 //
@@ -125,7 +133,8 @@ function taoBotTiSo(ten, nhan, khungB0, khungA0, cuocNho, cuocLon) {
                 benKhoa = null;
                 phiaKhoa = null;
                 demTarget++;
-                if (bot.onTarget) bot.onTarget(d);
+                // Xếp lịch kéo các bot sau, chạy sau khi mọi bot đã cập nhật xong
+                if (bot.onTarget) hangDoiKeo.push(() => bot.onTarget(d));
             } else if (giaiDoan === cuocNho && cycleProfit <= -LO_CHUYEN) {
                 giaiDoan = cuocLon;
                 benKhoa = ben;
@@ -178,25 +187,25 @@ function taoBotSW(botGoc, ten, nhan) {
 }
 
 // taoBotTiSo(ten, nhan, khungB, khungA, cuocNho, cuocLon)
-const bot1 = taoBotTiSo(TEN_BOT1, "B1", -3, 3, 8, 16);
-const bot2 = taoBotTiSo(TEN_BOT2, "B2", -5, 5, 5, 10);
-const bot3 = taoBotTiSo(TEN_BOT3, "B3", -7, 7, 5, 10);
-const bot4 = taoBotTiSo(TEN_BOT4, "B4", -9, 9, 5, 10);
-const bot5 = taoBotTiSo(TEN_BOT5, "B5", -11, 11, 5, 10);
-const bot6 = taoBotTiSo(TEN_BOT6, "B6", -13, 13, 5, 10);
-const bot7 = taoBotTiSo(TEN_BOT7, "B7", -15, 15, 5, 10);
-const bot8 = taoBotTiSo(TEN_BOT8, "B8", -17, 17, 5, 10);
-const bot9 = taoBotTiSo(TEN_BOT9, "B9", -19, 19, 5, 10);
-const bot10 = taoBotTiSo(TEN_BOT10, "B10", -21, 21, 5, 10);
+const bot1 = taoBotTiSo(TEN_BOT1, "B1", -2, 2, 10, 20);
+const bot2 = taoBotTiSo(TEN_BOT2, "B2", -4, 4, 10, 20);
+const bot3 = taoBotTiSo(TEN_BOT3, "B3", -6, 6, 10, 20);
+const bot4 = taoBotTiSo(TEN_BOT4, "B4", -8, 8, 10, 20);
+const bot5 = taoBotTiSo(TEN_BOT5, "B5", -10, 10, 10, 20);
+const bot6 = taoBotTiSo(TEN_BOT6, "B6", -12, 12, 10, 20);
+const bot7 = taoBotTiSo(TEN_BOT7, "B7", -14, 14, 10, 20);
+const bot8 = taoBotTiSo(TEN_BOT8, "B8", -16, 16, 10, 20);
+const bot9 = taoBotTiSo(TEN_BOT9, "B9", -18, 18, 10, 20);
+const bot10 = taoBotTiSo(TEN_BOT10, "B10", -20, 20, 10, 20);
 const botSW = taoBotSW(bot1, TEN_BOT_SW, "SW");
 
 // ─── Liên kết khung ─────────────────────────────────────────────────────────
-// Thứ tự bot tỉ số; khung mỗi bot cách bot liền kề 3
+// Thứ tự bot tỉ số; khung mỗi bot cách bot liền kề BUOC_KHUNG
 const BOT_TISO = [bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10];
 const BUOC_KHUNG = 2;
 
 // Bot thứ i đạt target -> kéo cả khung + tiSo của các bot sau (off tính so với bot i)
-//   B1 -> kéo 2-5 | B2 -> kéo 3-5 | B3 -> kéo 4-5 | B4 -> kéo 5 | B5 -> chỉ tự reset
+//   B1 -> kéo 2..10 | B2 -> kéo 3..10 | ... | B9 -> kéo 10 | B10 -> chỉ tự reset
 BOT_TISO.forEach((x, i) => {
     x.onTarget = () => {
         for (let j = i + 1; j < BOT_TISO.length; j++) {
@@ -206,7 +215,7 @@ BOT_TISO.forEach((x, i) => {
     };
 });
 
-// botSW phải đứng sau bot1
+// botSW phải đứng sau bot1 (để đọc được lệnh của bot1)
 const DANH_SACH_BOT = [bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10, botSW];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -539,7 +548,7 @@ async function vongLapDatCuoc(page, roomType) {
             showThongBao(page, "Lỗi khi check kết quả", 5000, "#fb2424ff");
             // Lệnh thật: coi như thua, trừ đủ khoản cược, gộp sync 1 request (chỉ đếm thua 1 lần/ván)
             setting.set("solenhthua", setting.get("solenhthua") + 1);
-            if (tongRed > tongBlue) setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
+            if (tinHieu.tinhieu === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
             else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
 
             const ketQuaVanLoi = [];
@@ -553,6 +562,14 @@ async function vongLapDatCuoc(page, roomType) {
 
                 ketQuaVanLoi.push({ result: "thua", profitDelta: -q.amount, toolName: q.bot.ten, khoiLuong: q.amount, phi: 0, tut, ...layTrangThaiBotExtra(q.bot) });
             }
+
+            // Kéo khung sau khi mọi bot thật đã cập nhật, rồi chụp lại trạng thái cuối
+            chayKeoKhung();
+            for (const it of ketQuaVanLoi) {
+                const bot = DANH_SACH_BOT.find((b) => b.ten === it.toolName);
+                if (bot) Object.assign(it, layTrangThaiBotExtra(bot));
+            }
+
             await syncKetQuaBatch(ketQuaVanLoi);
             capNhatStats();
             await outPhong(page, "OutPhong -> Không đọc được kết quả - coi như thua");
@@ -585,69 +602,56 @@ async function vongLapDatCuoc(page, roomType) {
 
         let tongDelta = 0;
         let tongVonVe = 0;
-        // Flag: chỉ cộng win/thua vào UI 1 lần/ván (nhiều bot cùng chạy thì không nhân lên)
-        let daThongKeAo = false;
-        let daThongKeThat = false;
-        const thangAo = ketQuaMau === tinHieu.tinhieu;   // win ảo = kết quả trùng tín hiệu
+        // Win/thua ĐẾM theo tín hiệu trúng/trật, áp dụng cho MỌI bot (thật + ảo).
+        // Tiền (delta, phí, profit, vốn) vẫn tính theo bên cược thật của từng bot.
+        const thangDem = ketQuaMau === tinHieu.tinhieu;
+        const resultDem = thangDem ? "win" : "thua";
+        // Cộng win/thua vào UI đúng 1 lần/ván (nhiều bot cùng chạy thì không nhân lên)
+        if (thangDem) {
+            setting.set("solenhwin", setting.get("solenhwin") + 1);
+            if (tinHieu.tinhieu === "red") setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
+            else setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
+        } else {
+            setting.set("solenhthua", setting.get("solenhthua") + 1);
+            if (tinHieu.tinhieu === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
+            else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
+        }
         // Gom kết quả cả ván, cuối vòng gửi 1 request duy nhất
         const ketQuaVan = [];
 
-        // Bước 1: chốt delta + thống kê UI cho từng bot
-        // Bước 2: cập nhật bot theo thứ tự (bot1 trước -> kéo khung + tiSo các bot sau)
+        // Bước 1: mọi bot (ảo + thật) cập nhật kết quả ván, kéo khung được xếp hàng đợi
+        // Bước 2: sau vòng for mới chạy kéo khung + tiSo (bot 1 -> 10)
         for (const q of quyetDinh) {
-            // Thắng/thua theo bên của riêng từng bot
+            // Thắng/thua TIỀN theo bên của riêng từng bot
             const thang = q.isThat && ketQuaMau === q.ben;
             // Đỏ thắng chịu phí 5%, xanh ăn đủ
             const phi = thang && q.ben === "red" ? round2(q.amount * 0.05) : 0;
             const delta = !q.isThat ? 0 : (thang ? round2(q.amount - phi) : -q.amount);
 
-            // Tỉ số tính theo thắng/thua của bot (ảo cũng tính). Có thể kích hoạt onTarget kéo khung + tiSo bot khác.
+            // Tỉ số tính theo thắng/thua của bot (ảo cũng tính). Bot đạt target chỉ xếp lịch kéo, chưa kéo ngay.
             q.bot.ketQua(ketQuaMau, q.isThat, q.ben, delta, q.amount, tinHieu.tinhieu, q.phia);
 
             if (!q.isThat) {
                 // ── VÁN ẢO ──────────────────────────────────────────────────
-                // Local UI win/thua: chỉ cộng 1 lần dù có nhiều bot ảo cùng ván
-                if (!daThongKeAo) {
-                    daThongKeAo = true;
-                    if (thangAo) {
-                        setting.set("solenhwin", setting.get("solenhwin") + 1);
-                        if (tinHieu.tinhieu === "red") setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
-                        else setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
-                    } else {
-                        setting.set("solenhthua", setting.get("solenhthua") + 1);
-                        if (tinHieu.tinhieu === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
-                        else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
-                    }
-                }
                 // delta=0, khoiLuong=0 — chỉ đếm, không cộng tiền
-                ketQuaVan.push({ result: thangAo ? "win" : "thua", profitDelta: 0, toolName: q.bot.ten, khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
+                ketQuaVan.push({ result: resultDem, profitDelta: 0, toolName: q.bot.ten, khoiLuong: 0, phi: 0, tut: 0, ...layTrangThaiBotExtra(q.bot) });
                 continue;
             }
 
-            // ── Thống kê cho lệnh THẬT ─────────────────────────────────────
+            // ── Tiền cho lệnh THẬT ─────────────────────────────────────────
             tongDelta = round2(tongDelta + delta);
             if (thang) tongVonVe = round2(tongVonVe + q.amount + delta);
 
-            if (!daThongKeThat) {
-                daThongKeThat = true;
-                if (thang) {
-                    setting.set("solenhwin", setting.get("solenhwin") + 1);
-                    if (q.ben === "red") setting.set("solenhwin_Red", setting.get("solenhwin_Red") + 1);
-                    else setting.set("solenhWin_Xanh", setting.get("solenhWin_Xanh") + 1);
-                } else {
-                    setting.set("solenhthua", setting.get("solenhthua") + 1);
-                    if (q.ben === "red") setting.set("solenhthua_Red", setting.get("solenhthua_Red") + 1);
-                    else setting.set("solenhthua_Xanh", setting.get("solenhthua_Xanh") + 1);
-                }
-            }
-
             const tut = ghiThat(q.bot.ten, delta);
 
-            ketQuaVan.push({ result: thang ? "win" : "thua", profitDelta: delta, toolName: q.bot.ten, khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
+            // result = đếm theo tín hiệu; profitDelta = tiền thật (có thể dương dù result = thua với bot phía B)
+            ketQuaVan.push({ result: resultDem, profitDelta: delta, toolName: q.bot.ten, khoiLuong: q.amount, phi, tut, ...layTrangThaiBotExtra(q.bot) });
         }
 
-        // Trạng thái bot có thể bị kéo khung sau khi bot đứng trước đã được ghi vào ketQuaVan
-        // -> chụp lại trạng thái cuối cùng của ván cho đồng nhất
+        // Mọi bot đã cập nhật xong -> giờ mới kéo khung + tiSo các bot sau (bot 1 -> 10)
+        chayKeoKhung();
+
+        // Chụp lại trạng thái cuối cùng của ván (sau khi kéo) cho đồng nhất
         for (const it of ketQuaVan) {
             const bot = DANH_SACH_BOT.find((b) => b.ten === it.toolName);
             if (bot) Object.assign(it, layTrangThaiBotExtra(bot));
@@ -692,7 +696,7 @@ async function vongLapDatCuoc(page, roomType) {
 }
 
 // ─── Lấy trạng thái nội tại của bot để gửi kèm lên API (tiSo, khungB, khungA hoặc n) ──
-// Bot 1..5: gửi tiSo + khungB + khungA + cycleProfit
+// Bot 1..10: gửi tiSo + khungB + khungA + cycleProfit
 // Bot SW: chỉ gửi n (bộ đếm nhân)
 function layTrangThaiBotExtra(bot) {
     const currentTrangThai = setting.get("botTrangThai") || {};
