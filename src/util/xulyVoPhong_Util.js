@@ -44,7 +44,7 @@ function ghiThat(ten, delta) {
     return round2(t.dinh - t.profit);
 }
 
-const LO_CHUYEN = 100;    // lỗ ròng chu kỳ chạm 100K thì sang cược lớn
+const LO_CHUYEN = 60;    // lỗ ròng chu kỳ chạm 60k thì sang cược lớn
 const DU_TARGET = 2;      // ròng chu kỳ >= +2K thì đạt target
 const DICH_KHUNG = 1;     // đạt target thì khung dịch 1
 
